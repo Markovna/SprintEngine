@@ -18,6 +18,7 @@ public:
     inline static void Error(const std::string &str, const Args& ...args) {
         s_ClientLogger->error(str, args...);
     }
+
     template<typename ...Args>
     inline static void CoreInfo(const std::string &str, const Args& ...args) {
         s_CoreLogger->info(str, args...);
@@ -36,8 +37,8 @@ public:
     static void Init();
 
 private:
-    static std::shared_ptr<spdlog::logger> s_CoreLogger;
-    static std::shared_ptr<spdlog::logger> s_ClientLogger;
+    static std::unique_ptr<spdlog::logger> s_CoreLogger;
+    static std::unique_ptr<spdlog::logger> s_ClientLogger;
 };
 
 

@@ -2,8 +2,8 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include "Log.h"
 
-std::shared_ptr<spdlog::logger> Log::s_CoreLogger;
-std::shared_ptr<spdlog::logger> Log::s_ClientLogger;
+std::unique_ptr<spdlog::logger> Log::s_CoreLogger;
+std::unique_ptr<spdlog::logger> Log::s_ClientLogger;
 
 void Log::Init() {
     auto stdout_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -14,11 +14,11 @@ void Log::Init() {
 
     std::vector<spdlog::sink_ptr> sinks {stdout_sink, file_sink};
 
-    s_CoreLogger = std::make_shared<spdlog::logger>("ENGINE", begin(sinks), end(sinks));
+    s_CoreLogger = std::make_unique<spdlog::logger>("ENGINE", begin(sinks), end(sinks));
     s_CoreLogger->set_level(spdlog::level::trace);
     s_CoreLogger->flush_on(spdlog::level::trace);
 
-    s_ClientLogger = std::make_shared<spdlog::logger>("APP", begin(sinks), end(sinks));
+    s_ClientLogger = std::make_unique<spdlog::logger>("APP", begin(sinks), end(sinks));
     s_ClientLogger->set_level(spdlog::level::trace);
     s_ClientLogger->flush_on(spdlog::level::trace);
 }

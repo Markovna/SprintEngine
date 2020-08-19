@@ -1,73 +1,43 @@
 #include "Application.h"
+#include "Window.h"
 #include "Log.h"
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
+// TODO: put all this stuff to some config
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
+const unsigned int TARGET_FPS = 60;
 
-static void GLFWErrorCallback(int error_code, const char* description) {
-    Log::CoreError("GLFW error ({1}): {0}", description, error_code);
+Application::Application() {
+    Log::Init();
+
+    m_Window = std::make_unique<Window>(SCREEN_WIDTH, SCREEN_HEIGHT);
+    m_Window->SetEventCallback([this](Event &e) { OnEvent(e); });
+    m_Window->SetCloseCallback([this]() { OnClose(); });
+}
+
+void Application::UpdateTime() {
+    using namespace std::chrono;
+    time_point now = steady_clock::now();
+    m_DeltaTime = duration_cast<microseconds>(now - m_LastUpdateTime).count() / 1000000.0f;
+    m_LastUpdateTime = now;
 }
 
 int Application::Run() {
-    Log::Init();
+    m_Running = true;
 
-    if (!glfwInit()) {
-        Log::CoreError("GLFW could not initialize!");
+    while (m_Running) {
+
+        UpdateTime();
+
+        m_Window->OnUpdate();
     }
-    else {
 
-        glfwSetErrorCallback(GLFWErrorCallback);
-
-        GLFWwindow *window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "SprintEngine", NULL, NULL);
-        if (!window) {
-            Log::CoreError("Window could not be created!");
-        }
-        else {
-
-            glfwMakeContextCurrent(window);
-
-            if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-            {
-                Log::CoreError("Failed to initialize GLAD");
-                return -1;
-            }
-
-            // set input callbacks
-            glfwSetKeyCallback(window, [](GLFWwindow *w, int key, int scancode, int action, int mods) {
-                if (action == GLFW_PRESS)
-                    Log::CoreInfo("Key pressed: {0}", key);
-                else if (action == GLFW_RELEASE)
-                    Log::CoreInfo("Key released: {0}", key);
-            });
-
-            glfwSetMouseButtonCallback(window, [](GLFWwindow *w, int button, int action, int mods) {
-                if (action == GLFW_PRESS)
-                    Log::CoreInfo("Mouse pressed: {0}", button);
-                else if (action == GLFW_RELEASE)
-                    Log::CoreInfo("Mouse released: {0}", button);
-            });
-
-            glfwSetCursorPosCallback(window, [](GLFWwindow * w, double xpos, double ypos) {
-                //Log::CoreInfo("Mouse moved: [{0}, {1}]", xpos, ypos);
-            });
-
-            glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-
-            while (!glfwWindowShouldClose(window)) {
-
-                glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT);
-
-                glfwSwapBuffers(window);
-                glfwPollEvents();
-            }
-
-            glfwDestroyWindow(window);
-        }
-        glfwTerminate();
-    }
     return 0;
+}
+
+void Application::OnEvent(Event &event) {
+}
+
+void Application::OnClose() {
+    m_Running = false;
 }
