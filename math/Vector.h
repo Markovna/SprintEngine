@@ -1,10 +1,12 @@
 #pragma once
 
-#include <cstdio>
-#include <variant>
+#include <string>
+#include <iomanip>
+#include "spdlog/fmt/ostr.h"
 
 template <size_t N>
 struct Vector {
+
     const float& operator[] (size_t index) const {
         assert(index >= 0 && index < N);
         return m_Data[index];
@@ -14,15 +16,24 @@ struct Vector {
         assert(index >= 0 && index < N);
         return m_Data[index];
     }
+
 private:
     float m_Data[N];
 };
+
+typedef Vector<2> Vec2;
+typedef Vector<3> Vec3;
+typedef Vector<4> Vec4;
 
 template<>
 struct Vector<2> {
     float X, Y;
     static constexpr size_t N = 2;
 
+    static const Vector Zero;
+    static const Vector One;
+
+    Vector() : X(0), Y(0) {}
     explicit Vector(float x, float y) : X(x), Y(y) {
     }
 
@@ -50,8 +61,21 @@ struct Vector<3> {
     float X, Y, Z;
     static constexpr size_t N = 3;
 
-    explicit Vector(float x, float y, float z) : X(x), Y(y), Z(z) {
+    static const Vector Zero;
+    static const Vector One;
+    static const Vector Up;
+    static const Vector Down;
+    static const Vector Forward;
+    static const Vector Backward;
+    static const Vector Right;
+    static const Vector Left;
+
+    Vector(const Vec2& vec, float z = 0.0f) : X(vec.X), Y(vec.Y), Z(z) {}
+    Vector() : X(0), Y(0), Z(0) {}
+    Vector(float x, float y, float z) : X(x), Y(y), Z(z) {
     }
+
+    explicit operator Vec2() const { return Vec2(X, Y); }
 
     const float& operator[] (size_t index) const {
         assert(index >= 0 && index < N);
@@ -79,8 +103,13 @@ struct Vector<4> {
     float X, Y, Z, W;
     static constexpr size_t N = 4;
 
-    explicit Vector(float x, float y, float z, float w) : X(x), Y(y), Z(z), W(w) {
+    Vector(const Vec3& vec, float w = 0.0f) : X(vec.X), Y(vec.Y), Z(vec.Z), W(w) {}
+    Vector() : X(0), Y(0), Z(0), W(0) {}
+    Vector(float x, float y, float z, float w) : X(x), Y(y), Z(z), W(w) {
     }
+
+    explicit operator Vec2() const { return Vec2(X, Y); }
+    explicit operator Vec3() const { return Vec3(X, Y, Z); }
 
     const float& operator[] (size_t index) const {
         assert(index >= 0 && index < N);
@@ -105,6 +134,11 @@ struct Vector<4> {
     }
 };
 
-typedef Vector<2> Vec2;
-typedef Vector<3> Vec3;
-typedef Vector<4> Vec4;
+template<typename OStream, size_t N>
+OStream &operator<<(OStream &out, const Vector<N>& vec) {
+    out << '[';
+    for (size_t i = 0; i < N - 1; i++) {
+        out << std::setprecision(5) << vec[i] << ", ";
+    }
+    return out << std::setprecision(5) << vec[N - 1] << ']';
+}
