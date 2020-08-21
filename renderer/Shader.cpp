@@ -98,11 +98,11 @@ void Shader::SetFloat(const std::string& name, float value) const {
     glUniform1f(glGetUniformLocation(m_GLShaderID, name.c_str()), value);
 }
 
-void Shader::SetFloat3(const std::string& name, Vec3 value) const {
+void Shader::SetFloat3(const std::string& name, const Vec3& value) const {
     glUniform3f(glGetUniformLocation(m_GLShaderID, name.c_str()), value.X, value.Y, value.Z);
 }
 
-void Shader::SetFloat4(const std::string& name, Vec4 value) const {
+void Shader::SetFloat4(const std::string& name, const Vec4& value) const {
     glUniform4f(glGetUniformLocation(m_GLShaderID, name.c_str()), value.X, value.Y, value.Z, value.W);
 }
 
@@ -111,5 +111,5 @@ void Shader::Use() const {
 }
 
 std::shared_ptr<Shader> Shader::Load(const std::string& path) {
-    return std::make_shared<Shader>(ReadFile(path));
+    return std::shared_ptr<Shader>(new Shader(ReadFile(path)));
 }

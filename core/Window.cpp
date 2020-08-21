@@ -5,13 +5,15 @@
 
 #include "Window.h"
 #include "Shader.h"
+#include "Texture.h"
+#include "stb_image.h"
 
 void PrepareRenderTriangles();
 void RenderTriangle();
 
 Window::Window(int width, int height) {
     int status = glfwInit();
-    assert(status); // TODO: asset macro
+    assert(status); // TODO: assert macro
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -23,13 +25,13 @@ Window::Window(int width, int height) {
     });
 
     m_Window = glfwCreateWindow(width, height, "SprintEngine", NULL, NULL);
-    assert(m_Window); // TODO: asset macro
+    assert(m_Window); // TODO: assert macro
 
     glfwMakeContextCurrent(m_Window);
     glfwSetWindowUserPointer(m_Window, this);
 
     int loaded = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-    assert(loaded); // TODO: asset macro
+    assert(loaded); // TODO: assert macro
 
     // set input callbacks
     glfwSetKeyCallback(m_Window, [](GLFWwindow *w, int key, int scancode, int action, int mods) {
@@ -86,7 +88,7 @@ Window::~Window() {
 
 
 void Window::OnUpdate() {
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     RenderTriangle();
@@ -99,19 +101,26 @@ unsigned int vertexArrayObj;
 unsigned int elementArrayObj;
 
 std::shared_ptr<Shader> m_Shader;
+std::shared_ptr<Texture> texture;
+std::shared_ptr<Texture> texture2;
 
 void PrepareRenderTriangles() {
+    texture = Texture::Load("assets/textures/container.jpg");
+    texture2 = Texture::Load("assets/textures/seal.jpg");
 
-    m_Shader = Shader::Load("TestShader.shader");
+    m_Shader = Shader::Load("assets/shaders/TestShader.shader");
+    m_Shader->Use();
+    m_Shader->SetInt("Texture1", 0);
+    m_Shader->SetInt("Texture2", 1);
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     static float vertices[] = {
-            // positions          // colors
-             0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 1.0f, 1.0f,
-             0.5f, -0.5f,  0.0f,  0.0f, 0.0f, 1.0f, 1.0f,
-            -0.5f, -0.5f,  0.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-            -0.5f,  0.5f,  0.0f,  1.0f, 1.0f, 0.0f, 1.0f
+            // positions          // colors                // tex coords
+             0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 1.0f, 1.0f,  1.0f, 1.0f,
+             0.5f, -0.5f,  0.0f,  0.0f, 0.0f, 1.0f, 1.0f,  1.0f, 0.0f,
+            -0.5f, -0.5f,  0.0f,  1.0f, 0.0f, 1.0f, 1.0f,  0.0f, 0.0f,
+            -0.5f,  0.5f,  0.0f,  1.0f, 1.0f, 0.0f, 1.0f,  0.0f, 1.0f
     };
     unsigned int indices[] = {
             0, 1, 3,
@@ -131,24 +140,38 @@ void PrepareRenderTriangles() {
     glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObj);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(0 * sizeof(GLfloat)));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(0 * sizeof(GLfloat)));
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(7 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
 }
 
 void RenderTriangle() {
-    float timeValue = glfwGetTime();
-    float greenValue = (sin(timeValue) / 1.0f) + 0.5f;
-    float blueValue  = (cos(timeValue) / 1.0f) + 0.5f;
-    float redValue   = (sin(timeValue + 3.14f) / 1.0f) + 0.5f;
+    float timeValue = glfwGetTime() * 0.5f;
+
+    Vec4 color;
+    color.X = sin(timeValue) / 2.0f + 0.5f;
+    color.Y = cos(timeValue) / 2.0f + 0.5f;
+    color.Z = sin(timeValue + 3.14 * 0.5f) / 2.0f + 0.5f;
+    color.W = 1.0f;
 
     m_Shader->Use();
-    m_Shader->SetFloat4("mainColor", Vec4(redValue, greenValue, blueValue, 1.0f));
+    m_Shader->SetFloat4("mainColor", color);
+
+    if (texture)
+        texture->Bind(0);
+
+    if (texture2)
+        texture2->Bind(1);
 
     glBindVertexArray(vertexArrayObj);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    glUseProgram(0);
 }
