@@ -96,6 +96,18 @@ struct Vector<3> {
             case 2: return Z;
         }
     }
+
+    Vector operator^(const Vector& rhs) const {
+        return Vector(
+                Y * rhs.Z - Z * rhs.Y,
+                Z * rhs.X - X * rhs.Z,
+                X * rhs.Y - Y * rhs.X
+            );
+    }
+
+    float operator|(const Vector<3>& rhs) const {
+        return X * rhs.X + Y * rhs.Y + Z * rhs.Z;
+    }
 };
 
 template<>
@@ -141,4 +153,115 @@ OStream &operator<<(OStream &out, const Vector<N>& vec) {
         out << std::setprecision(5) << vec[i] << ", ";
     }
     return out << std::setprecision(5) << vec[N - 1] << ']';
+}
+
+template<size_t N>
+Vector<N> operator+(const Vector<N>& lhs, const Vector<N>& rhs) {
+    Vector<N> res;
+    for (int i = 0; i < N; ++i) {
+        res[i] = lhs[i] + rhs[i];
+    }
+    return res;
+}
+
+template<size_t N>
+Vector<N> operator-(const Vector<N>& lhs, const Vector<N>& rhs) {
+    Vector<N> res;
+    for (int i = 0; i < N; ++i) {
+        res[i] = lhs[i] - rhs[i];
+    }
+    return res;
+}
+
+template<size_t N>
+Vector<N> operator-(const Vector<N>& rhs) {
+    Vector<N> res;
+    for (int i = 0; i < N; ++i) {
+        res[i] = -rhs[i];
+    }
+    return res;
+}
+
+template<size_t N>
+Vector<N> operator*(const Vector<N>& lhs, const Vector<N>& rhs) {
+    Vector<N> res;
+    for (int i = 0; i < N; ++i) {
+        res[i] = lhs[i] * rhs[i];
+    }
+    return res;
+}
+
+template<size_t N>
+Vector<N> operator*(float lhs, const Vector<N>& rhs) {
+    Vector<N> res;
+    for (int i = 0; i < N; ++i) {
+        res[i] = lhs * rhs[i];
+    }
+    return res;
+}
+
+template<size_t N>
+Vector<N> operator*(const Vector<N>& lhs, float rhs) {
+    Vector<N> res;
+    for (int i = 0; i < N; ++i) {
+        res[i] = lhs[i] * rhs;
+    }
+    return res;
+}
+
+template<size_t N>
+Vector<N> operator/(const Vector<N>& lhs, float rhs) {
+    Vector<N> res;
+    const float scale = 1.0f / rhs;
+    for (int i = 0; i < N; ++i) {
+        res[i] = lhs[i] * scale;
+    }
+    return res;
+}
+
+template<size_t N>
+Vector<N>& operator+=(Vector<N>& lhs, const Vector<N>& rhs) {
+    for (int i = 0; i < N; ++i) {
+        lhs[i] += rhs[i];
+    }
+    return lhs;
+}
+
+template<size_t N>
+Vector<N>& operator-=(Vector<N>& lhs, const Vector<N>& rhs) {
+    for (int i = 0; i < N; ++i) {
+        lhs[i] -= rhs[i];
+    }
+    return lhs;
+}
+
+template<size_t N>
+Vector<N>& operator*=(Vector<N>& lhs, const Vector<N>& rhs) {
+    for (int i = 0; i < N; ++i) {
+        lhs[i] *= rhs[i];
+    }
+    return lhs;
+}
+
+template<size_t N>
+Vector<N>& operator/=(Vector<N>& lhs, float rhs) {
+    const float scale = 1.0f / rhs;
+    for (int i = 0; i < N; ++i) {
+        lhs[i] *= scale;
+    }
+    return lhs;
+}
+
+template<size_t N>
+bool operator==(const Vector<N>& lhs, const Vector<N>& rhs) {
+    bool eq = true;
+    for (int i = 0; i < N; ++i) {
+        eq &= lhs[i] == rhs[i];
+    }
+    return eq;
+}
+
+template<size_t N>
+bool operator!=(const Vector<N>& lhs, const Vector<N>& rhs) {
+    return !(lhs == rhs);
 }

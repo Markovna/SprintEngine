@@ -8,9 +8,11 @@ layout (location = 2) in vec2 aTexCoord;
 out vec4 vColor;
 out vec2 vTexCoord;
 
+uniform mat4 transform;
+
 void main()
 {
-    gl_Position = vec4(aPos, 1.0);
+    gl_Position = transform * vec4(aPos, 1.0);
     vColor = aCol;
     vTexCoord = aTexCoord;
 }
@@ -29,6 +31,5 @@ uniform sampler2D Texture2;
 
 void main()
 {
-
     FragColor = mainColor * vColor * mix(texture(Texture1, vTexCoord), texture(Texture2, vTexCoord), 0.5);
 }

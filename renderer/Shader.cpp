@@ -106,6 +106,10 @@ void Shader::SetFloat4(const std::string& name, const Vec4& value) const {
     glUniform4f(glGetUniformLocation(m_GLShaderID, name.c_str()), value.X, value.Y, value.Z, value.W);
 }
 
+void Shader::SetMat(const std::string& name, const Matrix& value) const {
+    glUniformMatrix4fv(glGetUniformLocation(m_GLShaderID, name.c_str()), 1, GL_FALSE, &value[0][0]);
+}
+
 void Shader::Use() const {
     glUseProgram(m_GLShaderID);
 }

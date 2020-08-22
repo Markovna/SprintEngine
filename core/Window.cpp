@@ -2,9 +2,12 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <math.h>
 
 #include "Window.h"
 #include "Shader.h"
+#include "Vector.h"
+#include "Matrix.h"
 #include "Texture.h"
 #include "stb_image.h"
 
@@ -161,8 +164,15 @@ void RenderTriangle() {
     color.Z = sin(timeValue + 3.14 * 0.5f) / 2.0f + 0.5f;
     color.W = 1.0f;
 
+    Matrix m(Matrix::Identity);
+    m *= Matrix::Translation(0.25f * Vec3::Forward);
+    m *= Matrix::Translation(0.25f * Vec3::Right);
+    m *= Matrix::Rotation(Quat(Vec3::Up, 2.0f * timeValue));
+//    m *= Matrix::Scale(0.8f);
+
     m_Shader->Use();
     m_Shader->SetFloat4("mainColor", color);
+    m_Shader->SetMat("transform", m);
 
     if (texture)
         texture->Bind(0);
