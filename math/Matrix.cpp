@@ -38,19 +38,30 @@ Matrix Matrix::Rotation(const Quat& rot) {
         );
 }
 
-static Matrix Ortho(float width, float height, float minZ, float maxZ) {
-
+Matrix Matrix::Ortho(float width, float height, float minZ, float maxZ) {
+    float scale = 1.0f / (maxZ - minZ);
+    return Matrix(
+            Vec4(1.0f / width, 0.0f, 0.0f, 0.0f),
+            Vec4(0.0f, 1.0f / height, 0.0f, 0.0f),
+            Vec4(0.0f, 0.0f, scale, 0.0f),
+            Vec4(0.0f, 0.0f, -(minZ + maxZ) * scale, 1.0f)
+        );
 }
 
-static Matrix Perspective(float fov, float width, float height, float minZ, float maxZ) {
+Matrix Matrix::Perspective(float fov, float width, float height, float minZ, float maxZ) {
     const float tan = 1.0f / std::tan(fov * 0.5f);
     const float scale = 1.0f / (maxZ - minZ);
     return Matrix(
             Vec4(tan, 0.0f, 0.0f, 0.0f),
-            Vec4(0.0f, width * height * tan, 0.0f, 0.0f),
+            Vec4(0.0f, width * tan / height, 0.0f, 0.0f),
             Vec4(0.0f, 0.0f, maxZ * scale, 1.0f),
             Vec4(0.0f, 0.0f, - minZ * maxZ * scale, 0.0f)
         );
+}
+
+
+Matrix Matrix::LookAt(const Vec3& position, const Vec3& target, const Vec3 up) {
+
 }
 
 Matrix::Matrix(const Vec3& x, const Vec3& y, const Vec3& z, const Vec3& w) :
@@ -73,9 +84,9 @@ Matrix::Matrix(const Vec4& x, const Vec4& y, const Vec4& z, const Vec4& w) :
 
 Matrix::Matrix() :
     m_Data {
-        { 0.0f, 0.0f, 0.0f, 0.0f },
-        { 0.0f, 0.0f, 0.0f, 0.0f },
-        { 0.0f, 0.0f, 0.0f, 0.0f },
-        { 0.0f, 0.0f, 0.0f, 0.0f }
+        { 1.0f, 0.0f, 0.0f, 0.0f },
+        { 0.0f, 1.0f, 0.0f, 0.0f },
+        { 0.0f, 0.0f, 1.0f, 0.0f },
+        { 0.0f, 0.0f, 0.0f, 1.0f }
     }
 {}

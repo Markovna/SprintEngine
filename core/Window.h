@@ -24,6 +24,7 @@ public:
     }
 
 private:
+    int m_Width, m_Height;
     GLFWwindow* m_Window;
     EventCallback m_EventCallback;
     CloseCallback m_CloseCallback;

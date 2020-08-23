@@ -12,7 +12,7 @@
 #include "stb_image.h"
 
 void PrepareRenderTriangles();
-void RenderTriangle();
+void RenderTriangle(int, int);
 
 Window::Window(int width, int height) {
     int status = glfwInit();
@@ -29,6 +29,9 @@ Window::Window(int width, int height) {
 
     m_Window = glfwCreateWindow(width, height, "SprintEngine", NULL, NULL);
     assert(m_Window); // TODO: assert macro
+
+    m_Width = width;
+    m_Height = height;
 
     glfwMakeContextCurrent(m_Window);
     glfwSetWindowUserPointer(m_Window, this);
@@ -92,9 +95,9 @@ Window::~Window() {
 
 void Window::OnUpdate() {
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    RenderTriangle();
+    RenderTriangle(m_Width, m_Height);
 
     glfwSwapBuffers(m_Window);
     glfwPollEvents();
@@ -108,6 +111,9 @@ std::shared_ptr<Texture> texture;
 std::shared_ptr<Texture> texture2;
 
 void PrepareRenderTriangles() {
+
+    glEnable(GL_DEPTH_TEST);
+
     texture = Texture::Load("assets/textures/container.jpg");
     texture2 = Texture::Load("assets/textures/seal.jpg");
 
@@ -120,15 +126,57 @@ void PrepareRenderTriangles() {
     // ------------------------------------------------------------------
     static float vertices[] = {
             // positions          // colors                // tex coords
-             0.5f,  0.5f,  0.0f,  0.0f, 1.0f, 1.0f, 1.0f,  1.0f, 1.0f,
-             0.5f, -0.5f,  0.0f,  0.0f, 0.0f, 1.0f, 1.0f,  1.0f, 0.0f,
-            -0.5f, -0.5f,  0.0f,  1.0f, 0.0f, 1.0f, 1.0f,  0.0f, 0.0f,
-            -0.5f,  0.5f,  0.0f,  1.0f, 1.0f, 0.0f, 1.0f,  0.0f, 1.0f
+//             0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 1.0f, 1.0f,  1.0f, 1.0f,
+//             0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f,  1.0f, 0.0f,
+//            -0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 1.0f, 1.0f,  0.0f, 0.0f,
+//            -0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f, 1.0f,  0.0f, 1.0f,
+
+             -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+             0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+             0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+             0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+             -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+             -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+             -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+             0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+             0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+             0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+             -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+             -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+             -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+             -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+             -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+             -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+             -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+             -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+             0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+             0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+             0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+             0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+             0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+             0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+             -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+             0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+             0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+             0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+             -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+             -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+             -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+             0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+             0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+             0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+             -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+             -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
-    unsigned int indices[] = {
-            0, 1, 3,
-            1, 2, 3
-    };
+//    unsigned int indices[] = {
+//            0, 1, 3,
+//            1, 2, 3,
+//        };
 
     unsigned int vertexBufferObj;
     glGenVertexArrays(1, &vertexArrayObj);
@@ -137,42 +185,44 @@ void PrepareRenderTriangles() {
 
     glBindVertexArray(vertexArrayObj);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementArrayObj);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementArrayObj);
+//    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObj);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(0 * sizeof(GLfloat)));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(0 * sizeof(GLfloat)));
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(7 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
 }
 
-void RenderTriangle() {
+void RenderTriangle(int width, int height) {
     float timeValue = glfwGetTime() * 0.5f;
 
     Vec4 color;
     color.X = sin(timeValue) / 2.0f + 0.5f;
     color.Y = cos(timeValue) / 2.0f + 0.5f;
-    color.Z = sin(timeValue + 3.14 * 0.5f) / 2.0f + 0.5f;
+    color.Z = sin(timeValue + M_PI * 0.5f) / 2.0f + 0.5f;
     color.W = 1.0f;
 
-    Matrix m(Matrix::Identity);
-    m *= Matrix::Translation(0.25f * Vec3::Forward);
-    m *= Matrix::Translation(0.25f * Vec3::Right);
-    m *= Matrix::Rotation(Quat(Vec3::Up, 2.0f * timeValue));
-//    m *= Matrix::Scale(0.8f);
+    Matrix model;
+    model *= Matrix::Rotation(Quat(Vec3::Forward, 1.5f * timeValue));
+    model *= Matrix::Rotation(Quat(Vec3::Left, 1.0f * timeValue));
+    model *= Matrix::Translation(Vec3(0.0f, 0.0f, 1.0f));
+
+    Matrix view = Matrix::Translation(Vec3(0.0f, 0.0f, 3.0f));
+    Matrix projection = Matrix::Perspective(45.0f * M_PI / 180.0f, (float)width, (float)height, 0.1f, 100.0f);
+//    Matrix projection = Matrix::Ortho(1.0f, width / height, 0.1f, 100.0f);
 
     m_Shader->Use();
     m_Shader->SetFloat4("mainColor", color);
-    m_Shader->SetMat("transform", m);
+    m_Shader->SetMat("model", model);
+    m_Shader->SetMat("view", view);
+    m_Shader->SetMat("projection", projection);
 
     if (texture)
         texture->Bind(0);
@@ -181,7 +231,8 @@ void RenderTriangle() {
         texture2->Bind(1);
 
     glBindVertexArray(vertexArrayObj);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+//    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glUseProgram(0);
 }

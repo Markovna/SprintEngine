@@ -2,25 +2,24 @@
 #version 330 core
 
 layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec4 aCol;
-layout (location = 2) in vec2 aTexCoord;
+layout (location = 1) in vec2 aTexCoord;
 
-out vec4 vColor;
 out vec2 vTexCoord;
 
-uniform mat4 transform;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
 void main()
 {
-    gl_Position = transform * vec4(aPos, 1.0);
-    vColor = aCol;
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
     vTexCoord = aTexCoord;
 }
 
 #type fragment
 #version 330 core
 
-in vec4 vColor;
+//in vec4 vColor;
 in vec2 vTexCoord;
 
 out vec4 FragColor;
@@ -31,5 +30,5 @@ uniform sampler2D Texture2;
 
 void main()
 {
-    FragColor = mainColor * vColor * mix(texture(Texture1, vTexCoord), texture(Texture2, vTexCoord), 0.5);
+    FragColor = mainColor * mix(texture(Texture1, vTexCoord), texture(Texture2, vTexCoord), 0.5);
 }
