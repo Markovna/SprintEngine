@@ -29,7 +29,7 @@ VertexBuffer& VertexBuffer::operator=(VertexBuffer &&other) noexcept {
         items.push_back({ type, offset, false });
         offset += type.Size;
     }
-    return VertexBuffer(move(items), data, size);
+    return VertexBuffer(move(items), offset, data, size);
 }
 
 void VertexBuffer::SetAttribute(const VertexArray& vertexArray, unsigned int slot, size_t attributeIdx) const {
@@ -50,8 +50,7 @@ VertexBuffer::~VertexBuffer() {
     glDeleteBuffers(1, &m_HandleID);
 }
 
-VertexBuffer::VertexBuffer(std::vector<Item> items, float* data, uint32_t size) : m_Layout(std::move(items)) {
-    m_Stride = m_Layout[m_Layout.size()-1].Offset + m_Layout[m_Layout.size()-1].Type.Size;
+VertexBuffer::VertexBuffer(std::vector<Item> items, size_t stride, float* data, uint32_t size) : m_Layout(std::move(items)), m_Stride(stride) {
     glGenBuffers(1, &m_HandleID);
     glBindBuffer(GL_ARRAY_BUFFER, m_HandleID);
     glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);

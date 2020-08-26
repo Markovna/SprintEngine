@@ -44,7 +44,7 @@ public:
 
 
 private:
-    VertexBuffer(std::vector<Item> items, float* data, uint32_t size);
+    VertexBuffer(std::vector<Item> items, size_t stride, float* data, uint32_t size);
 
 private:
     unsigned int m_HandleID;

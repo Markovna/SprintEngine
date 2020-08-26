@@ -103,8 +103,6 @@ void Window::OnUpdate() {
     glfwPollEvents();
 }
 
-//unsigned int vertexArrayObj;
-
 std::shared_ptr<VertexArray> m_VertexArray;
 std::shared_ptr<VertexBuffer> m_VertexBuffer;
 std::shared_ptr<Shader> m_Shader;
@@ -201,7 +199,7 @@ void PrepareRenderTriangles() {
     m_VertexArray->SetIndexBuffer(indices, count);
 
     m_VertexBuffer = std::make_shared<VertexBuffer>(
-            VertexBuffer::Create(vertices, 5 * count * sizeof(*vertices), {VertexDataType::Vec3, VertexDataType::Vec2 }));
+            VertexBuffer::Create(vertices, 5 * count * sizeof(*vertices), { VertexDataType::Vec3, VertexDataType::Vec2 }));
 
     unsigned int slot;
     if (m_Shader->TryGetAttributeID("aPos", slot)) {
