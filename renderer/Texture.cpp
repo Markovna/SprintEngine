@@ -2,8 +2,7 @@
 
 Texture::Loader::Loader(const std::string& path) {
     stbi_set_flip_vertically_on_load(true);
-    int nrChannels;
-    m_Data = stbi_load(path.c_str(), &m_Width, &m_Height, &nrChannels, 0);
+    m_Data = stbi_load(path.c_str(), &m_Width, &m_Height, &m_Channels, 0);
 }
 
 Texture::Loader::~Loader() {
@@ -11,26 +10,30 @@ Texture::Loader::~Loader() {
         stbi_image_free(m_Data);
 }
 
-Texture::Loader::Loader(Loader&& loader) {
+Texture::Loader::Loader(Loader&& loader) noexcept {
     m_Data = loader.m_Data;
     m_Width = loader.m_Width;
     m_Height = loader.m_Width;
+    m_Channels = loader.m_Channels;
 
     loader.m_Data = nullptr;
     loader.m_Width = 0;
     loader.m_Height = 0;
+    loader.m_Channels = 0;
 }
 
-Texture::Loader& Texture::Loader::operator=(Loader&& loader) {
+Texture::Loader& Texture::Loader::operator=(Loader&& loader) noexcept {
     if (m_Data == loader.m_Data) return *this;
 
     m_Data = loader.m_Data;
     m_Width = loader.m_Width;
     m_Height = loader.m_Width;
+    m_Channels = loader.m_Channels;
 
     loader.m_Data = nullptr;
     loader.m_Width = 0;
     loader.m_Height = 0;
+    loader.m_Channels = 0;
     return *this;
 }
 
@@ -39,14 +42,26 @@ std::shared_ptr<Texture> Texture::Load(const std::string& path) {
         return std::shared_ptr<Texture>(
                 new Texture(loader.GetData(),
                             loader.GetWidth(),
-                            loader.GetHeight()));
+                            loader.GetHeight(),
+                            loader.GetChannelsNum()));
     }
 
     Log::CoreError("Failed to load texture {0}", path);
     return nullptr;
 }
 
-Texture::Texture(const unsigned char *data, unsigned int width, unsigned int height) {
+static GLenum GetFormat(unsigned int channels) {
+    GLenum format = 0;
+    if (channels == 1)
+        format = GL_RED;
+    else if (channels == 3)
+        format = GL_RGB;
+    else if (channels == 4)
+        format = GL_RGBA;
+    return format;
+}
+
+Texture::Texture(const unsigned char *data, unsigned int width, unsigned int height, unsigned int channels) {
     glGenTextures(1, &m_GLTextureID);
     glBindTexture(GL_TEXTURE_2D, m_GLTextureID);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -54,7 +69,8 @@ Texture::Texture(const unsigned char *data, unsigned int width, unsigned int hei
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    GLenum format = GetFormat(channels);
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     glBindTexture(GL_TEXTURE_2D, 0);

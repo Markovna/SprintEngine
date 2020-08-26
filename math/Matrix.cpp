@@ -60,7 +60,7 @@ Matrix Matrix::Perspective(float fov, float width, float height, float minZ, flo
 }
 
 
-Matrix Matrix::LookAt(const Vec3& position, const Vec3& target, const Vec3 up) {
+Matrix Matrix::LookAt(const Vec3& position, const Vec3& target, const Vec3& up) {
 
 }
 

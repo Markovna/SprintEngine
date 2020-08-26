@@ -5,7 +5,6 @@
 // TODO: put all this stuff to some config
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
-const unsigned int TARGET_FPS = 60;
 
 Application::Application() {
     Log::Init();

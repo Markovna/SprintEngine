@@ -70,7 +70,7 @@ struct Vector<3> {
     static const Vector Right;
     static const Vector Left;
 
-    Vector(const Vec2& vec, float z = 0.0f) : X(vec.X), Y(vec.Y), Z(z) {}
+    explicit Vector(const Vec2& vec, float z = 0.0f) : X(vec.X), Y(vec.Y), Z(z) {}
     Vector() : X(0), Y(0), Z(0) {}
     Vector(float x, float y, float z) : X(x), Y(y), Z(z) {
     }
@@ -115,7 +115,7 @@ struct Vector<4> {
     float X, Y, Z, W;
     static constexpr size_t N = 4;
 
-    Vector(const Vec3& vec, float w = 0.0f) : X(vec.X), Y(vec.Y), Z(vec.Z), W(w) {}
+    explicit Vector(const Vec3& vec, float w = 0.0f) : X(vec.X), Y(vec.Y), Z(vec.Z), W(w) {}
     Vector() : X(0), Y(0), Z(0), W(0) {}
     Vector(float x, float y, float z, float w) : X(x), Y(y), Z(z), W(w) {
     }

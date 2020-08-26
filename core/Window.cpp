@@ -2,14 +2,14 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <math.h>
+#include <cmath>
 
 #include "Window.h"
 #include "Shader.h"
 #include "Vector.h"
 #include "Matrix.h"
 #include "Texture.h"
-#include "stb_image.h"
+#include "VertexBuffer.h"
 
 void PrepareRenderTriangles();
 void RenderTriangle(int, int);
@@ -103,54 +103,37 @@ void Window::OnUpdate() {
     glfwPollEvents();
 }
 
-unsigned int vertexArrayObj;
-unsigned int elementArrayObj;
+//unsigned int vertexArrayObj;
 
+std::shared_ptr<VertexArray> m_VertexArray;
+std::shared_ptr<VertexBuffer> m_VertexBuffer;
 std::shared_ptr<Shader> m_Shader;
-std::shared_ptr<Texture> texture;
-std::shared_ptr<Texture> texture2;
+std::shared_ptr<Texture> m_Texture;
+std::shared_ptr<Texture> m_Texture2;
 
-void PrepareRenderTriangles() {
-
-    glEnable(GL_DEPTH_TEST);
-
-    texture = Texture::Load("assets/textures/container.jpg");
-    texture2 = Texture::Load("assets/textures/seal.jpg");
-
-    m_Shader = Shader::Load("assets/shaders/TestShader.shader");
-    m_Shader->Use();
-    m_Shader->SetInt("Texture1", 0);
-    m_Shader->SetInt("Texture2", 1);
-
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    // ------------------------------------------------------------------
+float* GetVertices() {
     static float vertices[] = {
-            // positions          // colors                // tex coords
-//             0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 1.0f, 1.0f,  1.0f, 1.0f,
-//             0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f, 1.0f,  1.0f, 0.0f,
-//            -0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 1.0f, 1.0f,  0.0f, 0.0f,
-//            -0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f, 1.0f,  0.0f, 1.0f,
-
-             -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+            // pos                // tex coords
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
              0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
              0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
              0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-             -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-             -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 
-             -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
              0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
              0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
              0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-             -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-             -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
 
-             -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-             -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-             -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-             -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-             -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-             -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
 
              0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
              0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
@@ -159,80 +142,97 @@ void PrepareRenderTriangles() {
              0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
              0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
 
-             -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
              0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
              0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
              0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-             -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-             -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
 
-             -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
              0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
              0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
              0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-             -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-             -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-    };
-//    unsigned int indices[] = {
-//            0, 1, 3,
-//            1, 2, 3,
-//        };
+            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+        };
+    return vertices;
+}
 
-    unsigned int vertexBufferObj;
-    glGenVertexArrays(1, &vertexArrayObj);
-    glGenBuffers(1, &vertexBufferObj);
-    glGenBuffers(1, &elementArrayObj);
+uint32_t* GetIndices(size_t& count) {
+    static uint32_t indices[] = {
+            0,  1,  2,
+            3,  4,  5,
+            6,  7,  8,
+            9,  10, 11,
+            12, 13, 14,
+            15, 16, 17,
+            18, 19, 20,
+            21, 22, 23,
+            24, 25, 26,
+            27, 28, 29,
+            30, 31, 32,
+            33, 34, 35
+        };
+    count = 36;
+    return indices;
+}
 
-    glBindVertexArray(vertexArrayObj);
+void PrepareRenderTriangles() {
 
-//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementArrayObj);
-//    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glEnable(GL_DEPTH_TEST);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObj);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    m_Texture  = Texture::Load("assets/textures/container.jpg");
+    m_Texture2 = Texture::Load("assets/textures/seal.png");
+    m_Shader   = Shader::Load("assets/shaders/TestShader.shader");
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(0 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(0);
+    if (m_Texture) m_Texture->Bind(0);
+    if (m_Texture2) m_Texture2->Bind(1);
 
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
+    m_Shader->Bind();
+    m_Shader->SetInt("Texture1", 0);
+    m_Shader->SetInt("Texture2", 1);
 
-    glBindVertexArray(0);
+    size_t count;
+    float* vertices = GetVertices();
+    uint32_t* indices = GetIndices(count);
+
+    m_VertexArray = std::make_shared<VertexArray>();
+    m_VertexArray->SetIndexBuffer(indices, count);
+
+    m_VertexBuffer = std::make_shared<VertexBuffer>(
+            VertexBuffer::Create(vertices, 5 * count * sizeof(*vertices), {VertexDataType::Vec3, VertexDataType::Vec2 }));
+
+    unsigned int slot;
+    if (m_Shader->TryGetAttributeID("aPos", slot)) {
+        m_VertexBuffer->SetAttribute(*m_VertexArray, slot, 0);
+    }
+    if (m_Shader->TryGetAttributeID("aTexCoord", slot)) {
+        m_VertexBuffer->SetAttribute(*m_VertexArray, slot, 1);
+    }
 }
 
 void RenderTriangle(int width, int height) {
-    float timeValue = glfwGetTime() * 0.5f;
+    float timeValue =  0.5 * glfwGetTime();
 
-    Vec4 color;
-    color.X = sin(timeValue) / 2.0f + 0.5f;
-    color.Y = cos(timeValue) / 2.0f + 0.5f;
-    color.Z = sin(timeValue + M_PI * 0.5f) / 2.0f + 0.5f;
-    color.W = 1.0f;
+    Vec4 color(sin(timeValue) / 2.0f + 0.5f,0.3f,cos(timeValue) / 2.0f + 0.5f,1.0f);
 
     Matrix model;
-    model *= Matrix::Rotation(Quat(Vec3::Forward, 1.5f * timeValue));
-    model *= Matrix::Rotation(Quat(Vec3::Left, 1.0f * timeValue));
+    model *= Matrix::Rotation(Quat(Vec3::Forward, 1.0f * timeValue));
+    model *= Matrix::Rotation(Quat(Vec3::Left, 1.25f * timeValue));
     model *= Matrix::Translation(Vec3(0.0f, 0.0f, 1.0f));
 
-    Matrix view = Matrix::Translation(Vec3(0.0f, 0.0f, 3.0f));
-    Matrix projection = Matrix::Perspective(45.0f * M_PI / 180.0f, (float)width, (float)height, 0.1f, 100.0f);
+    Matrix view = Matrix::Translation(Vec3(0.0f, 0.0f, 2.0f));
+    Matrix projection = Matrix::Perspective(60.0f * M_PI / 180.0f, (float)width, (float)height, 0.1f, 100.0f);
 //    Matrix projection = Matrix::Ortho(1.0f, width / height, 0.1f, 100.0f);
 
-    m_Shader->Use();
+    m_Shader->Bind();
     m_Shader->SetFloat4("mainColor", color);
     m_Shader->SetMat("model", model);
     m_Shader->SetMat("view", view);
     m_Shader->SetMat("projection", projection);
 
-    if (texture)
-        texture->Bind(0);
-
-    if (texture2)
-        texture2->Bind(1);
-
-    glBindVertexArray(vertexArrayObj);
-//    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-
+    m_VertexArray->Bind();
+    glDrawElements(GL_TRIANGLES, m_VertexArray->IndexCount(), GL_UNSIGNED_INT, nullptr);
     glUseProgram(0);
 }
