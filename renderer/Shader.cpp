@@ -10,16 +10,14 @@ static std::string ReadFile(const std::string& path) {
     std::string content;
     std::ifstream file;
     file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    try
-    {
-        file.open(path);
+    try {
+        file.open(path, std::ios::in | std::ios::binary);
         std::stringstream sourceStream;
         sourceStream << file.rdbuf();
         file.close();
         content = sourceStream.str();
     }
-    catch (std::ifstream::failure& e)
-    {
+    catch (std::ifstream::failure& e) {
         Log::CoreError("Couldn't read file {0}", path);
     }
     return content;
@@ -53,8 +51,7 @@ static std::unordered_map<ShaderType, std::string> PreProcess(const std::string&
 
     const std::string typeToken = "#type";
     size_t pos = source.find(typeToken, 0);
-    while (pos != std::string::npos)
-    {
+    while (pos != std::string::npos) {
         size_t eol = source.find_first_of('\n', pos);
         size_t begin = pos + typeToken.size() + 1;
         std::string typeStr = source.substr(begin, eol - begin);
@@ -84,6 +81,12 @@ Shader::Shader(const std::string& source) {
         glGetProgramInfoLog(m_GLShaderID, 512, NULL, infoLog);
         Log::CoreError("Shader linking failed with errors:\n{0}", infoLog);
     }
+
+    PopulateAttributes();
+}
+
+Shader::~Shader() {
+    glDeleteProgram(m_GLShaderID);
 }
 
 void Shader::SetInt(const std::string& name, int value) const {
@@ -110,10 +113,37 @@ void Shader::SetMat(const std::string& name, const Matrix& value) const {
     glUniformMatrix4fv(glGetUniformLocation(m_GLShaderID, name.c_str()), 1, GL_FALSE, &value[0][0]);
 }
 
-void Shader::Use() const {
+void Shader::Bind() const {
     glUseProgram(m_GLShaderID);
 }
 
 std::shared_ptr<Shader> Shader::Load(const std::string& path) {
     return std::shared_ptr<Shader>(new Shader(ReadFile(path)));
+}
+
+bool Shader::TryGetAttributeID(const std::string &name, unsigned int& id) const {
+    if (const auto it = m_Attributes.find(name); it != m_Attributes.end()) {
+        id = it->second;
+        return true;
+    }
+    return false;
+}
+
+void Shader::PopulateAttributes() {
+    int count = 0;
+    glUseProgram(m_GLShaderID);
+    glGetProgramiv(m_GLShaderID, GL_ACTIVE_ATTRIBUTES, &count);
+
+    char name[128];
+    GLenum type;
+    int length, size;
+    for (int i = 0; i < count; ++i) {
+        memset(name, 0, sizeof(char) * 128);
+        glGetActiveAttrib(m_GLShaderID, (GLuint) i, 128, &length, &size, &type, name);
+        int attrib = glGetAttribLocation(m_GLShaderID, name);
+        if (attrib >= 0) {
+            m_Attributes[name] = attrib;
+        }
+    }
+    glUseProgram(0);
 }
