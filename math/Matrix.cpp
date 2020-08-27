@@ -59,9 +59,26 @@ Matrix Matrix::Perspective(float fov, float width, float height, float minZ, flo
         );
 }
 
+Matrix Matrix::LookAt(const Vec3& position, const Vec3& target) {
+    Vec3 fwd = Normalized(position - target);
+    Vec3 right = Vec3::Up ^ fwd;
+    return Matrix(
+            right,
+            fwd ^ right,
+            fwd,
+            position
+        );
+}
 
 Matrix Matrix::LookAt(const Vec3& position, const Vec3& target, const Vec3& up) {
-
+    Vec3 fwd = Normalized(position - target);
+    Vec3 right = Normalized(up ^ fwd);
+    return Matrix(
+            right,
+            fwd ^ right,
+            fwd,
+            position
+        );
 }
 
 Matrix::Matrix(const Vec3& x, const Vec3& y, const Vec3& z, const Vec3& w) :

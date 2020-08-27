@@ -220,6 +220,15 @@ Vector<N> operator/(const Vector<N>& lhs, float rhs) {
 }
 
 template<size_t N>
+float operator|(const Vector<N>& lhs, const Vector<N>& rhs) {
+    float res = 0;
+    for (int i = 0; i < N; ++i) {
+        res += lhs[i] * rhs[i];
+    }
+    return res;
+}
+
+template<size_t N>
 Vector<N>& operator+=(Vector<N>& lhs, const Vector<N>& rhs) {
     for (int i = 0; i < N; ++i) {
         lhs[i] += rhs[i];
@@ -264,4 +273,9 @@ bool operator==(const Vector<N>& lhs, const Vector<N>& rhs) {
 template<size_t N>
 bool operator!=(const Vector<N>& lhs, const Vector<N>& rhs) {
     return !(lhs == rhs);
+}
+
+template<class Vec>
+Vec Normalized(const Vec& vec) {
+    return vec / std::sqrt(vec | vec);
 }
