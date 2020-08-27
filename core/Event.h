@@ -1,56 +1,62 @@
 #pragma once
 
 #include <string>
+#include "KeyCode.h"
+#include "MouseCodes.h"
 
-enum class KeyCode {    // TODO: add all key codes
-    A
+#define EVENT_STATIC_TYPE(__type) static EventType GetStaticType() { return EventType::__type; }
+
+enum class EventType {
+    NONE        = 0x000,
+    MOUSE_UP    = 0x001,
+    MOUSE_DOWN  = 0x002,
+    MOUSE_MOVE  = 0x004,
+    KEY_PRESS   = 0x008,
+    KEY_RELEASE = 0x010
 };
 
 class Event {
 public:
-    enum class Type {
-        NONE        = 0x000,
-        MOUSE_UP    = 0x001,
-        MOUSE_DOWN  = 0x002,
-        MOUSE_MOVE  = 0x004,
-        KEY_PRESS   = 0x008,
-        KEY_RELEASE = 0x010
-    };
-
     virtual ~Event() = default;
 
-    Type GetType() const { return m_Type; }
+    EventType GetType() const { return m_Type; }
+    bool IsConsumed() const { return m_Consumed; }
     void Consume() { m_Consumed = true; }
 
 protected:
-    Event(Type);
+    explicit Event(EventType);
 
 private:
-    const Type m_Type;
+    const EventType m_Type;
     bool m_Consumed;
 };
 
 class MouseDownEvent : public Event {
 public:
-    MouseDownEvent() : Event(Type::MOUSE_DOWN) {}
+    explicit MouseDownEvent(MouseCode mouseCode) : Event(EventType::MOUSE_DOWN) {}
+    EVENT_STATIC_TYPE(MOUSE_DOWN)
 };
 
 class MouseUpEvent : public Event {
 public:
-    MouseUpEvent() : Event(Type::MOUSE_UP) {}
+    explicit MouseUpEvent(MouseCode mouseCode) : Event(EventType::MOUSE_UP) {}
+    EVENT_STATIC_TYPE(MOUSE_UP)
 };
 
 class MouseMoveEvent : public Event {
 public:
-    MouseMoveEvent(double x, double y) : Event(Type::MOUSE_MOVE) {}
+    MouseMoveEvent(double x, double y) : Event(EventType::MOUSE_MOVE) {}
+    EVENT_STATIC_TYPE(MOUSE_MOVE)
 };
 
 class KeyPressEvent : public Event {
 public:
-    KeyPressEvent(KeyCode keyCode) : Event(Type::KEY_PRESS) {}
+    explicit KeyPressEvent(KeyCode keyCode) : Event(EventType::KEY_PRESS) {}
+    EVENT_STATIC_TYPE(KEY_PRESS)
 };
 
 class KeyReleaseEvent : public Event {
 public:
-    KeyReleaseEvent(KeyCode keyCode) : Event(Type::KEY_RELEASE) {}
+    explicit KeyReleaseEvent(KeyCode keyCode) : Event(EventType::KEY_RELEASE) {}
+    EVENT_STATIC_TYPE(KEY_RELEASE)
 };
