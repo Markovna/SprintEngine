@@ -10,9 +10,10 @@
 #include "Matrix.h"
 #include "Texture.h"
 #include "VertexBuffer.h"
+#include "Camera.h"
 
-void PrepareRenderTriangles();
-void RenderTriangle(int, int);
+void PrepareRenderTriangles(int, int);
+void RenderTriangle();
 
 Window::Window(int width, int height) {
     int status = glfwInit();
@@ -46,11 +47,11 @@ Window::Window(int width, int height) {
             return;
 
         if (action == GLFW_PRESS) {
-            KeyPressEvent event(KeyCode::A); // TODO:
+            KeyPressEvent event(key);
             window->m_EventCallback(event);
         }
         else if (action == GLFW_RELEASE) {
-            KeyReleaseEvent event(KeyCode::A); // TODO
+            KeyReleaseEvent event(key);
             window->m_EventCallback(event);
         }
     });
@@ -61,11 +62,11 @@ Window::Window(int width, int height) {
             return;
 
         if (action == GLFW_PRESS) {
-            MouseDownEvent event;
+            MouseDownEvent event(button);
             window->m_EventCallback(event);
         }
         else if (action == GLFW_RELEASE) {
-            MouseUpEvent event;
+            MouseUpEvent event(button);
             window->m_EventCallback(event);
         }
     });
@@ -84,7 +85,7 @@ Window::Window(int width, int height) {
             window->m_CloseCallback();
     });
 
-    PrepareRenderTriangles();
+    PrepareRenderTriangles(m_Width, m_Height);
 }
 
 Window::~Window() {
@@ -97,7 +98,7 @@ void Window::OnUpdate() {
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    RenderTriangle(m_Width, m_Height);
+    RenderTriangle();
 
     glfwSwapBuffers(m_Window);
     glfwPollEvents();
@@ -108,6 +109,7 @@ std::shared_ptr<VertexBuffer> m_VertexBuffer;
 std::shared_ptr<Shader> m_Shader;
 std::shared_ptr<Texture> m_Texture;
 std::shared_ptr<Texture> m_Texture2;
+std::shared_ptr<Camera> m_Camera;
 
 float* GetVertices() {
     static float vertices[] = {
@@ -176,10 +178,11 @@ uint32_t* GetIndices(size_t& count) {
     return indices;
 }
 
-void PrepareRenderTriangles() {
+void PrepareRenderTriangles(int width, int height) {
 
     glEnable(GL_DEPTH_TEST);
 
+    m_Camera   = std::make_shared<Camera>(Matrix::Perspective(60.0f * M_PI / 180.0f, (float)width, (float)height, 0.1f, 100.0f));
     m_Texture  = Texture::Load("assets/textures/container.jpg");
     m_Texture2 = Texture::Load("assets/textures/seal.png");
     m_Shader   = Shader::Load("assets/shaders/TestShader.shader");
@@ -210,25 +213,24 @@ void PrepareRenderTriangles() {
     }
 }
 
-void RenderTriangle(int width, int height) {
+void RenderTriangle() {
     float timeValue =  0.5 * glfwGetTime();
 
     Vec4 color(sin(timeValue) / 2.0f + 0.5f,0.3f,cos(timeValue) / 2.0f + 0.5f,1.0f);
 
-    Matrix model;
+    Matrix model = Matrix::Identity;
     model *= Matrix::Rotation(Quat(Vec3::Forward, 1.0f * timeValue));
     model *= Matrix::Rotation(Quat(Vec3::Left, 1.25f * timeValue));
-    model *= Matrix::Translation(Vec3(0.0f, 0.0f, 1.0f));
+    model *= Matrix::Translation(Vec3::Zero);
 
-    Matrix view = Matrix::Translation(Vec3(0.0f, 0.0f, 2.0f));
-    Matrix projection = Matrix::Perspective(60.0f * M_PI / 180.0f, (float)width, (float)height, 0.1f, 100.0f);
-//    Matrix projection = Matrix::Ortho(1.0f, width / height, 0.1f, 100.0f);
+    m_Camera->SetPosition(Vec3(0.0f, 0.0f, 3.0f));
+    m_Camera->SetRotation(Quat(Vec3::Right, 0.0f * M_PI / 180.0f));
 
     m_Shader->Bind();
     m_Shader->SetFloat4("mainColor", color);
     m_Shader->SetMat("model", model);
-    m_Shader->SetMat("view", view);
-    m_Shader->SetMat("projection", projection);
+    m_Shader->SetMat("view", m_Camera->GetViewMatrix());
+    m_Shader->SetMat("projection", m_Camera->GetProjectionMatrix());
 
     m_VertexArray->Bind();
     glDrawElements(GL_TRIANGLES, m_VertexArray->IndexCount(), GL_UNSIGNED_INT, nullptr);

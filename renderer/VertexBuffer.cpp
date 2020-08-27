@@ -4,6 +4,7 @@
 VertexBuffer::VertexBuffer(VertexBuffer &&other) noexcept
         : m_HandleID(other.m_HandleID), m_Layout(std::move(other.m_Layout)), m_Stride(other.m_Stride) {
     other.m_HandleID = 0;
+    other.m_Stride = 0;
 }
 
 VertexBuffer& VertexBuffer::operator=(VertexBuffer &&other) noexcept {
@@ -18,10 +19,13 @@ VertexBuffer& VertexBuffer::operator=(VertexBuffer &&other) noexcept {
     m_Stride   = other.m_Stride;
 
     other.m_HandleID = 0;
+    other.m_Stride = 0;
     return *this;
 }
 
  VertexBuffer VertexBuffer::Create(float* data, uint32_t size, std::initializer_list<VertexDataType> types) {
+    assert(types.size());
+
     std::vector<Item> items;
     items.reserve(types.size());
     size_t offset = 0;
