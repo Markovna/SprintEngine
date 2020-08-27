@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <cmath>
+#include <imgui.h>
 
 #include "Window.h"
 #include "Shader.h"
