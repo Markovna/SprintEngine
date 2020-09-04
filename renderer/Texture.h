@@ -1,11 +1,8 @@
 #pragma once
 
-#include "stb_image.h"
-#include "Log.h"
-
 #include <string>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+
+namespace Sprint {
 
 class Texture {
 
@@ -20,7 +17,7 @@ class Texture {
         Loader(Loader&& loader) noexcept;
         Loader& operator=(Loader&& loader) noexcept;
 
-        explicit operator bool() { return m_Data; }
+        explicit operator bool() const { return m_Data; }
 
         int GetHeight() const { return m_Height; }
         int GetWidth() const { return m_Width; }
@@ -40,4 +37,5 @@ private:
     Texture(const unsigned char *data, unsigned int width, unsigned int height, unsigned int channels);
 };
 
+}
 

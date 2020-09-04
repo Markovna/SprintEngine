@@ -1,5 +1,8 @@
 #include "Matrix.h"
 
+
+namespace Sprint {
+
 const Matrix Matrix::Identity(Vec3::Forward, Vec3::Right, Vec3::Up, Vec3::Zero);
 
 Matrix Matrix::Translation(const Vec3& trans) {
@@ -107,3 +110,5 @@ Matrix::Matrix() :
         { 0.0f, 0.0f, 0.0f, 1.0f }
     }
 {}
+
+}

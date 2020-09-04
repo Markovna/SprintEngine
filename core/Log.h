@@ -2,6 +2,9 @@
 
 #include "spdlog/spdlog.h"
 
+
+namespace Sprint {
+
 class Log {
 public:
     template<typename ...Args>
@@ -42,3 +45,4 @@ private:
 };
 
 
+}

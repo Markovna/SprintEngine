@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(SprintEngine)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/spdlog)
@@ -9,13 +9,33 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/glfw)
 add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/glad)
 add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/stb_image)
 add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/imgui)
+add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/assimp)
 
-add_executable(SprintEngine core/main.cpp core/Log.cpp core/Log.h core/Event.cpp core/Event.h core/Application.cpp core/Application.h core/Window.cpp core/Window.h renderer/Shader.cpp renderer/Shader.h math/Vector.cpp math/Vector.h renderer/Texture.cpp renderer/Texture.h math/Matrix.cpp math/Matrix.h math/Quat.cpp math/Quat.h renderer/VertexBuffer.cpp renderer/VertexBuffer.h renderer/IndexBuffer.cpp renderer/IndexBuffer.h renderer/VertexArray.cpp renderer/VertexArray.h renderer/VertexDataType.cpp renderer/VertexDataType.h core/KeyCode.h core/MouseCodes.h renderer/Camera.cpp renderer/Camera.h)
+add_executable(SprintEngine
+        core/main.cpp
+        core/Log.cpp core/Log.h
+        core/WindowEvent.cpp core/WindowEvent.h
+        core/Application.cpp core/Application.h
+        core/Window.cpp core/Window.h
+        renderer/Shader.cpp renderer/Shader.h
+        math/Vector.cpp math/Vector.h
+        renderer/Texture.cpp renderer/Texture.h
+        math/Matrix.cpp math/Matrix.h
+        math/Quat.cpp math/Quat.h
+        core/KeyCode.h
+        core/MouseCodes.h
+        renderer/Camera.cpp renderer/Camera.h
+        core/ModelLoader.cpp core/ModelLoader.h
+        renderer/Mesh.cpp renderer/Mesh.h
+        common/Color.cpp common/Color.h
+        editor/ImGui.cpp editor/ImGui.h
+        renderer/GL.cpp renderer/GL.h Common/IntAlloc.h renderer/VertexLayout.cpp renderer/VertexLayout.h)
 
-target_include_directories(SprintEngine PRIVATE core/ renderer/ math/)
+target_include_directories(SprintEngine PRIVATE core/ renderer/ math/ common/)
 
 target_link_libraries(SprintEngine PRIVATE glfw)
 target_link_libraries(SprintEngine PRIVATE spdlog)
 target_link_libraries(SprintEngine PRIVATE glad)
 target_link_libraries(SprintEngine PRIVATE stb_image)
 target_link_libraries(SprintEngine PRIVATE imgui)
+target_link_libraries(SprintEngine PRIVATE assimp)

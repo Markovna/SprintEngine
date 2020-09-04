@@ -5,3 +5,6 @@
 [submodule "thirdparty/imgui"]
 	path = thirdparty/imgui
 	url = https://github.com/Markovna/imgui
+[submodule "thirdparty/assimp"]
+	path = thirdparty/assimp
+	url = https://github.com/Markovna/assimp

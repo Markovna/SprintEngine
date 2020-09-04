@@ -2,6 +2,9 @@
 
 #include "Matrix.h"
 
+
+namespace Sprint {
+
 class Camera {
 public:
     explicit Camera(const Matrix& projection) :
@@ -24,4 +27,5 @@ private:
     Quat m_Rotation;
 };
 
+}
 

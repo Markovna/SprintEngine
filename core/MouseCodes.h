@@ -2,6 +2,9 @@
 
 #include <cstdint>
 
+
+namespace Sprint {
+
 using MouseCode = uint16_t;
 
 namespace Mouse
@@ -22,4 +25,5 @@ namespace Mouse
         ButtonRight            = Button1,
         ButtonMiddle           = Button2
     };
+}
 }

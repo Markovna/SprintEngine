@@ -2,6 +2,9 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include "Log.h"
 
+
+namespace Sprint {
+
 std::unique_ptr<spdlog::logger> Log::s_CoreLogger;
 std::unique_ptr<spdlog::logger> Log::s_ClientLogger;
 
@@ -21,4 +24,6 @@ void Log::Init() {
     s_ClientLogger = std::make_unique<spdlog::logger>("APP", begin(sinks), end(sinks));
     s_ClientLogger->set_level(spdlog::level::trace);
     s_ClientLogger->flush_on(spdlog::level::trace);
+}
+
 }

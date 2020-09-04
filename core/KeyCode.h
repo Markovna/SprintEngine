@@ -2,6 +2,9 @@
 
 #include <cstdint>
 
+
+namespace Sprint {
+
 using KeyCode = uint16_t;
 
 namespace Key
@@ -139,4 +142,5 @@ namespace Key
         RightSuper          = 347,
         Menu                = 348
     };
+}
 }

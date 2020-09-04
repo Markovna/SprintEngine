@@ -1,33 +1,32 @@
 #pragma once
 
-#include "Event.h"
+#include "WindowEvent.h"
 
+#include <queue>
 #include <functional>
 #include <GLFW/glfw3.h>
 
+namespace Sprint {
+
 class Window {
+private:
+    using Event = WindowEvent;
 public:
-    using EventCallback = std::function<void(Event&)>;
-    using CloseCallback = std::function<void()>;
 
     Window(int width, int height);
     ~Window();
 
     void OnUpdate();
+    bool PollEvent(Event& event);
 
-    void SetEventCallback(const EventCallback& callback) {
-        m_EventCallback = callback;
-    }
-
-    void SetCloseCallback(const CloseCallback& callback) {
-        m_CloseCallback = callback;
-    }
+private:
+    void PushEvent(Event event);
 
 private:
     int m_Width, m_Height;
     GLFWwindow* m_Window;
-    EventCallback m_EventCallback;
-    CloseCallback m_CloseCallback;
+    std::queue<Event> m_Events;
 };
 
 
+}

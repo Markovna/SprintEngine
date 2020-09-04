@@ -1,5 +1,8 @@
 #include "Quat.h"
 
+
+namespace Sprint {
+
 Quat::Quat() {}
 
 Quat::Quat(float x, float y, float z, float w) : X(x), Y(y), Z(z), W(w) {}
@@ -11,3 +14,5 @@ Quat::Quat(const Vec3& Axis, float AngleRad) {
 }
 
 const Quat Quat::Identity(0.0f,0.0f,0.0f,1.0f);
+
+}

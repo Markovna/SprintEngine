@@ -5,6 +5,9 @@
 #include "Vector.h"
 #include "Quat.h"
 
+
+namespace Sprint {
+
 struct Matrix {
 
     Matrix(const Vec3& x, const Vec3& y, const Vec3& z, const Vec3& w);
@@ -190,5 +193,4 @@ inline Vec3 Matrix::Transform(const Vec3& vec) const {
     return res;
 }
 
-
-
+}

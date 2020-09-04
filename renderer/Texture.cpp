@@ -1,5 +1,12 @@
 #include "Texture.h"
 
+#include "stb_image.h"
+#include "Log.h"
+
+#include <glad/glad.h>
+
+namespace Sprint {
+
 Texture::Loader::Loader(const std::string& path) {
     stbi_set_flip_vertically_on_load(true);
     m_Data = stbi_load(path.c_str(), &m_Width, &m_Height, &m_Channels, 0);
@@ -38,7 +45,8 @@ Texture::Loader& Texture::Loader::operator=(Loader&& loader) noexcept {
 }
 
 std::shared_ptr<Texture> Texture::Load(const std::string& path) {
-    if (Loader loader(path); loader) {
+    Loader loader(path);
+    if (loader) {
         return std::shared_ptr<Texture>(
                 new Texture(loader.GetData(),
                             loader.GetWidth(),
@@ -79,4 +87,6 @@ Texture::Texture(const unsigned char *data, unsigned int width, unsigned int hei
 void Texture::Bind(uint32_t slot) const {
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, m_GLTextureID);
+}
+
 }

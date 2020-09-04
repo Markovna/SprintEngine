@@ -4,6 +4,9 @@
 #include <iomanip>
 #include "spdlog/fmt/ostr.h"
 
+
+namespace Sprint {
+
 template <size_t N>
 struct Vector {
 
@@ -278,4 +281,6 @@ bool operator!=(const Vector<N>& lhs, const Vector<N>& rhs) {
 template<class Vec>
 Vec Normalized(const Vec& vec) {
     return vec / std::sqrt(vec | vec);
+}
+
 }

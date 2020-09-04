@@ -1,90 +1,76 @@
 #include "Log.h"
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+//#include <glad/glad.h>
+//#include <GLFW/glfw3.h>
 #include <cmath>
-#include <imgui.h>
 
 #include "Window.h"
 #include "Shader.h"
 #include "Vector.h"
 #include "Matrix.h"
 #include "Texture.h"
-#include "VertexBuffer.h"
 #include "Camera.h"
+#include "Color.h"
+
+
+namespace Sprint {
 
 void PrepareRenderTriangles(int, int);
 void RenderTriangle();
 
-Window::Window(int width, int height) {
+static void GLFWErrorCallback(int error_code, const char* description) {
+    Log::CoreError("GLFW error ({1}): {0}", description, error_code);
+}
+
+Window::Window(int width, int height) : m_Width(width), m_Height(height) {
     int status = glfwInit();
     assert(status); // TODO: assert macro
+    glfwSetErrorCallback(&GLFWErrorCallback);
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    glfwSetErrorCallback([](int error_code, const char* description) {
-        Log::CoreError("GLFW error ({1}): {0}", description, error_code);
-    });
-
-    m_Window = glfwCreateWindow(width, height, "SprintEngine", NULL, NULL);
+    m_Window = glfwCreateWindow(m_Width, m_Height, "SprintEngine", NULL, NULL);
     assert(m_Window); // TODO: assert macro
 
-    m_Width = width;
-    m_Height = height;
-
     glfwMakeContextCurrent(m_Window);
-    glfwSetWindowUserPointer(m_Window, this);
 
-    int loaded = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-    assert(loaded); // TODO: assert macro
+    glfwSetWindowUserPointer(m_Window, this);
 
     // set input callbacks
     glfwSetKeyCallback(m_Window, [](GLFWwindow *w, int key, int scancode, int action, int mods) {
-        Window* window = (Window*)glfwGetWindowUserPointer(w);
-        if (!window->m_EventCallback)
-            return;
-
+        Window* window = (Window*) glfwGetWindowUserPointer(w);
         if (action == GLFW_PRESS) {
-            KeyPressEvent event(key);
-            window->m_EventCallback(event);
+            window->PushEvent(WindowEvent(KeyEvent(key), true));
         }
         else if (action == GLFW_RELEASE) {
-            KeyReleaseEvent event(key);
-            window->m_EventCallback(event);
+            window->PushEvent(WindowEvent(KeyEvent(key), false));
         }
     });
 
     glfwSetMouseButtonCallback(m_Window, [](GLFWwindow *w, int button, int action, int mods) {
         Window* window = (Window*)glfwGetWindowUserPointer(w);
-        if (!window->m_EventCallback)
-            return;
-
         if (action == GLFW_PRESS) {
-            MouseDownEvent event(button);
-            window->m_EventCallback(event);
+            window->PushEvent(WindowEvent(MouseEvent(button), true));
         }
         else if (action == GLFW_RELEASE) {
-            MouseUpEvent event(button);
-            window->m_EventCallback(event);
+            window->PushEvent(WindowEvent(MouseEvent(button), false));
         }
     });
 
     glfwSetCursorPosCallback(m_Window, [](GLFWwindow *w, double xpos, double ypos) {
         Window* window = (Window*)glfwGetWindowUserPointer(w);
-        if (window->m_EventCallback) {
-            MouseMoveEvent event(xpos, ypos);
-            window->m_EventCallback(event);
-        }
+        window->PushEvent(WindowEvent(MouseMoveEvent(Vec2(xpos, ypos))));
     });
 
     glfwSetWindowCloseCallback(m_Window, [](GLFWwindow *w) {
         Window* window = (Window*)glfwGetWindowUserPointer(w);
-        if (window->m_CloseCallback)
-            window->m_CloseCallback();
+        window->PushEvent(WindowEvent(CloseEvent()));
     });
+
+    GL::Init();
 
     PrepareRenderTriangles(m_Width, m_Height);
 }
@@ -92,21 +78,36 @@ Window::Window(int width, int height) {
 Window::~Window() {
     glfwDestroyWindow(m_Window);
     glfwTerminate();
+
+    GL::Shutdown();
 }
 
-
 void Window::OnUpdate() {
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glfwMakeContextCurrent(m_Window);
+
+    GL::Clear(Color(0.2f, 0.2f, 0.2f, 1.0f), GL::CLEAR_COLOR | GL::CLEAR_DEPTH);
 
     RenderTriangle();
 
-    glfwSwapBuffers(m_Window);
+    GL::SwapBuffers();
+
     glfwPollEvents();
 }
 
-std::shared_ptr<VertexArray> m_VertexArray;
-std::shared_ptr<VertexBuffer> m_VertexBuffer;
+bool Window::PollEvent(Event& event) {
+    if (m_Events.empty())
+        return false;
+
+    event = m_Events.front();
+    m_Events.pop();
+    return true;
+}
+
+void Window::PushEvent(Event event) {
+    m_Events.push(std::move(event));
+}
+
+GL::VertexBufferHandle m_VBHandle;
 std::shared_ptr<Shader> m_Shader;
 std::shared_ptr<Texture> m_Texture;
 std::shared_ptr<Texture> m_Texture2;
@@ -181,17 +182,18 @@ uint32_t* GetIndices(size_t& count) {
 
 void PrepareRenderTriangles(int width, int height) {
 
-    glEnable(GL_DEPTH_TEST);
-
     m_Camera   = std::make_shared<Camera>(Matrix::Perspective(60.0f * M_PI / 180.0f, (float)width, (float)height, 0.1f, 100.0f));
     m_Texture  = Texture::Load("assets/textures/container.jpg");
     m_Texture2 = Texture::Load("assets/textures/seal.png");
-    m_Shader   = Shader::Load("assets/shaders/TestShader.shader");
+    m_Shader   = Shader::Load(
+            "assets/shaders/TestShader.shader",
+            {
+                GL::AttributeType::POSITION, GL::AttributeType::TEXCOORD0
+            });
 
     if (m_Texture) m_Texture->Bind(0);
     if (m_Texture2) m_Texture2->Bind(1);
 
-    m_Shader->Bind();
     m_Shader->SetInt("Texture1", 0);
     m_Shader->SetInt("Texture2", 1);
 
@@ -199,25 +201,19 @@ void PrepareRenderTriangles(int width, int height) {
     float* vertices = GetVertices();
     uint32_t* indices = GetIndices(count);
 
-    m_VertexArray = std::make_shared<VertexArray>();
-    m_VertexArray->SetIndexBuffer(indices, count);
-
-    m_VertexBuffer = std::make_shared<VertexBuffer>(
-            VertexBuffer::Create(vertices, 5 * count * sizeof(*vertices), { VertexDataType::Vec3, VertexDataType::Vec2 }));
-
-    unsigned int slot;
-    if (m_Shader->TryGetAttributeID("aPos", slot)) {
-        m_VertexBuffer->SetAttribute(*m_VertexArray, slot, 0);
-    }
-    if (m_Shader->TryGetAttributeID("aTexCoord", slot)) {
-        m_VertexBuffer->SetAttribute(*m_VertexArray, slot, 1);
-    }
+    m_VBHandle = GL::CreateVertexBuffer(
+            vertices, 5 * count,
+            {
+                {GL::AttributeType::POSITION, GL::AttributeFormat::Vec3 },
+                {GL::AttributeType::TEXCOORD0, GL::AttributeFormat::Vec2 }
+            }
+        );
 }
 
 void RenderTriangle() {
-    float timeValue =  0.5 * glfwGetTime();
+    float timeValue =  0.5f * glfwGetTime();
 
-    Vec4 color(sin(timeValue) / 2.0f + 0.5f,0.3f,cos(timeValue) / 2.0f + 0.5f,1.0f);
+    Color color(sin(timeValue) / 2.0f + 0.5f,0.3f,cos(timeValue) / 2.0f + 0.5f,1.0f);
 
     Matrix model = Matrix::Identity;
     model *= Matrix::Rotation(Quat(Vec3::Forward, 1.0f * timeValue));
@@ -227,13 +223,14 @@ void RenderTriangle() {
     m_Camera->SetPosition(Vec3(0.0f, 0.0f, 3.0f));
     m_Camera->SetRotation(Quat(Vec3::Right, 0.0f * M_PI / 180.0f));
 
-    m_Shader->Bind();
+//    m_Shader->Bind();
     m_Shader->SetFloat4("mainColor", color);
     m_Shader->SetMat("model", model);
     m_Shader->SetMat("view", m_Camera->GetViewMatrix());
     m_Shader->SetMat("projection", m_Camera->GetProjectionMatrix());
 
-    m_VertexArray->Bind();
-    glDrawElements(GL_TRIANGLES, m_VertexArray->IndexCount(), GL_UNSIGNED_INT, nullptr);
-    glUseProgram(0);
+    GL::Bind(m_VBHandle);
+    m_Shader->Render();
+}
+
 }

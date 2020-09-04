@@ -1,26 +1,29 @@
 #pragma once
 
-#include "Event.h"
+#include "WindowEvent.h"
 #include "Window.h"
 
 #include "chrono"
 
-using TimeSpan = std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds>;
+
+namespace Sprint {
+
+
+typedef std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> TimeSpan;
 
 class Application {
 public:
     Application();
     int Run();
 private:
-    void OnEvent(Event& event);
-    void OnClose();
     void UpdateTime();
+    bool RunOneFrame();
 private:
-    bool m_Running = false;
     std::unique_ptr<Window> m_Window;
 
-    float m_DeltaTime;
+    float m_DeltaTime = 0;
     TimeSpan m_LastUpdateTime;
 };
 
 
+}

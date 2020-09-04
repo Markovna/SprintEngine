@@ -2,6 +2,9 @@
 
 #include "Vector.h"
 
+
+namespace Sprint {
+
 struct Quat {
     float X, Y, Z, W;
 
@@ -19,3 +22,4 @@ struct Quat {
 };
 
 
+}
