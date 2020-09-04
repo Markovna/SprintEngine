@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include "GL.h"
 
 namespace Sprint {
 
@@ -32,9 +33,11 @@ class Texture {
 public:
     static std::shared_ptr<Texture> Load(const std::string& path);
     void Bind(uint32_t slot = 0) const;
+    ~Texture();
 private:
-    unsigned int m_GLTextureID;
-    Texture(const unsigned char *data, unsigned int width, unsigned int height, unsigned int channels);
+    Texture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t channels);
+
+    GL::TextureHandle m_Handle;
 };
 
 }

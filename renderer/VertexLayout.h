@@ -11,7 +11,7 @@ constexpr static uint16_t MAX_ATTRIBUTES_COUNT = 16;
 enum class GLType : uint8_t { FLOAT };
 
 struct AttributeType {
-    enum Type : uint8_t {
+    enum Enum : uint8_t {
         POSITION  = 0,
         NORMAL    = 1,
         COLOR0    = 2,
@@ -21,10 +21,11 @@ struct AttributeType {
         TEXCOORD1 = 6,
         TEXCOORD2 = 7,
         TEXCOORD3 = 8,
-        TEXCOORD4 = 9
+        TEXCOORD4 = 9,
+        TEXCOORD5 = 10
     };
 
-    constexpr static uint32_t Count = 10;
+    constexpr static uint32_t Count = 11;
 };
 
 struct AttributeFormat {
@@ -40,12 +41,12 @@ struct AttributeFormat {
 };
 
 struct Attribute {
-    Attribute(AttributeType::Type type, AttributeFormat format, bool normalized = false) :
+    Attribute(AttributeType::Enum type, AttributeFormat format, bool normalized = false) :
             Type(type), Format(format), Normalized(normalized) {}
 
     Attribute() : Attribute{AttributeType::POSITION, AttributeFormat::Float, false} {}
 
-    AttributeType::Type Type;
+    AttributeType::Enum Type;
     AttributeFormat Format;
     bool Normalized;
 };

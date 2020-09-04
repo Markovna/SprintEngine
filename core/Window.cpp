@@ -1,7 +1,5 @@
 #include "Log.h"
 
-//#include <glad/glad.h>
-//#include <GLFW/glfw3.h>
 #include <cmath>
 
 #include "Window.h"
@@ -223,7 +221,6 @@ void RenderTriangle() {
     m_Camera->SetPosition(Vec3(0.0f, 0.0f, 3.0f));
     m_Camera->SetRotation(Quat(Vec3::Right, 0.0f * M_PI / 180.0f));
 
-//    m_Shader->Bind();
     m_Shader->SetFloat4("mainColor", color);
     m_Shader->SetMat("model", model);
     m_Shader->SetMat("view", m_Camera->GetViewMatrix());

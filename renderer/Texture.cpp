@@ -3,8 +3,6 @@
 #include "stb_image.h"
 #include "Log.h"
 
-#include <glad/glad.h>
-
 namespace Sprint {
 
 Texture::Loader::Loader(const std::string& path) {
@@ -58,35 +56,16 @@ std::shared_ptr<Texture> Texture::Load(const std::string& path) {
     return nullptr;
 }
 
-static GLenum GetFormat(unsigned int channels) {
-    GLenum format = 0;
-    if (channels == 1)
-        format = GL_RED;
-    else if (channels == 3)
-        format = GL_RGB;
-    else if (channels == 4)
-        format = GL_RGBA;
-    return format;
-}
-
-Texture::Texture(const unsigned char *data, unsigned int width, unsigned int height, unsigned int channels) {
-    glGenTextures(1, &m_GLTextureID);
-    glBindTexture(GL_TEXTURE_2D, m_GLTextureID);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    GLenum format = GetFormat(channels);
-    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
+Texture::Texture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t channels) :
+    m_Handle(GL::CreateTexture(data, width, height, channels)) {
 }
 
 void Texture::Bind(uint32_t slot) const {
-    glActiveTexture(GL_TEXTURE0 + slot);
-    glBindTexture(GL_TEXTURE_2D, m_GLTextureID);
+    GL::Bind(m_Handle, slot);
+}
+
+Texture::~Texture() {
+    GL::Destroy(m_Handle);
 }
 
 }

@@ -1,8 +1,6 @@
 #include "Shader.h"
 #include "Log.h"
 
-//#include <glad/glad.h>
-//#include <GLFW/glfw3.h>
 #include <fstream>
 #include <sstream>
 
@@ -25,7 +23,7 @@ static std::string ReadFile(const std::string& path) {
     return content;
 }
 
-Shader::Shader(const std::string& source, std::initializer_list<GL::AttributeType::Type> inTypes) :
+Shader::Shader(const std::string& source, std::initializer_list<GL::AttributeType::Enum> inTypes) :
     m_Handle(GL::CreateShader(source, std::move(inTypes)))
 {
 }
@@ -69,7 +67,7 @@ void Shader::Render() const {
     GL::Render(m_Handle);
 }
 
-std::shared_ptr<Shader> Shader::Load(const std::string& path, std::initializer_list<GL::AttributeType::Type> inTypes) {
+std::shared_ptr<Shader> Shader::Load(const std::string& path, std::initializer_list<GL::AttributeType::Enum> inTypes) {
     return std::shared_ptr<Shader>(new Shader(ReadFile(path), move(inTypes)));
 }
 

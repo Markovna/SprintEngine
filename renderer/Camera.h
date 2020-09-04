@@ -2,7 +2,6 @@
 
 #include "Matrix.h"
 
-
 namespace Sprint {
 
 class Camera {
