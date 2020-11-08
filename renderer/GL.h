@@ -10,19 +10,19 @@
 
 #include "IntAlloc.h"
 
-namespace Sprint {
+namespace sprint {
 
-namespace GL {
+namespace gl {
 
-constexpr static const uint16_t MAX_INDEX_BUFFERS_COUNT  = 1024;
-constexpr static const uint16_t MAX_VERTEX_BUFFERS_COUNT = 1024;
-constexpr static const uint16_t MAX_SHADERS_COUNT = 1024;
-constexpr static const uint16_t MAX_TEXTURES_COUNT = 1024;
+constexpr static const uint16_t kMaxIndexBuffersCount  = 1024;
+constexpr static const uint16_t kMaxVertexBuffersCount = 1024;
+constexpr static const uint16_t kMaxShadersCount = 1024;
+constexpr static const uint16_t kMaxTexturesCount = 1024;
 
-using CLEAR_FLAG = uint8_t;
-constexpr static const CLEAR_FLAG CLEAR_DEPTH = 0x001;
-constexpr static const CLEAR_FLAG CLEAR_COLOR = 0x002;
-constexpr static const CLEAR_FLAG CLEAR_STENCIL = 0x004;
+using ClearFlag = uint8_t;
+constexpr static const ClearFlag kClearDepth = 0x001;
+constexpr static const ClearFlag kClearColor = 0x002;
+constexpr static const ClearFlag kClearStencil = 0x004;
 
 enum class HandleType {
     VertexBuffer,
@@ -77,7 +77,7 @@ struct ShaderType {
 
 class Shader {
 public:
-    Shader() noexcept : m_AttributesMask(0), m_ID(0) {}
+    Shader() noexcept : attributes_mask_(0), id_(0) {}
     Shader(const std::string& source, std::initializer_list<AttributeType::Enum> inTypes);
 
     void Use() const;
@@ -86,60 +86,60 @@ public:
     void Destroy();
 
 private:
-    uint32_t m_AttributesMask;
-    uint32_t m_AttributeLocations[AttributeType::Count];
-    uint32_t m_ID;
+    uint32_t attributes_mask_;
+    uint32_t attribute_locations_[AttributeType::Count];
+    uint32_t id_;
 };
 
 struct IndexBuffer {
-    IndexBuffer() noexcept : ID(0), Size(0) {};
-    IndexBuffer(uint32_t id, uint32_t size) noexcept : ID(id), Size(size) {}
+    IndexBuffer() noexcept : id(0), size(0) {};
+    IndexBuffer(uint32_t id, uint32_t size) noexcept : id(id), size(size) {}
 
-    uint32_t ID;
-    uint32_t Size;
+    uint32_t id;
+    uint32_t size;
 };
 
 struct VertexBuffer {
-    VertexBuffer() noexcept : ID(0), Size(0), Layout{} {};
+    VertexBuffer() noexcept : id(0), size(0), layout{} {};
     VertexBuffer(uint32_t id, uint32_t size, VertexLayout layout) noexcept :
-            ID(id), Size(size), Layout(layout)
+        id(id), size(size), layout(layout)
     {}
 
-    uint32_t ID;
-    uint32_t Size;
-    VertexLayout Layout;
+    uint32_t id;
+    uint32_t size;
+    VertexLayout layout;
 };
 
 struct Texture {
-    Texture() noexcept : ID(0) {}
-    explicit Texture(uint32_t id) : ID(id) {}
+    Texture() noexcept : id(0) {}
+    explicit Texture(uint32_t id) : id(id) {}
 
-    uint32_t ID;
+    uint32_t id;
 };
 
 typedef GLFWwindow* ContextWndHandle;
 
-static VertexBufferHandle m_VertexBufferHandle = VertexBufferHandle::Invalid;
-static IndexBufferHandle m_IndexBufferHandle = IndexBufferHandle::Invalid;
-static uint32_t m_VertexArrayID = 0;
-static ContextWndHandle m_CtxWndHandle;
+static VertexBufferHandle vertex_buffer_handle = VertexBufferHandle::Invalid;
+static IndexBufferHandle index_buffer_handle = IndexBufferHandle::Invalid;
+static uint32_t vertex_array_id = 0;
+static ContextWndHandle ctx_window_handle;
 
-static IndexBuffer m_IndexBuffers[MAX_INDEX_BUFFERS_COUNT];
-static VertexBuffer m_VertexBuffers[MAX_VERTEX_BUFFERS_COUNT];
-static Shader m_Shaders[MAX_SHADERS_COUNT];
-static Texture m_Textures[MAX_TEXTURES_COUNT];
+static IndexBuffer index_buffers[kMaxIndexBuffersCount];
+static VertexBuffer vertex_buffers[kMaxVertexBuffersCount];
+static Shader shaders[kMaxShadersCount];
+static Texture textures[kMaxTexturesCount];
 
-static IntAlloc<MAX_INDEX_BUFFERS_COUNT, IndexBufferHandle::INVALID_ID>  m_IndexBufferIds;
-static IntAlloc<MAX_VERTEX_BUFFERS_COUNT, VertexBufferHandle::INVALID_ID> m_VertexBufferIds;
-static IntAlloc<MAX_SHADERS_COUNT, ShaderHandle::INVALID_ID> m_ShaderIds;
-static IntAlloc<MAX_TEXTURES_COUNT, TextureHandle::INVALID_ID> m_TextureIds;
+static IntAlloc<kMaxIndexBuffersCount, IndexBufferHandle::INVALID_ID>  index_buffer_ids;
+static IntAlloc<kMaxVertexBuffersCount, VertexBufferHandle::INVALID_ID> vertex_buffer_ids;
+static IntAlloc<kMaxShadersCount, ShaderHandle::INVALID_ID> shader_ids;
+static IntAlloc<kMaxTexturesCount, TextureHandle::INVALID_ID> texture_ids;
 
 void Init();
 void Shutdown();
 
 IndexBufferHandle CreateIndexBuffer(uint32_t* indices, uint32_t size);
 VertexBufferHandle CreateVertexBuffer(float* data, uint32_t size, VertexLayout layout);
-ShaderHandle CreateShader(const std::string& source, std::initializer_list<AttributeType::Enum> inTypes);
+ShaderHandle CreateShader(const std::string& source, std::initializer_list<AttributeType::Enum> in_types);
 TextureHandle CreateTexture(const uint8_t* data, uint32_t width, uint32_t height, uint32_t channels);
 
 void Bind(IndexBufferHandle handle);
@@ -156,7 +156,7 @@ void SetUniform(ShaderHandle handle, UniformType::Enum type, const std::string& 
 void Render(ShaderHandle handle);
 
 void SwapBuffers();
-void Clear(const Color& color, CLEAR_FLAG options);
+void Clear(const Color& color, ClearFlag options);
 
 }
 

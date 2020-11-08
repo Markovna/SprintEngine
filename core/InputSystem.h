@@ -2,12 +2,12 @@
 
 #include "WindowEvent.h"
 
-namespace Sprint {
+namespace sprint {
 
 class InputSystem {
 public:
     void PushEvent(WindowEvent &event) {
-        switch (event.GetType()) {
+        switch (event.get_type()) {
 //            case WindowEvent::Type::MOUSE_DOWN:  OnMouseDown(event.Mouse);     break;
 //            case WindowEvent::Type::MOUSE_UP:    OnMouseUp(event.Mouse);       break;
 //            case WindowEvent::Type::MOUSE_MOVE:  OnMouseMove(event.MouseMove); break;

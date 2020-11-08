@@ -7,7 +7,7 @@
 #include "MouseCodes.h"
 #include "Vector.h"
 
-namespace Sprint {
+namespace sprint {
 
 struct MouseMoveEvent {
     explicit MouseMoveEvent(Vec2 position) : Position(position) {}
@@ -41,16 +41,16 @@ public:
     };
 
 public:
-    WindowEvent(KeyEvent keyEvent, bool pressed);
-    WindowEvent(MouseEvent mouseEvent, bool down);
-    WindowEvent(MouseMoveEvent mouseEvent);
-    WindowEvent(CloseEvent closeEvent);
+    WindowEvent(KeyEvent key_event, bool pressed);
+    WindowEvent(MouseEvent mouse_event, bool down);
+    WindowEvent(MouseMoveEvent move_event);
+    WindowEvent(CloseEvent close_event);
     WindowEvent();
 
-    inline Type GetType() const;
+    inline Type get_type() const;
 
 private:
-    Type m_Type;
+    Type type_;
 
 public:
     union {
@@ -62,6 +62,6 @@ public:
     };
 };
 
-inline WindowEvent::Type WindowEvent::GetType() const { return m_Type; }
+inline WindowEvent::Type WindowEvent::get_type() const { return type_; }
 
 }

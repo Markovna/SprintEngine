@@ -7,10 +7,12 @@ struct Widget {
     Widget() {}
 
     mutable int count = 0;
+
     void Foo(int x) { count += x; }
+
     void Foo(int x) const { count += x; }
 
-    void Bar(int x) { }
+    void Bar(int x) {}
 };
 
 static int AddOne(int x) {
@@ -37,11 +39,17 @@ struct Counter {
     }
 
     Counter() { construct_count++; }
-    Counter(const Counter&) { construct_count++; }
-    Counter(Counter&&) { construct_count++; }
 
-    Counter& operator= (const Counter&) { assign_count++; return *this; }
-    Counter& operator= (Counter&&) = delete;
+    Counter(const Counter &) { construct_count++; }
+
+    Counter(Counter &&) { construct_count++; }
+
+    Counter &operator=(const Counter &) {
+        assign_count++;
+        return *this;
+    }
+
+    Counter &operator=(Counter &&) = delete;
 
     ~Counter() { destruct_count++; }
 };
@@ -52,9 +60,12 @@ size_t Counter::assign_count = 0;
 
 struct NonCopyable {
     NonCopyable() = default;
-    NonCopyable(const NonCopyable&) = delete;
-    NonCopyable(NonCopyable&&) = default;
-    int operator()(int x, int y){ return x + y; }
+
+    NonCopyable(const NonCopyable &) = delete;
+
+    NonCopyable(NonCopyable &&) = default;
+
+    int operator()(int x, int y) { return x + y; }
 };
 
 void TestMemberFunc() {
@@ -235,7 +246,7 @@ void TestCompare() {
 void TestCommon() {
     // test return value
     {
-        delegate<int(int,int)> d = [](int x, int y) { return x + y; };
+        delegate<int(int, int)> d = [](int x, int y) { return x + y; };
         assert(d(10, 42) == 52);
         assert(d != nullptr);
         assert(d);
@@ -264,7 +275,7 @@ void TestCommon() {
 
     {
         delegate<int(int)> d = nullptr;
-        d = [](int x){ return x + 1; };
+        d = [](int x) { return x + 1; };
         assert(d(1) == 2);
     }
     {
@@ -300,7 +311,7 @@ void TestCommon() {
     }
     {
         std::array<char, 1024> arr{};
-        delegate<int(int)> d = [arr](int x){ return x + 1; };
+        delegate<int(int)> d = [arr](int x) { return x + 1; };
         d = d;
         assert(d(1) == 2);
     }

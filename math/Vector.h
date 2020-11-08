@@ -5,23 +5,23 @@
 #include "spdlog/fmt/ostr.h"
 
 
-namespace Sprint {
+namespace sprint {
 
 template <size_t N>
 struct Vector {
 
     const float& operator[] (size_t index) const {
         assert(index >= 0 && index < N);
-        return m_Data[index];
+        return data_[index];
     }
 
     float& operator[] (size_t index) {
         assert(index >= 0 && index < N);
-        return m_Data[index];
+        return data_[index];
     }
 
 private:
-    float m_Data[N];
+    float data_[N];
 };
 
 typedef Vector<2> Vec2;
@@ -30,22 +30,22 @@ typedef Vector<4> Vec4;
 
 template<>
 struct Vector<2> {
-    float X, Y;
+    float x, y;
     static constexpr size_t N = 2;
 
     static const Vector Zero;
     static const Vector One;
 
-    Vector() : X(0), Y(0) {}
-    explicit Vector(float x, float y) : X(x), Y(y) {
+    Vector() : x(0), y(0) {}
+    explicit Vector(float x, float y) : x(x), y(y) {
     }
 
     const float& operator[] (size_t index) const {
         assert(index >= 0 && index < N);
         switch (index) {
             default:
-            case 0: return X;
-            case 1: return Y;
+            case 0: return x;
+            case 1: return y;
         }
     }
 
@@ -53,15 +53,15 @@ struct Vector<2> {
         assert(index >= 0 && index < N);
         switch (index) {
             default:
-            case 0: return X;
-            case 1: return Y;
+            case 0: return x;
+            case 1: return y;
         }
     }
 };
 
 template<>
 struct Vector<3> {
-    float X, Y, Z;
+    float x, y, z;
     static constexpr size_t N = 3;
 
     static const Vector Zero;
@@ -73,20 +73,20 @@ struct Vector<3> {
     static const Vector Right;
     static const Vector Left;
 
-    explicit Vector(const Vec2& vec, float z = 0.0f) : X(vec.X), Y(vec.Y), Z(z) {}
-    Vector() : X(0), Y(0), Z(0) {}
-    Vector(float x, float y, float z) : X(x), Y(y), Z(z) {
+    explicit Vector(const Vec2& vec, float z = 0.0f) : x(vec.x), y(vec.y), z(z) {}
+    Vector() : x(0), y(0), z(0) {}
+    Vector(float x, float y, float z) : x(x), y(y), z(z) {
     }
 
-    explicit operator Vec2() const { return Vec2(X, Y); }
+    explicit operator Vec2() const { return Vec2(x, y); }
 
     const float& operator[] (size_t index) const {
         assert(index >= 0 && index < N);
         switch (index) {
             default:
-            case 0: return X;
-            case 1: return Y;
-            case 2: return Z;
+            case 0: return x;
+            case 1: return y;
+            case 2: return z;
         }
     }
 
@@ -94,46 +94,46 @@ struct Vector<3> {
         assert(index >= 0 && index < N);
         switch (index) {
             default:
-            case 0: return X;
-            case 1: return Y;
-            case 2: return Z;
+            case 0: return x;
+            case 1: return y;
+            case 2: return z;
         }
     }
 
     Vector operator^(const Vector& rhs) const {
         return Vector(
-                Y * rhs.Z - Z * rhs.Y,
-                Z * rhs.X - X * rhs.Z,
-                X * rhs.Y - Y * rhs.X
+                y * rhs.z - z * rhs.y,
+                z * rhs.x - x * rhs.z,
+                x * rhs.y - y * rhs.x
             );
     }
 
     float operator|(const Vector<3>& rhs) const {
-        return X * rhs.X + Y * rhs.Y + Z * rhs.Z;
+        return x * rhs.x + y * rhs.y + z * rhs.z;
     }
 };
 
 template<>
 struct Vector<4> {
-    float X, Y, Z, W;
+    float x, y, z, w;
     static constexpr size_t N = 4;
 
-    explicit Vector(const Vec3& vec, float w = 0.0f) : X(vec.X), Y(vec.Y), Z(vec.Z), W(w) {}
-    Vector() : X(0), Y(0), Z(0), W(0) {}
-    Vector(float x, float y, float z, float w) : X(x), Y(y), Z(z), W(w) {
+    explicit Vector(const Vec3& vec, float w = 0.0f) : x(vec.x), y(vec.y), z(vec.z), w(w) {}
+    Vector() : x(0), y(0), z(0), w(0) {}
+    Vector(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {
     }
 
-    explicit operator Vec2() const { return Vec2(X, Y); }
-    explicit operator Vec3() const { return Vec3(X, Y, Z); }
+    explicit operator Vec2() const { return Vec2(x, y); }
+    explicit operator Vec3() const { return Vec3(x, y, z); }
 
     const float& operator[] (size_t index) const {
         assert(index >= 0 && index < N);
         switch (index) {
             default:
-            case 0: return X;
-            case 1: return Y;
-            case 2: return Z;
-            case 3: return W;
+            case 0: return x;
+            case 1: return y;
+            case 2: return z;
+            case 3: return w;
         }
     }
 
@@ -141,10 +141,10 @@ struct Vector<4> {
         assert(index >= 0 && index < N);
         switch (index) {
             default:
-            case 0: return X;
-            case 1: return Y;
-            case 2: return Z;
-            case 3: return W;
+            case 0: return x;
+            case 1: return y;
+            case 2: return z;
+            case 3: return w;
         }
     }
 };

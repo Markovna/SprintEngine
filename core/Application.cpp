@@ -2,7 +2,7 @@
 #include "Window.h"
 #include "Log.h"
 
-namespace Sprint {
+namespace sprint {
 
 // TODO: put all this stuff to some config
 const int SCREEN_WIDTH = 640;
@@ -11,14 +11,14 @@ const int SCREEN_HEIGHT = 480;
 Application::Application() {
     Log::Init();
 
-    m_Window = std::make_unique<Window>(SCREEN_WIDTH, SCREEN_HEIGHT);
+    window_ = std::make_unique<Window>(SCREEN_WIDTH, SCREEN_HEIGHT);
 }
 
 void Application::UpdateTime() {
     using namespace std::chrono;
     TimeSpan now = steady_clock::now();
-    m_DeltaTime = duration_cast<microseconds>(now - m_LastUpdateTime).count() / 1000000.0f;
-    m_LastUpdateTime = now;
+    delta_time_ = duration_cast<microseconds>(now - last_update_time_).count() / 1000000.0f;
+    last_update_time_ = now;
 }
 
 int Application::Run() {
@@ -26,20 +26,35 @@ int Application::Run() {
     return 0;
 }
 
-void OnMouseDown(MouseEvent& event) {}
-void OnMouseUp(MouseEvent& event) {}
-void OnMouseMove(MouseMoveEvent& event) {}
-void OnKeyPress(KeyEvent& event) {}
-void OnKeyRelease(KeyEvent& event) {}
+void OnMouseDown(MouseEvent &event) {}
 
-void OnEvent(WindowEvent& event) {
-    switch (event.GetType()) {
-        case WindowEvent::MOUSE_DOWN:  OnMouseDown(event.Mouse);     break;
-        case WindowEvent::MOUSE_UP:    OnMouseUp(event.Mouse);       break;
-        case WindowEvent::MOUSE_MOVE:  OnMouseMove(event.MouseMove); break;
-        case WindowEvent::KEY_PRESS:   OnKeyPress(event.Key);        break;
-        case WindowEvent::KEY_RELEASE: OnKeyRelease(event.Key);      break;
-        default: break;
+void OnMouseUp(MouseEvent &event) {}
+
+void OnMouseMove(MouseMoveEvent &event) {}
+
+void OnKeyPress(KeyEvent &event) {}
+
+void OnKeyRelease(KeyEvent &event) {}
+
+void OnEvent(WindowEvent &event) {
+    switch (event.get_type()) {
+        case WindowEvent::MOUSE_DOWN:
+            OnMouseDown(event.Mouse);
+            break;
+        case WindowEvent::MOUSE_UP:
+            OnMouseUp(event.Mouse);
+            break;
+        case WindowEvent::MOUSE_MOVE:
+            OnMouseMove(event.MouseMove);
+            break;
+        case WindowEvent::KEY_PRESS:
+            OnKeyPress(event.Key);
+            break;
+        case WindowEvent::KEY_RELEASE:
+            OnKeyRelease(event.Key);
+            break;
+        default:
+            break;
     }
 }
 
@@ -48,14 +63,14 @@ bool Application::RunOneFrame() {
     UpdateTime();
 
     WindowEvent event;
-    while (m_Window->PollEvent(event)) {
-        if (event.GetType() == WindowEvent::CLOSE)
+    while (window_->PollEvent(event)) {
+        if (event.get_type() == WindowEvent::CLOSE)
             return false;
 
         OnEvent(event);
     }
 
-    m_Window->OnUpdate();
+    window_->OnUpdate();
     return true;
 }
 }

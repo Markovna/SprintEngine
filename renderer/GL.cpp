@@ -6,9 +6,9 @@
 #include "IntAlloc.h"
 #include "Log.h"
 
-namespace Sprint {
+namespace sprint {
 
-namespace GL {
+namespace gl {
 
 typedef uint32_t ATTRIB_LOCATION_MASK;
 
@@ -67,11 +67,11 @@ static uint32_t CompileShader(ShaderType::Enum type, const std::string& source) 
     return shaderID;
 }
 
-static GLbitfield ToGLBits(CLEAR_FLAG mask) {
+static GLbitfield ToGLBits(ClearFlag mask) {
     GLbitfield bitfield = 0;
-    if (mask & CLEAR_DEPTH) bitfield |= (uint32_t) GL_DEPTH_BUFFER_BIT;
-    if (mask & CLEAR_COLOR) bitfield |= (uint32_t) GL_COLOR_BUFFER_BIT;
-    if (mask & CLEAR_STENCIL) bitfield |= (uint32_t) GL_STENCIL_BUFFER_BIT;
+    if (mask & kClearDepth) bitfield |= (uint32_t) GL_DEPTH_BUFFER_BIT;
+    if (mask & kClearColor) bitfield |= (uint32_t) GL_COLOR_BUFFER_BIT;
+    if (mask & kClearStencil) bitfield |= (uint32_t) GL_STENCIL_BUFFER_BIT;
     return bitfield;
 }
 
@@ -105,7 +105,7 @@ static void CreateTexture(TextureHandle handle, const uint8_t *data, uint32_t wi
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    m_Textures[handle.ID] = Texture(textureId);
+  textures[handle.ID] = Texture(textureId);
 }
 
 static void CreateIndexBuffer(IndexBufferHandle handle, uint32_t *indices, uint32_t size) {
@@ -114,7 +114,7 @@ static void CreateIndexBuffer(IndexBufferHandle handle, uint32_t *indices, uint3
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferId);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, size * sizeof(uint32_t), indices, GL_STATIC_DRAW);
 
-    m_IndexBuffers[handle.ID] = IndexBuffer(bufferId, size);
+  index_buffers[handle.ID] = IndexBuffer(bufferId, size);
 }
 
 static void CreateVertexBuffer(VertexBufferHandle handle, float *data, uint32_t size, VertexLayout layout) {
@@ -123,15 +123,15 @@ static void CreateVertexBuffer(VertexBufferHandle handle, float *data, uint32_t 
     glBindBuffer(GL_ARRAY_BUFFER, bufferId);
     glBufferData(GL_ARRAY_BUFFER, size * sizeof(float), data, GL_STATIC_DRAW);
 
-    m_VertexBuffers[handle.ID] = VertexBuffer(bufferId, size, layout);
+  vertex_buffers[handle.ID] = VertexBuffer(bufferId, size, layout);
 }
 
 static void BindVertexBuffer(const VertexBuffer& buffer) {
-    glBindBuffer(GL_ARRAY_BUFFER, buffer.ID);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer.id);
 }
 
 static void BindIndexBuffer(const IndexBuffer& buffer) {
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.ID);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.id);
 }
 
 static void UnbindVertexBuffer() {
@@ -154,11 +154,11 @@ static void BindAttribute(uint32_t attributeIdx, const VertexLayout::Item& item,
     glEnableVertexAttribArray(attributeIdx);
     glVertexAttribPointer(
             attributeIdx,
-            item.Attribute.Format.Size,
-            ToGLenum(item.Attribute.Format.Type),
-            item.Attribute.Normalized,
+            item.attribute.format.size,
+            ToGLenum(item.attribute.format.type),
+            item.attribute.normalized,
             stride,
-            (void*)(item.Offset)
+            (void*)(item.offset)
         );
 }
 
@@ -166,8 +166,8 @@ static void BindAttributes(const Shader& shader, const VertexLayout& layout) {
     ATTRIB_LOCATION_MASK enabledAttribMask = 0;
     for (const auto& item : layout) {
         uint32_t idx;
-        if (shader.TryGetLocation(item.Attribute.Type, idx)) {
-            BindAttribute(idx, item, layout.GetStride());
+        if (shader.TryGetLocation(item.attribute.type, idx)) {
+            BindAttribute(idx, item, layout.get_stride());
             enabledAttribMask |= ((ATTRIB_LOCATION_MASK) 1) << idx;
         }
     }
@@ -175,8 +175,8 @@ static void BindAttributes(const Shader& shader, const VertexLayout& layout) {
     DisableAttributes(~enabledAttribMask);
 }
 
-void Clear(const Color &color, CLEAR_FLAG options) {
-    glClearColor(color.R, color.G, color.B, color.A);
+void Clear(const Color &color, ClearFlag options) {
+    glClearColor(color.r, color.g, color.b, color.a);
     glClear(ToGLBits(options));
 }
 
@@ -184,68 +184,68 @@ void Init() {
     int loaded = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
     assert(loaded);
 
-    glGenVertexArrays(1, &m_VertexArrayID);
-    glBindVertexArray(m_VertexArrayID);
+    glGenVertexArrays(1, &vertex_array_id);
+    glBindVertexArray(vertex_array_id);
 
     glEnable(GL_DEPTH_TEST);
 
-    m_CtxWndHandle = glfwGetCurrentContext();
+  ctx_window_handle = glfwGetCurrentContext();
 }
 
 void Shutdown() {
     glBindVertexArray(0);
-    glDeleteVertexArrays(1, &m_VertexArrayID);
+    glDeleteVertexArrays(1, &vertex_array_id);
 }
 
 IndexBufferHandle CreateIndexBuffer(uint32_t *indices, uint32_t size) {
-    IndexBufferHandle handle(m_IndexBufferIds.Alloc());
+    IndexBufferHandle handle(index_buffer_ids.Alloc());
     assert(handle.IsValid());
     CreateIndexBuffer(handle, indices, size);
     return handle;
 }
 
 void Destroy(IndexBufferHandle& handle) {
-    glDeleteBuffers(1, &m_IndexBuffers[handle.ID].ID);
-    m_IndexBufferIds.Free(handle.ID);
+    glDeleteBuffers(1, &index_buffers[handle.ID].id);
+    index_buffer_ids.Free(handle.ID);
     handle = IndexBufferHandle::Invalid;
 }
 
 VertexBufferHandle CreateVertexBuffer(float *data, uint32_t size, VertexLayout layout) {
-    VertexBufferHandle handle(m_VertexBufferIds.Alloc());
+    VertexBufferHandle handle(vertex_buffer_ids.Alloc());
     assert(handle.IsValid());
     CreateVertexBuffer(handle, data, size, layout);
     return handle;
 }
 
 void Destroy(VertexBufferHandle &handle) {
-    glDeleteBuffers(1, &m_VertexBuffers[handle.ID].ID);
-    m_VertexBufferIds.Free(handle.ID);
+    glDeleteBuffers(1, &vertex_buffers[handle.ID].id);
+    vertex_buffer_ids.Free(handle.ID);
     handle = VertexBufferHandle::Invalid;
 }
 
 void Bind(IndexBufferHandle handle) {
-    m_IndexBufferHandle = handle;
-    BindIndexBuffer(m_IndexBuffers[handle.ID]);
+  index_buffer_handle = handle;
+    BindIndexBuffer(index_buffers[handle.ID]);
 }
 
 void Bind(VertexBufferHandle handle) {
-    m_VertexBufferHandle = handle;
-    BindVertexBuffer(m_VertexBuffers[handle.ID]);
+  vertex_buffer_handle = handle;
+    BindVertexBuffer(vertex_buffers[handle.ID]);
 }
 
 void Render(ShaderHandle handle) {
-    Shader& shader = m_Shaders[handle.ID];
+    Shader& shader = shaders[handle.ID];
     shader.Use();
-    if (m_VertexBufferHandle.IsValid()) {
-        const VertexBuffer& vb = m_VertexBuffers[m_VertexBufferHandle.ID];
-        BindAttributes(shader, vb.Layout);
+    if (vertex_buffer_handle.IsValid()) {
+        const VertexBuffer& vb = vertex_buffers[vertex_buffer_handle.ID];
+        BindAttributes(shader, vb.layout);
 
-        if (m_IndexBufferHandle.IsValid()) {
-            const IndexBuffer& ib = m_IndexBuffers[m_IndexBufferHandle.ID];
-            glDrawElements(GL_TRIANGLES, ib.Size, GL_UNSIGNED_INT, nullptr);
+        if (index_buffer_handle.IsValid()) {
+            const IndexBuffer& ib = index_buffers[index_buffer_handle.ID];
+            glDrawElements(GL_TRIANGLES, ib.size, GL_UNSIGNED_INT, nullptr);
         }
         else {
-            glDrawArrays(GL_TRIANGLES, 0, vb.Size);
+            glDrawArrays(GL_TRIANGLES, 0, vb.size);
         }
     }
 
@@ -254,76 +254,76 @@ void Render(ShaderHandle handle) {
     UnbindVertexBuffer();
     UnbindIndexBuffer();
 
-    m_VertexBufferHandle = VertexBufferHandle::Invalid;
-    m_IndexBufferHandle = IndexBufferHandle::Invalid;
+  vertex_buffer_handle = VertexBufferHandle::Invalid;
+  index_buffer_handle = IndexBufferHandle::Invalid;
 }
 
-ShaderHandle CreateShader(const std::string &source, std::initializer_list<AttributeType::Enum> inTypes) {
-    ShaderHandle handle(m_ShaderIds.Alloc());
+ShaderHandle CreateShader(const std::string &source, std::initializer_list<AttributeType::Enum> in_types) {
+    ShaderHandle handle(shader_ids.Alloc());
     assert(handle.IsValid());
-    m_Shaders[handle.ID] = Shader(source, inTypes);
+  shaders[handle.ID] = Shader(source, in_types);
     return handle;
 }
 
 TextureHandle CreateTexture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t channels) {
-    TextureHandle handle(m_TextureIds.Alloc());
+    TextureHandle handle(texture_ids.Alloc());
     assert(handle.IsValid());
     CreateTexture(handle, data, width, height, channels);
     return handle;
 }
 
 void Destroy(ShaderHandle &handle) {
-    m_Shaders[handle.ID].Destroy();
-    m_ShaderIds.Free(handle.ID);
+    shaders[handle.ID].Destroy();
+    shader_ids.Free(handle.ID);
     handle = ShaderHandle::Invalid;
 }
 
 void SwapBuffers() {
-    glfwSwapBuffers(m_CtxWndHandle);
+    glfwSwapBuffers(ctx_window_handle);
 }
 
 void Destroy(TextureHandle &handle) {
-    glDeleteTextures(1, &m_Textures[handle.ID].ID);
-    m_TextureIds.Free(handle.ID);
+    glDeleteTextures(1, &textures[handle.ID].id);
+    texture_ids.Free(handle.ID);
     handle = TextureHandle::Invalid;
 }
 
 void Bind(TextureHandle handle, uint32_t idx) {
     glActiveTexture(GL_TEXTURE0 + idx);
-    glBindTexture(GL_TEXTURE_2D, m_Textures[handle.ID].ID);
+    glBindTexture(GL_TEXTURE_2D, textures[handle.ID].id);
 }
 
 void SetUniform(ShaderHandle handle, UniformType::Enum type, const std::string &name, const void *values) {
-    m_Shaders[handle.ID].SetUniform(type, name, values);
+    shaders[handle.ID].SetUniform(type, name, values);
 }
 
-Shader::Shader(const std::string &source, std::initializer_list<AttributeType::Enum> inTypes) : m_AttributesMask(0) {
-    m_ID = glCreateProgram();
+Shader::Shader(const std::string &source, std::initializer_list<AttributeType::Enum> inTypes) : attributes_mask_(0) {
+  id_ = glCreateProgram();
     std::string shaders[ShaderType::Count];
     PreProcess(source, shaders);
     for (size_t i = 0; i < ShaderType::Count; i++) {
         auto id = CompileShader((ShaderType::Enum) i, shaders[i]);
-        glAttachShader(m_ID, id);
+        glAttachShader(id_, id);
         glDeleteShader(id);
     }
 
-    glLinkProgram(m_ID);
-    CheckLinkStatus(m_ID);
+    glLinkProgram(id_);
+    CheckLinkStatus(id_);
 
     uint32_t location = 0;
     for (auto type : inTypes) {
-        m_AttributeLocations[type] = location++;
-        m_AttributesMask |= ((uint32_t) 1) << type;
+      attribute_locations_[type] = location++;
+        attributes_mask_ |= ((uint32_t) 1) << type;
     }
 }
 
 void Shader::Use() const {
-    glUseProgram(m_ID);
+    glUseProgram(id_);
 }
 
 void Shader::SetUniform(UniformType::Enum type, const std::string &name, const void *value) const {
-    glUseProgram(m_ID);
-    uint32_t location = glGetUniformLocation(m_ID, name.c_str());
+    glUseProgram(id_);
+    uint32_t location = glGetUniformLocation(id_, name.c_str());
     float* ptr;
     switch (type) {
         case UniformType::Enum::Int:
@@ -348,14 +348,14 @@ void Shader::SetUniform(UniformType::Enum type, const std::string &name, const v
 }
 
 void Shader::Destroy() {
-    glDeleteProgram(m_ID);
-    m_ID = 0;
-    m_AttributesMask = 0;
+    glDeleteProgram(id_);
+  id_ = 0;
+    attributes_mask_ = 0;
 }
 
 bool Shader::TryGetLocation(AttributeType::Enum type, uint32_t &location) const {
-    if (m_AttributesMask & (((uint32_t) 1) << type)) {
-        location = m_AttributeLocations[type];
+    if (attributes_mask_ & (((uint32_t) 1) << type)) {
+        location = attribute_locations_[type];
         return true;
     }
     return false;

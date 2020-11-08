@@ -3,7 +3,7 @@
 #include <string>
 #include "GL.h"
 
-namespace Sprint {
+namespace sprint {
 
 class Texture {
 
@@ -18,16 +18,16 @@ class Texture {
         Loader(Loader&& loader) noexcept;
         Loader& operator=(Loader&& loader) noexcept;
 
-        explicit operator bool() const { return m_Data; }
+        explicit operator bool() const { return data_; }
 
-        int GetHeight() const { return m_Height; }
-        int GetWidth() const { return m_Width; }
-        int GetChannelsNum() const { return m_Channels; }
+        int get_height() const { return height_; }
+        int get_width() const { return width_; }
+        int get_channels_num() const { return channels_; }
 
-        const unsigned char* GetData() const { return m_Data; }
+        const unsigned char* get_data() const { return data_; }
     private:
-        unsigned char* m_Data;
-        int m_Width, m_Height, m_Channels;
+        unsigned char* data_;
+        int width_, height_, channels_;
     };
 
 public:
@@ -37,7 +37,7 @@ public:
 private:
     Texture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t channels);
 
-    GL::TextureHandle m_Handle;
+    gl::TextureHandle handle_;
 };
 
 }

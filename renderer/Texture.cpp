@@ -3,42 +3,42 @@
 #include "stb_image.h"
 #include "Log.h"
 
-namespace Sprint {
+namespace sprint {
 
 Texture::Loader::Loader(const std::string& path) {
     stbi_set_flip_vertically_on_load(true);
-    m_Data = stbi_load(path.c_str(), &m_Width, &m_Height, &m_Channels, 0);
+  data_ = stbi_load(path.c_str(), &width_, &height_, &channels_, 0);
 }
 
 Texture::Loader::~Loader() {
-    if (m_Data)
-        stbi_image_free(m_Data);
+    if (data_)
+        stbi_image_free(data_);
 }
 
 Texture::Loader::Loader(Loader&& loader) noexcept {
-    m_Data = loader.m_Data;
-    m_Width = loader.m_Width;
-    m_Height = loader.m_Width;
-    m_Channels = loader.m_Channels;
+  data_ = loader.data_;
+  width_ = loader.width_;
+  height_ = loader.width_;
+  channels_ = loader.channels_;
 
-    loader.m_Data = nullptr;
-    loader.m_Width = 0;
-    loader.m_Height = 0;
-    loader.m_Channels = 0;
+    loader.data_ = nullptr;
+    loader.width_ = 0;
+    loader.height_ = 0;
+    loader.channels_ = 0;
 }
 
 Texture::Loader& Texture::Loader::operator=(Loader&& loader) noexcept {
-    if (m_Data == loader.m_Data) return *this;
+    if (data_ == loader.data_) return *this;
 
-    m_Data = loader.m_Data;
-    m_Width = loader.m_Width;
-    m_Height = loader.m_Width;
-    m_Channels = loader.m_Channels;
+  data_ = loader.data_;
+  width_ = loader.width_;
+  height_ = loader.width_;
+  channels_ = loader.channels_;
 
-    loader.m_Data = nullptr;
-    loader.m_Width = 0;
-    loader.m_Height = 0;
-    loader.m_Channels = 0;
+    loader.data_ = nullptr;
+    loader.width_ = 0;
+    loader.height_ = 0;
+    loader.channels_ = 0;
     return *this;
 }
 
@@ -46,10 +46,10 @@ std::shared_ptr<Texture> Texture::Load(const std::string& path) {
     Loader loader(path);
     if (loader) {
         return std::shared_ptr<Texture>(
-                new Texture(loader.GetData(),
-                            loader.GetWidth(),
-                            loader.GetHeight(),
-                            loader.GetChannelsNum()));
+                new Texture(loader.get_data(),
+                            loader.get_width(),
+                            loader.get_height(),
+                            loader.get_channels_num()));
     }
 
     Log::CoreError("Failed to load texture {0}", path);
@@ -57,15 +57,15 @@ std::shared_ptr<Texture> Texture::Load(const std::string& path) {
 }
 
 Texture::Texture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t channels) :
-    m_Handle(GL::CreateTexture(data, width, height, channels)) {
+    handle_(gl::CreateTexture(data, width, height, channels)) {
 }
 
 void Texture::Bind(uint32_t slot) const {
-    GL::Bind(m_Handle, slot);
+    gl::Bind(handle_, slot);
 }
 
 Texture::~Texture() {
-    GL::Destroy(m_Handle);
+    gl::Destroy(handle_);
 }
 
 }

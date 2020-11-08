@@ -3,10 +3,10 @@
 #include "Log.h"
 
 
-namespace Sprint {
+namespace sprint {
 
-std::unique_ptr<spdlog::logger> Log::s_CoreLogger;
-std::unique_ptr<spdlog::logger> Log::s_ClientLogger;
+std::unique_ptr<spdlog::logger> Log::core_logger_;
+std::unique_ptr<spdlog::logger> Log::client_logger_;
 
 void Log::Init() {
     auto stdout_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -17,13 +17,13 @@ void Log::Init() {
 
     std::vector<spdlog::sink_ptr> sinks {stdout_sink, file_sink};
 
-    s_CoreLogger = std::make_unique<spdlog::logger>("ENGINE", begin(sinks), end(sinks));
-    s_CoreLogger->set_level(spdlog::level::trace);
-    s_CoreLogger->flush_on(spdlog::level::trace);
+    core_logger_ = std::make_unique<spdlog::logger>("ENGINE", begin(sinks), end(sinks));
+    core_logger_->set_level(spdlog::level::trace);
+    core_logger_->flush_on(spdlog::level::trace);
 
-    s_ClientLogger = std::make_unique<spdlog::logger>("APP", begin(sinks), end(sinks));
-    s_ClientLogger->set_level(spdlog::level::trace);
-    s_ClientLogger->flush_on(spdlog::level::trace);
+    client_logger_ = std::make_unique<spdlog::logger>("APP", begin(sinks), end(sinks));
+    client_logger_->set_level(spdlog::level::trace);
+    client_logger_->flush_on(spdlog::level::trace);
 }
 
 }

@@ -6,7 +6,7 @@
 #include "Quat.h"
 
 
-namespace Sprint {
+namespace sprint {
 
 struct Matrix {
 
@@ -15,11 +15,11 @@ struct Matrix {
     Matrix();
 
     inline float* operator[](const size_t index) {
-        return m_Data[index];
+        return data_[index];
     }
 
     inline const float* operator[](const size_t index) const {
-        return m_Data[index];
+        return data_[index];
     }
 
     inline Vec3 GetOrigin() const;
@@ -58,29 +58,29 @@ struct Matrix {
     const static Matrix Identity;
 
 private:
-    float m_Data[4][4];
+    float data_[4][4];
 };
 
 inline Vec3 Matrix::GetOrigin() const {
-    return Vec3(m_Data[3][0], m_Data[3][1], m_Data[3][2]);
+    return Vec3(data_[3][0], data_[3][1], data_[3][2]);
 }
 
 inline void Matrix::SetOrigin(const Vec3& vec) {
-    m_Data[3][0] = vec.X;
-    m_Data[3][1] = vec.Y;
-    m_Data[3][2] = vec.Z;
+    data_[3][0] = vec.x;
+    data_[3][1] = vec.y;
+    data_[3][2] = vec.z;
 }
 
 inline Vec3 Matrix::GetColumn(size_t index) const {
     assert(index >= 0 && index < 4);
-    return Vec3(m_Data[0][index], m_Data[1][index], m_Data[2][index]);
+    return Vec3(data_[0][index], data_[1][index], data_[2][index]);
 }
 
 inline void Matrix::SetColumn(size_t index, const Vec3& vec) {
     assert(index >= 0 && index < 4);
-    m_Data[0][index] = vec.X;
-    m_Data[1][index] = vec.Y;
-    m_Data[2][index] = vec.Z;
+    data_[0][index] = vec.x;
+    data_[1][index] = vec.y;
+    data_[2][index] = vec.z;
 }
 
 inline Matrix Matrix::operator*(const Matrix& other) const {
@@ -160,25 +160,25 @@ inline bool Matrix::Equals(const Matrix& other, float tolerance) const {
 }
 
 inline float Matrix::Determinant() const {
-    return	m_Data[0][0] * (
-            m_Data[1][1] * (m_Data[2][2] * m_Data[3][3] - m_Data[2][3] * m_Data[3][2]) -
-            m_Data[2][1] * (m_Data[1][2] * m_Data[3][3] - m_Data[1][3] * m_Data[3][2]) +
-            m_Data[3][1] * (m_Data[1][2] * m_Data[2][3] - m_Data[1][3] * m_Data[2][2]))
+    return data_[0][0] * (
+            data_[1][1] * (data_[2][2] * data_[3][3] - data_[2][3] * data_[3][2]) -
+            data_[2][1] * (data_[1][2] * data_[3][3] - data_[1][3] * data_[3][2]) +
+            data_[3][1] * (data_[1][2] * data_[2][3] - data_[1][3] * data_[2][2]))
 
-              - m_Data[1][0] * (
-            m_Data[0][1] * (m_Data[2][2] * m_Data[3][3] - m_Data[2][3] * m_Data[3][2]) -
-            m_Data[2][1] * (m_Data[0][2] * m_Data[3][3] - m_Data[0][3] * m_Data[3][2]) +
-            m_Data[3][1] * (m_Data[0][2] * m_Data[2][3] - m_Data[0][3] * m_Data[2][2]))
+           - data_[1][0] * (
+            data_[0][1] * (data_[2][2] * data_[3][3] - data_[2][3] * data_[3][2]) -
+            data_[2][1] * (data_[0][2] * data_[3][3] - data_[0][3] * data_[3][2]) +
+            data_[3][1] * (data_[0][2] * data_[2][3] - data_[0][3] * data_[2][2]))
 
-              + m_Data[2][0] * (
-            m_Data[0][1] * (m_Data[1][2] * m_Data[3][3] - m_Data[1][3] * m_Data[3][2]) -
-            m_Data[1][1] * (m_Data[0][2] * m_Data[3][3] - m_Data[0][3] * m_Data[3][2]) +
-            m_Data[3][1] * (m_Data[0][2] * m_Data[1][3] - m_Data[0][3] * m_Data[1][2]))
+           + data_[2][0] * (
+            data_[0][1] * (data_[1][2] * data_[3][3] - data_[1][3] * data_[3][2]) -
+            data_[1][1] * (data_[0][2] * data_[3][3] - data_[0][3] * data_[3][2]) +
+            data_[3][1] * (data_[0][2] * data_[1][3] - data_[0][3] * data_[1][2]))
 
-              - m_Data[3][0] * (
-            m_Data[0][1] * (m_Data[1][2] * m_Data[2][3] - m_Data[1][3] * m_Data[2][2]) -
-            m_Data[1][1] * (m_Data[0][2] * m_Data[2][3] - m_Data[0][3] * m_Data[2][2]) +
-            m_Data[2][1] * (m_Data[0][2] * m_Data[1][3] - m_Data[0][3] * m_Data[1][2]));
+           - data_[3][0] * (
+            data_[0][1] * (data_[1][2] * data_[2][3] - data_[1][3] * data_[2][2]) -
+            data_[1][1] * (data_[0][2] * data_[2][3] - data_[0][3] * data_[2][2]) +
+            data_[2][1] * (data_[0][2] * data_[1][3] - data_[0][3] * data_[1][2]));
 }
 
 inline Vec3 Matrix::Transform(const Vec3& vec) const {

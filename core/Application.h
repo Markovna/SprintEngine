@@ -6,7 +6,7 @@
 #include "chrono"
 
 
-namespace Sprint {
+namespace sprint {
 
 
 typedef std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> TimeSpan;
@@ -19,10 +19,10 @@ private:
     void UpdateTime();
     bool RunOneFrame();
 private:
-    std::unique_ptr<Window> m_Window;
+    std::unique_ptr<Window> window_;
 
-    float m_DeltaTime = 0;
-    TimeSpan m_LastUpdateTime;
+    float delta_time_ = 0;
+    TimeSpan last_update_time_;
 };
 
 

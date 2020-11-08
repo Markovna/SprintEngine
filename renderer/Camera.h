@@ -2,28 +2,28 @@
 
 #include "Matrix.h"
 
-namespace Sprint {
+namespace sprint {
 
 class Camera {
 public:
     explicit Camera(const Matrix& projection) :
-        m_Position(Vec3::Zero),
-        m_Rotation(Quat::Identity),
-        m_ProjectionMatrix(projection)
+            position_(Vec3::Zero),
+            rotation_(Quat::Identity),
+            projection_matrix_(projection)
     {}
 
-    void SetRotation(const Quat& rotation) { m_Rotation = rotation; }
-    void SetPosition(const Vec3& position) { m_Position = position; }
-    void SetProjectionMatrix(const Matrix& mat) { m_ProjectionMatrix = mat; }
+    void set_rotation(const Quat& rotation) { rotation_ = rotation; }
+    void set_position(const Vec3& position) { position_ = position; }
+    void set_projection_matrix(const Matrix& mat) { projection_matrix_ = mat; }
 
-    Matrix GetProjectionMatrix() const { return m_ProjectionMatrix; }
-    Matrix GetViewMatrix() const { return Matrix::Translation(m_Position) * Matrix::Rotation(m_Rotation); }
+    Matrix get_projection_matrix() const { return projection_matrix_; }
+    Matrix GetViewMatrix() const { return Matrix::Translation(position_) * Matrix::Rotation(rotation_); }
 
 private:
-    Matrix m_ProjectionMatrix;
+    Matrix projection_matrix_;
 
-    Vec3 m_Position;
-    Quat m_Rotation;
+    Vec3 position_;
+    Quat rotation_;
 };
 
 }

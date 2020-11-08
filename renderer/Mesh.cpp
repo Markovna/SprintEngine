@@ -1,6 +1,6 @@
 #include "Mesh.h"
 
 
-namespace Sprint {
+namespace sprint {
 
 }

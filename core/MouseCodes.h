@@ -3,11 +3,11 @@
 #include <cstdint>
 
 
-namespace Sprint {
+namespace sprint {
 
 using MouseCode = uint16_t;
 
-namespace Mouse
+namespace mouse
 {
     enum : MouseCode
     {

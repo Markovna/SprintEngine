@@ -7,13 +7,13 @@
 
 #include <string>
 
-namespace Sprint {
+namespace sprint {
 
 enum class ShaderType : uint8_t { Vertex, Fragment };
 
 class Shader {
 private:
-    explicit Shader(const std::string& source, std::initializer_list<GL::AttributeType::Enum> inTypes);
+    explicit Shader(const std::string& source, std::initializer_list<gl::AttributeType::Enum> inTypes);
 
 public:
 
@@ -32,9 +32,9 @@ public:
     void SetFloat4(const std::string& name, const Color& value) const;
     void SetMat(const std::string& name, const Matrix& value) const;
 
-    static std::shared_ptr<Shader> Load(const std::string& path, std::initializer_list<GL::AttributeType::Enum> inTypes);
+    static std::shared_ptr<Shader> Load(const std::string& path, std::initializer_list<gl::AttributeType::Enum> in_types);
 private:
-    GL::ShaderHandle m_Handle;
+    gl::ShaderHandle handle_;
 };
 
 }

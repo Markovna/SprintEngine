@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Sprint {
+namespace sprint {
 
 struct Color {
 
@@ -13,7 +13,7 @@ struct Color {
     Color(float r, float g, float b, float a = 1.0f) noexcept;
     Color() noexcept;
 
-    float R, G, B, A;
+    float r, g, b, a;
 
     inline Color operator*(const Color& rhs) const;
     inline void operator*=(const Color& other);

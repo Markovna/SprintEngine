@@ -3,11 +3,11 @@
 #include <cstdint>
 
 
-namespace Sprint {
+namespace sprint {
 
 using KeyCode = uint16_t;
 
-namespace Key
+namespace key
 {
     enum : KeyCode
     {

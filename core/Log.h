@@ -3,45 +3,45 @@
 #include "spdlog/spdlog.h"
 
 
-namespace Sprint {
+namespace sprint {
 
 class Log {
 public:
     template<typename ...Args>
     inline static void Info(const std::string &str, const Args& ...args) {
-        s_ClientLogger->info(str, args...);
+        client_logger_->info(str, args...);
     }
 
     template<typename ...Args>
     inline static void Warning(const std::string &str, const Args& ...args) {
-        s_ClientLogger->warn(str, args...);
+        client_logger_->warn(str, args...);
     }
 
     template<typename ...Args>
     inline static void Error(const std::string &str, const Args& ...args) {
-        s_ClientLogger->error(str, args...);
+        client_logger_->error(str, args...);
     }
 
     template<typename ...Args>
     inline static void CoreInfo(const std::string &str, const Args& ...args) {
-        s_CoreLogger->info(str, args...);
+        core_logger_->info(str, args...);
     }
 
     template<typename ...Args>
     inline static void CoreWarning(const std::string &str, const Args& ...args) {
-        s_CoreLogger->warn(str, args...);
+        core_logger_->warn(str, args...);
     }
 
     template<typename ...Args>
     inline static void CoreError(const std::string &str, const Args& ...args) {
-        s_CoreLogger->error(str, args...);
+        core_logger_->error(str, args...);
     }
 
     static void Init();
 
 private:
-    static std::unique_ptr<spdlog::logger> s_CoreLogger;
-    static std::unique_ptr<spdlog::logger> s_ClientLogger;
+    static std::unique_ptr<spdlog::logger> core_logger_;
+    static std::unique_ptr<spdlog::logger> client_logger_;
 };
 
 

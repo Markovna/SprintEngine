@@ -1,6 +1,6 @@
 #include "Camera.h"
 
 
-namespace Sprint {
+namespace sprint {
 
 }

@@ -4,32 +4,32 @@
 #include <numeric>
 #include <bitset>
 
-namespace Sprint {
+namespace sprint {
 
 template<size_t N, size_t INVALID_ID = N>
 class IntAlloc {
 public:
-    IntAlloc() noexcept : m_ReservedCount(0), bitset_() {
-        std::iota(std::begin(m_FreeIndices), std::end(m_FreeIndices), 0);
+    IntAlloc() noexcept : reserved_count_(0), bitset_() {
+        std::iota(std::begin(free_indices_), std::end(free_indices_), 0);
     }
 
     uint32_t Alloc() {
-        if (m_ReservedCount == N) return INVALID_ID;
-        bitset_[m_ReservedCount] = 0;
-        return m_FreeIndices[m_ReservedCount++];
+        if (reserved_count_ == N) return INVALID_ID;
+        bitset_[reserved_count_] = 0;
+        return free_indices_[reserved_count_++];
     }
 
     void Free(uint32_t idx) {
         assert(idx < N);
         assert(!bitset_[idx]);
-        assert(m_ReservedCount);
+        assert(reserved_count_);
         bitset_[idx] = 1;
-        m_FreeIndices[--m_ReservedCount] = idx;
+        free_indices_[--reserved_count_] = idx;
     }
 private:
     std::bitset<N> bitset_;
-    uint32_t m_FreeIndices[N];
-    size_t m_ReservedCount;
+    uint32_t free_indices_[N];
+    size_t reserved_count_;
 };
 
 }

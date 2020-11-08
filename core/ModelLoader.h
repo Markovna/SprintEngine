@@ -4,9 +4,9 @@
 #include <assimp/postprocess.h>
 #include "Log.h"
 
-namespace Sprint {
+namespace sprint {
 
-namespace ModelLoader {
+namespace model_loader {
     void Load(const std::string& path) {
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);

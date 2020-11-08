@@ -6,7 +6,7 @@
 #include <functional>
 #include <GLFW/glfw3.h>
 
-namespace Sprint {
+namespace sprint {
 
 class Window {
 private:
@@ -23,9 +23,9 @@ private:
     void PushEvent(Event event);
 
 private:
-    int m_Width, m_Height;
-    GLFWwindow* m_Window;
-    std::queue<Event> m_Events;
+    int width_, height_;
+    GLFWwindow* window_;
+    std::queue<Event> events_;
 };
 
 

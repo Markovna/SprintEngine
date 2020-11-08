@@ -4,7 +4,7 @@
 #include <fstream>
 #include <sstream>
 
-namespace Sprint {
+namespace sprint {
 
 static std::string ReadFile(const std::string& path) {
     std::string content;
@@ -23,52 +23,52 @@ static std::string ReadFile(const std::string& path) {
     return content;
 }
 
-Shader::Shader(const std::string& source, std::initializer_list<GL::AttributeType::Enum> inTypes) :
-    m_Handle(GL::CreateShader(source, std::move(inTypes)))
+Shader::Shader(const std::string& source, std::initializer_list<gl::AttributeType::Enum> inTypes) :
+    handle_(gl::CreateShader(source, std::move(inTypes)))
 {
 }
 
 Shader::~Shader() {
-    GL::Destroy(m_Handle);
+    gl::Destroy(handle_);
 }
 
 void Shader::SetInt(const std::string& name, int value) const {
-    GL::SetUniform(m_Handle, GL::UniformType::Int, name, &value);
+    gl::SetUniform(handle_, gl::UniformType::Int, name, &value);
 }
 
 void Shader::SetBool(const std::string& name, bool value) const {
-    GL::SetUniform(m_Handle, GL::UniformType::Int, name, &value);
+    gl::SetUniform(handle_, gl::UniformType::Int, name, &value);
 }
 
 void Shader::SetFloat(const std::string& name, float value) const {
-    GL::SetUniform(m_Handle, GL::UniformType::Float, name, &value);
+    gl::SetUniform(handle_, gl::UniformType::Float, name, &value);
 }
 
 void Shader::SetFloat3(const std::string& name, const Vec3& value) const {
-    float values[] = { value.X, value.Y, value.Z };
-    GL::SetUniform(m_Handle, GL::UniformType::Vec3, name, &values);
+    float values[] = {value.x, value.y, value.z };
+    gl::SetUniform(handle_, gl::UniformType::Vec3, name, &values);
 }
 
 void Shader::SetFloat4(const std::string& name, const Vec4& value) const {
-    float values[] = { value.X, value.Y, value.Z, value.W };
-    GL::SetUniform(m_Handle, GL::UniformType::Vec4, name, &values);
+    float values[] = {value.x, value.y, value.z, value.w };
+    gl::SetUniform(handle_, gl::UniformType::Vec4, name, &values);
 }
 
 void Shader::SetFloat4(const std::string &name, const Color &value) const {
-    float values[] = { value.R, value.G, value.B, value.A };
-    GL::SetUniform(m_Handle, GL::UniformType::Vec4, name, &values);
+    float values[] = {value.r, value.g, value.b, value.a };
+    gl::SetUniform(handle_, gl::UniformType::Vec4, name, &values);
 }
 
 void Shader::SetMat(const std::string& name, const Matrix& value) const {
-    GL::SetUniform(m_Handle, GL::UniformType::Mat4, name, &value[0][0]);
+    gl::SetUniform(handle_, gl::UniformType::Mat4, name, &value[0][0]);
 }
 
 void Shader::Render() const {
-    GL::Render(m_Handle);
+    gl::Render(handle_);
 }
 
-std::shared_ptr<Shader> Shader::Load(const std::string& path, std::initializer_list<GL::AttributeType::Enum> inTypes) {
-    return std::shared_ptr<Shader>(new Shader(ReadFile(path), move(inTypes)));
+std::shared_ptr<Shader> Shader::Load(const std::string& path, std::initializer_list<gl::AttributeType::Enum> in_types) {
+    return std::shared_ptr<Shader>(new Shader(ReadFile(path), move(in_types)));
 }
 
 }

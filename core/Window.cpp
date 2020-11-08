@@ -11,7 +11,7 @@
 #include "Color.h"
 
 
-namespace Sprint {
+namespace sprint {
 
 void PrepareRenderTriangles(int, int);
 void RenderTriangle();
@@ -20,7 +20,7 @@ static void GLFWErrorCallback(int error_code, const char* description) {
     Log::CoreError("GLFW error ({1}): {0}", description, error_code);
 }
 
-Window::Window(int width, int height) : m_Width(width), m_Height(height) {
+Window::Window(int width, int height) : width_(width), height_(height) {
     int status = glfwInit();
     assert(status); // TODO: assert macro
     glfwSetErrorCallback(&GLFWErrorCallback);
@@ -30,15 +30,15 @@ Window::Window(int width, int height) : m_Width(width), m_Height(height) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    m_Window = glfwCreateWindow(m_Width, m_Height, "SprintEngine", NULL, NULL);
-    assert(m_Window); // TODO: assert macro
+    window_ = glfwCreateWindow(width_, height_, "SprintEngine", NULL, NULL);
+    assert(window_); // TODO: assert macro
 
-    glfwMakeContextCurrent(m_Window);
+    glfwMakeContextCurrent(window_);
 
-    glfwSetWindowUserPointer(m_Window, this);
+    glfwSetWindowUserPointer(window_, this);
 
     // set input callbacks
-    glfwSetKeyCallback(m_Window, [](GLFWwindow *w, int key, int scancode, int action, int mods) {
+    glfwSetKeyCallback(window_, [](GLFWwindow *w, int key, int scancode, int action, int mods) {
         Window* window = (Window*) glfwGetWindowUserPointer(w);
         if (action == GLFW_PRESS) {
             window->PushEvent(WindowEvent(KeyEvent(key), true));
@@ -48,7 +48,7 @@ Window::Window(int width, int height) : m_Width(width), m_Height(height) {
         }
     });
 
-    glfwSetMouseButtonCallback(m_Window, [](GLFWwindow *w, int button, int action, int mods) {
+    glfwSetMouseButtonCallback(window_, [](GLFWwindow *w, int button, int action, int mods) {
         Window* window = (Window*)glfwGetWindowUserPointer(w);
         if (action == GLFW_PRESS) {
             window->PushEvent(WindowEvent(MouseEvent(button), true));
@@ -58,53 +58,53 @@ Window::Window(int width, int height) : m_Width(width), m_Height(height) {
         }
     });
 
-    glfwSetCursorPosCallback(m_Window, [](GLFWwindow *w, double xpos, double ypos) {
+    glfwSetCursorPosCallback(window_, [](GLFWwindow *w, double xpos, double ypos) {
         Window* window = (Window*)glfwGetWindowUserPointer(w);
         window->PushEvent(WindowEvent(MouseMoveEvent(Vec2(xpos, ypos))));
     });
 
-    glfwSetWindowCloseCallback(m_Window, [](GLFWwindow *w) {
+    glfwSetWindowCloseCallback(window_, [](GLFWwindow *w) {
         Window* window = (Window*)glfwGetWindowUserPointer(w);
         window->PushEvent(WindowEvent(CloseEvent()));
     });
 
-    GL::Init();
+    gl::Init();
 
-    PrepareRenderTriangles(m_Width, m_Height);
+    PrepareRenderTriangles(width_, height_);
 }
 
 Window::~Window() {
-    glfwDestroyWindow(m_Window);
+    glfwDestroyWindow(window_);
     glfwTerminate();
 
-    GL::Shutdown();
+    gl::Shutdown();
 }
 
 void Window::OnUpdate() {
 
-    GL::Clear(Color(0.2f, 0.2f, 0.2f, 1.0f), GL::CLEAR_COLOR | GL::CLEAR_DEPTH);
+    gl::Clear(Color(0.2f, 0.2f, 0.2f, 1.0f), gl::kClearColor | gl::kClearDepth);
 
     RenderTriangle();
 
-    GL::SwapBuffers();
+    gl::SwapBuffers();
 
     glfwPollEvents();
 }
 
 bool Window::PollEvent(Event& event) {
-    if (m_Events.empty())
+    if (events_.empty())
         return false;
 
-    event = m_Events.front();
-    m_Events.pop();
+    event = events_.front();
+    events_.pop();
     return true;
 }
 
 void Window::PushEvent(Event event) {
-    m_Events.push(event);
+    events_.push(event);
 }
 
-GL::VertexBufferHandle m_VBHandle;
+gl::VertexBufferHandle m_VBHandle;
 std::shared_ptr<Shader> m_Shader;
 std::shared_ptr<Texture> m_Texture;
 std::shared_ptr<Texture> m_Texture2;
@@ -185,7 +185,7 @@ void PrepareRenderTriangles(int width, int height) {
     m_Shader   = Shader::Load(
             "assets/shaders/TestShader.shader",
             {
-                GL::AttributeType::POSITION, GL::AttributeType::TEXCOORD0
+                    gl::AttributeType::POSITION, gl::AttributeType::TEXCOORD0
             });
 
     if (m_Texture) m_Texture->Bind(0);
@@ -198,11 +198,11 @@ void PrepareRenderTriangles(int width, int height) {
     float* vertices = GetVertices();
     uint32_t* indices = GetIndices(count);
 
-    m_VBHandle = GL::CreateVertexBuffer(
+    m_VBHandle = gl::CreateVertexBuffer(
             vertices, 5 * count,
             {
-                {GL::AttributeType::POSITION, GL::AttributeFormat::Vec3 },
-                {GL::AttributeType::TEXCOORD0, GL::AttributeFormat::Vec2 }
+                {gl::AttributeType::POSITION,  gl::AttributeFormat::Vec3 },
+                {gl::AttributeType::TEXCOORD0, gl::AttributeFormat::Vec2 }
             }
         );
 }
@@ -217,15 +217,15 @@ void RenderTriangle() {
     model *= Matrix::Rotation(Quat(Vec3::Left, 1.25f * timeValue));
     model *= Matrix::Translation(Vec3::Zero);
 
-    m_Camera->SetPosition(Vec3(0.0f, 0.0f, 3.0f));
-    m_Camera->SetRotation(Quat(Vec3::Right, 0.0f * M_PI / 180.0f));
+    m_Camera->set_position(Vec3(0.0f, 0.0f, 3.0f));
+    m_Camera->set_rotation(Quat(Vec3::Right, 0.0f * M_PI / 180.0f));
 
     m_Shader->SetFloat4("mainColor", color);
     m_Shader->SetMat("model", model);
     m_Shader->SetMat("view", m_Camera->GetViewMatrix());
-    m_Shader->SetMat("projection", m_Camera->GetProjectionMatrix());
+    m_Shader->SetMat("projection", m_Camera->get_projection_matrix());
 
-    GL::Bind(m_VBHandle);
+    gl::Bind(m_VBHandle);
     m_Shader->Render();
 }
 

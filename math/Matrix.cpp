@@ -1,7 +1,7 @@
 #include "Matrix.h"
 
 
-namespace Sprint {
+namespace sprint {
 
 const Matrix Matrix::Identity(Vec3::Forward, Vec3::Right, Vec3::Up, Vec3::Zero);
 
@@ -20,18 +20,18 @@ Matrix Matrix::Scale(float scale) {
 
 Matrix Matrix::Scale(const Vec3& scale) {
     return Matrix(
-            Vec3(scale.X, 0.0f, 0.0f),
-            Vec3(0.0f, scale.Y, 0.0f),
-            Vec3(0.0f, 0.0f, scale.Z),
+            Vec3(scale.x, 0.0f, 0.0f),
+            Vec3(0.0f, scale.y, 0.0f),
+            Vec3(0.0f, 0.0f, scale.z),
             Vec3(0.0f, 0.0f, 0.0f)
         );
 }
 
 Matrix Matrix::Rotation(const Quat& rot) {
-    const float x2 = rot.X + rot.X;  const float y2 = rot.Y + rot.Y;  const float z2 = rot.Z + rot.Z;
-    const float xx = rot.X * x2;     const float xy = rot.X * y2;   const float xz = rot.X * z2;
-    const float yy = rot.Y * y2;     const float yz = rot.Y * z2;   const float zz = rot.Z * z2;
-    const float wx = rot.W * x2;     const float wy = rot.W * y2;   const float wz = rot.W * z2;
+    const float x2 = rot.x + rot.x;  const float y2 = rot.y + rot.y;  const float z2 = rot.z + rot.z;
+    const float xx = rot.x * x2;     const float xy = rot.x * y2;   const float xz = rot.x * z2;
+    const float yy = rot.y * y2;     const float yz = rot.y * z2;   const float zz = rot.z * z2;
+    const float wx = rot.w * x2;     const float wy = rot.w * y2;   const float wz = rot.w * z2;
 
     return Matrix(
             Vec3(1.0f - (yy + zz), xy + wz,          xz - wy),
@@ -85,25 +85,25 @@ Matrix Matrix::LookAt(const Vec3& position, const Vec3& target, const Vec3& up) 
 }
 
 Matrix::Matrix(const Vec3& x, const Vec3& y, const Vec3& z, const Vec3& w) :
-    m_Data {
-        { x.X, x.Y, x.Z, 0.0f },
-        { y.X, y.Y, y.Z, 0.0f },
-        { z.X, z.Y, z.Z, 0.0f },
-        { w.X, w.Y, w.Z, 1.0f }
+        data_ {
+        { x.x, x.y, x.z, 0.0f },
+        { y.x, y.y, y.z, 0.0f },
+        { z.x, z.y, z.z, 0.0f },
+        { w.x, w.y, w.z, 1.0f }
     }
 {}
 
 Matrix::Matrix(const Vec4& x, const Vec4& y, const Vec4& z, const Vec4& w) :
-        m_Data {
-                { x.X, x.Y, x.Z, x.W },
-                { y.X, y.Y, y.Z, y.W },
-                { z.X, z.Y, z.Z, z.W },
-                { w.X, w.Y, w.Z, w.W }
+        data_ {
+                { x.x, x.y, x.z, x.w },
+                { y.x, y.y, y.z, y.w },
+                { z.x, z.y, z.z, z.w },
+                { w.x, w.y, w.z, w.w }
         }
 {}
 
 Matrix::Matrix() :
-    m_Data {
+        data_ {
         { 1.0f, 0.0f, 0.0f, 0.0f },
         { 0.0f, 1.0f, 0.0f, 0.0f },
         { 0.0f, 0.0f, 1.0f, 0.0f },
