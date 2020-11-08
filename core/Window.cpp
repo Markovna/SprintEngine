@@ -2,8 +2,8 @@
 
 #include <cmath>
 
-#include "Window.h"
 #include "Shader.h"
+#include "Window.h"
 #include "Vector.h"
 #include "Matrix.h"
 #include "Texture.h"
@@ -81,7 +81,6 @@ Window::~Window() {
 }
 
 void Window::OnUpdate() {
-    glfwMakeContextCurrent(m_Window);
 
     GL::Clear(Color(0.2f, 0.2f, 0.2f, 1.0f), GL::CLEAR_COLOR | GL::CLEAR_DEPTH);
 
@@ -102,7 +101,7 @@ bool Window::PollEvent(Event& event) {
 }
 
 void Window::PushEvent(Event event) {
-    m_Events.push(std::move(event));
+    m_Events.push(event);
 }
 
 GL::VertexBufferHandle m_VBHandle;
@@ -209,7 +208,7 @@ void PrepareRenderTriangles(int width, int height) {
 }
 
 void RenderTriangle() {
-    float timeValue =  0.5f * glfwGetTime();
+    float timeValue =  0.5 * glfwGetTime();
 
     Color color(sin(timeValue) / 2.0f + 0.5f,0.3f,cos(timeValue) / 2.0f + 0.5f,1.0f);
 

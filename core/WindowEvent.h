@@ -30,7 +30,7 @@ struct NoneEvent {};
 
 class WindowEvent {
 public:
-    enum class Type {
+    enum Type : uint8_t {
         NONE,
         MOUSE_UP,
         MOUSE_DOWN,
@@ -39,7 +39,6 @@ public:
         KEY_RELEASE,
         CLOSE
     };
-private:
 
 public:
     WindowEvent(KeyEvent keyEvent, bool pressed);

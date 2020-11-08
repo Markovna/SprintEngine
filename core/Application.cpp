@@ -34,11 +34,11 @@ void OnKeyRelease(KeyEvent& event) {}
 
 void OnEvent(WindowEvent& event) {
     switch (event.GetType()) {
-        case WindowEvent::Type::MOUSE_DOWN:  OnMouseDown(event.Mouse); break;
-        case WindowEvent::Type::MOUSE_UP:    OnMouseUp(event.Mouse); break;
-        case WindowEvent::Type::MOUSE_MOVE:  OnMouseMove(event.MouseMove); break;
-        case WindowEvent::Type::KEY_PRESS:   OnKeyPress(event.Key); break;
-        case WindowEvent::Type::KEY_RELEASE: OnKeyRelease(event.Key); break;
+        case WindowEvent::MOUSE_DOWN:  OnMouseDown(event.Mouse);     break;
+        case WindowEvent::MOUSE_UP:    OnMouseUp(event.Mouse);       break;
+        case WindowEvent::MOUSE_MOVE:  OnMouseMove(event.MouseMove); break;
+        case WindowEvent::KEY_PRESS:   OnKeyPress(event.Key);        break;
+        case WindowEvent::KEY_RELEASE: OnKeyRelease(event.Key);      break;
         default: break;
     }
 }
@@ -49,7 +49,7 @@ bool Application::RunOneFrame() {
 
     WindowEvent event;
     while (m_Window->PollEvent(event)) {
-        if (event.GetType() == WindowEvent::Type::CLOSE)
+        if (event.GetType() == WindowEvent::CLOSE)
             return false;
 
         OnEvent(event);

@@ -5,10 +5,9 @@
 
 #include "KeyCode.h"
 
-
 namespace Sprint {
 
-class ImGuiRenderer {
+class ImGuiImpl {
 public:
     void Init() {
         ImGui::StyleColorsDark();
@@ -47,7 +46,7 @@ public:
 
     }
 
-    void Render(ImDrawData* draw_data) {
+    void Render(ImDrawData* drawData) {
 
     }
 };

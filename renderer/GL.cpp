@@ -1,7 +1,7 @@
 #include "GL.h"
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+//#include <glad/glad.h>
+//#include <GLFW/glfw3.h>
 
 #include "IntAlloc.h"
 #include "Log.h"
@@ -10,33 +10,7 @@ namespace Sprint {
 
 namespace GL {
 
-constexpr static uint16_t MAX_INDEX_BUFFERS_COUNT  = 1024;
-constexpr static uint16_t MAX_VERTEX_BUFFERS_COUNT = 1024;
-constexpr static uint16_t MAX_SHADERS_COUNT = 1024;
-constexpr static uint16_t MAX_TEXTURES_COUNT = 1024;
-
 typedef uint32_t ATTRIB_LOCATION_MASK;
-
-struct ShaderType {
-    enum Enum {
-        Vertex = 0,
-        Fragment = 1
-    };
-
-    static constexpr size_t Count = 2;
-
-    static bool TryParse(const std::string_view str, Enum& type) {
-        if (str == "vertex") {
-            type = Vertex;
-            return true;
-        }
-        if (str == "fragment") {
-            type = Fragment;
-            return true;
-        }
-        return false;
-    }
-};
 
 static GLenum ToGLenum(ShaderType::Enum type) {
     switch (type) {
@@ -92,122 +66,6 @@ static uint32_t CompileShader(ShaderType::Enum type, const std::string& source) 
     CheckCompileStatus(shaderID);
     return shaderID;
 }
-
-class Shader {
-public:
-    Shader() noexcept : m_AttributesMask(0), m_ID(0) {}
-    Shader(const std::string& source, std::initializer_list<AttributeType::Enum> inTypes) : m_AttributesMask(0) {
-        m_ID = glCreateProgram();
-        std::string shaders[ShaderType::Count];
-        PreProcess(source, shaders);
-        for (size_t i = 0; i < ShaderType::Count; i++) {
-            auto id = CompileShader((ShaderType::Enum) i, shaders[i]);
-            glAttachShader(m_ID, id);
-            glDeleteShader(id);
-        }
-
-        glLinkProgram(m_ID);
-        CheckLinkStatus(m_ID);
-
-        uint32_t location = 0;
-        for (auto type : inTypes) {
-            m_AttributeLocations[type] = location++;
-            m_AttributesMask |= ((uint32_t) 1) << type;
-        }
-    }
-
-    void Use() const {
-        glUseProgram(m_ID);
-    }
-
-    void SetUniform(UniformType::Enum type, const std::string &name, const void* value) const {
-        glUseProgram(m_ID);
-        uint32_t location = glGetUniformLocation(m_ID, name.c_str());
-        float* ptr;
-        switch (type) {
-            case UniformType::Enum::Int:
-                glUniform1i(location, *(int*) value);
-                break;
-            case UniformType::Enum::Float:
-                glUniform1f(location, *(float*) value);
-                break;
-            case UniformType::Enum::Vec3:
-                ptr = (float*) value;
-                glUniform3f(location, ptr[0], ptr[1], ptr[2]);
-                break;
-            case UniformType::Enum::Vec4:
-                ptr = (float*) value;
-                glUniform4f(location, ptr[0], ptr[1], ptr[2], ptr[3]);
-                break;
-            case UniformType::Enum::Mat4:
-                glUniformMatrix4fv(location, 1, GL_FALSE, (float*) value);
-                break;
-        }
-        glUseProgram(0);
-    }
-
-    void Destroy() {
-        glDeleteProgram(m_ID);
-        m_ID = 0;
-        m_AttributesMask = 0;
-    }
-
-    bool TryGetLocation(AttributeType::Enum type, uint32_t& location) const {
-        if (m_AttributesMask & (((uint32_t) 1) << type)) {
-            location = m_AttributeLocations[type];
-            return true;
-        }
-        return false;
-    }
-
-private:
-    uint32_t m_AttributesMask;
-    uint32_t m_AttributeLocations[AttributeType::Count];
-    uint32_t m_ID;
-};
-
-struct IndexBuffer {
-    IndexBuffer() noexcept : ID(0), Size(0) {};
-    IndexBuffer(uint32_t id, uint32_t size) noexcept : ID(id), Size(size) {}
-
-    uint32_t ID;
-    uint32_t Size;
-};
-
-struct VertexBuffer {
-    VertexBuffer() noexcept : ID(0), Size(0), Layout{} {};
-    VertexBuffer(uint32_t id, uint32_t size, VertexLayout layout) noexcept :
-        ID(id), Size(size), Layout(layout)
-    {}
-
-    uint32_t ID;
-    uint32_t Size;
-    VertexLayout Layout;
-};
-
-struct Texture {
-    Texture() noexcept : ID(0) {}
-    explicit Texture(uint32_t id) : ID(id) {}
-
-    uint32_t ID;
-};
-
-typedef GLFWwindow* ContextWndHandle;
-
-static VertexBufferHandle m_VertexBufferHandle = VertexBufferHandle::Invalid;
-static IndexBufferHandle m_IndexBufferHandle = IndexBufferHandle::Invalid;
-static uint32_t m_VertexArrayID = 0;
-static ContextWndHandle m_CtxWndHandle;
-
-static IndexBuffer m_IndexBuffers[MAX_INDEX_BUFFERS_COUNT];
-static VertexBuffer m_VertexBuffers[MAX_VERTEX_BUFFERS_COUNT];
-static Shader m_Shaders[MAX_SHADERS_COUNT];
-static Texture m_Textures[MAX_TEXTURES_COUNT];
-
-static IntAlloc<MAX_INDEX_BUFFERS_COUNT, IndexBufferHandle::INVALID_ID>  m_IndexBufferIds;
-static IntAlloc<MAX_VERTEX_BUFFERS_COUNT, VertexBufferHandle::INVALID_ID> m_VertexBufferIds;
-static IntAlloc<MAX_SHADERS_COUNT, ShaderHandle::INVALID_ID> m_ShaderIds;
-static IntAlloc<MAX_TEXTURES_COUNT, TextureHandle::INVALID_ID> m_TextureIds;
 
 static GLbitfield ToGLBits(CLEAR_FLAG mask) {
     GLbitfield bitfield = 0;
@@ -424,10 +282,6 @@ void SwapBuffers() {
     glfwSwapBuffers(m_CtxWndHandle);
 }
 
-void SetUniform(ShaderHandle handle, UniformType::Enum type, const std::string &name, const void* value) {
-    m_Shaders[handle.ID].SetUniform(type, name, value);
-}
-
 void Destroy(TextureHandle &handle) {
     glDeleteTextures(1, &m_Textures[handle.ID].ID);
     m_TextureIds.Free(handle.ID);
@@ -437,6 +291,96 @@ void Destroy(TextureHandle &handle) {
 void Bind(TextureHandle handle, uint32_t idx) {
     glActiveTexture(GL_TEXTURE0 + idx);
     glBindTexture(GL_TEXTURE_2D, m_Textures[handle.ID].ID);
+}
+
+void SetUniform(ShaderHandle handle, UniformType::Enum type, const std::string &name, const void *values) {
+    m_Shaders[handle.ID].SetUniform(type, name, values);
+}
+
+Shader::Shader(const std::string &source, std::initializer_list<AttributeType::Enum> inTypes) : m_AttributesMask(0) {
+    m_ID = glCreateProgram();
+    std::string shaders[ShaderType::Count];
+    PreProcess(source, shaders);
+    for (size_t i = 0; i < ShaderType::Count; i++) {
+        auto id = CompileShader((ShaderType::Enum) i, shaders[i]);
+        glAttachShader(m_ID, id);
+        glDeleteShader(id);
+    }
+
+    glLinkProgram(m_ID);
+    CheckLinkStatus(m_ID);
+
+    uint32_t location = 0;
+    for (auto type : inTypes) {
+        m_AttributeLocations[type] = location++;
+        m_AttributesMask |= ((uint32_t) 1) << type;
+    }
+}
+
+void Shader::Use() const {
+    glUseProgram(m_ID);
+}
+
+void Shader::SetUniform(UniformType::Enum type, const std::string &name, const void *value) const {
+    glUseProgram(m_ID);
+    uint32_t location = glGetUniformLocation(m_ID, name.c_str());
+    float* ptr;
+    switch (type) {
+        case UniformType::Enum::Int:
+            glUniform1i(location, *(int*) value);
+            break;
+        case UniformType::Enum::Float:
+            glUniform1f(location, *(float*) value);
+            break;
+        case UniformType::Enum::Vec3:
+            ptr = (float*) value;
+            glUniform3f(location, ptr[0], ptr[1], ptr[2]);
+            break;
+        case UniformType::Enum::Vec4:
+            ptr = (float*) value;
+            glUniform4f(location, ptr[0], ptr[1], ptr[2], ptr[3]);
+            break;
+        case UniformType::Enum::Mat4:
+            glUniformMatrix4fv(location, 1, GL_FALSE, (float*) value);
+            break;
+    }
+    glUseProgram(0);
+}
+
+void Shader::Destroy() {
+    glDeleteProgram(m_ID);
+    m_ID = 0;
+    m_AttributesMask = 0;
+}
+
+bool Shader::TryGetLocation(AttributeType::Enum type, uint32_t &location) const {
+    if (m_AttributesMask & (((uint32_t) 1) << type)) {
+        location = m_AttributeLocations[type];
+        return true;
+    }
+    return false;
+}
+
+std::string UniformType::ToString(UniformType::Enum type) {
+    switch (type) {
+        case Int: return "Int";
+        case Float: return "Float";
+        case Vec3: return "Vec3";
+        case Vec4: return "Vec4";
+        case Mat4: return "Mat4";
+    }
+}
+
+bool ShaderType::TryParse(std::string_view str, ShaderType::Enum &type) {
+    if (str == "vertex") {
+        type = Vertex;
+        return true;
+    }
+    if (str == "fragment") {
+        type = Fragment;
+        return true;
+    }
+    return false;
 }
 
 }
