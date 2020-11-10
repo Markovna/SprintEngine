@@ -26,17 +26,7 @@ int Application::Run() {
     return 0;
 }
 
-void OnMouseDown(MouseEvent &event) {}
-
-void OnMouseUp(MouseEvent &event) {}
-
-void OnMouseMove(MouseMoveEvent &event) {}
-
-void OnKeyPress(KeyEvent &event) {}
-
-void OnKeyRelease(KeyEvent &event) {}
-
-void OnEvent(WindowEvent &event) {
+void Application::OnEvent(WindowEvent& event) {
     switch (event.get_type()) {
         case WindowEvent::MOUSE_DOWN:
             OnMouseDown(event.Mouse);
@@ -58,14 +48,14 @@ void OnEvent(WindowEvent &event) {
     }
 }
 
-
 bool Application::RunOneFrame() {
     UpdateTime();
 
     WindowEvent event;
     while (window_->PollEvent(event)) {
-        if (event.get_type() == WindowEvent::CLOSE)
+        if (event.get_type() == WindowEvent::CLOSE) {
             return false;
+        }
 
         OnEvent(event);
     }
