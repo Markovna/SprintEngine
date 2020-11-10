@@ -27,9 +27,9 @@ add_executable(SprintEngine
         renderer/Camera.cpp renderer/Camera.h
         core/ModelLoader.cpp core/ModelLoader.h
         renderer/Mesh.cpp renderer/Mesh.h
-        common/Color.cpp common/Color.h
+        common/color.cpp common/color.h
         editor/ImGui.cpp editor/ImGui.h
-        renderer/GL.cpp renderer/GL.h Common/IntAlloc.h renderer/VertexLayout.cpp renderer/VertexLayout.h core/InputSystem.cpp core/InputSystem.h common/signals/Delegate.h common/signals/Event.cpp common/signals/Event.h common/signals/function_ref.cpp common/signals/function_ref.h common/signals/Delegate_Test.cpp common/signals/Delegate_Test.h)
+        renderer/GL.cpp renderer/GL.h common/id_alloc.h renderer/VertexLayout.cpp renderer/VertexLayout.h core/InputSystem.cpp core/InputSystem.h common/signals/delegate.h common/signals/event.cpp common/signals/event.h common/signals/function_ref.cpp common/signals/function_ref.h common/signals/delegate_tests.cpp common/signals/delegate_tests.h common/slot_map.h)
 
 target_include_directories(SprintEngine PRIVATE core/ renderer/ math/ common/)
 

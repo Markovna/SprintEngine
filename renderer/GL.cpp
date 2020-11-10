@@ -3,7 +3,7 @@
 //#include <glad/glad.h>
 //#include <GLFW/glfw3.h>
 
-#include "IntAlloc.h"
+#include "id_alloc.h"
 #include "Log.h"
 
 namespace sprint {
@@ -198,8 +198,8 @@ void Shutdown() {
 }
 
 IndexBufferHandle CreateIndexBuffer(uint32_t *indices, uint32_t size) {
+    assert(index_buffer_ids.HasFree());
     IndexBufferHandle handle(index_buffer_ids.Alloc());
-    assert(handle.IsValid());
     CreateIndexBuffer(handle, indices, size);
     return handle;
 }
@@ -211,8 +211,8 @@ void Destroy(IndexBufferHandle& handle) {
 }
 
 VertexBufferHandle CreateVertexBuffer(float *data, uint32_t size, VertexLayout layout) {
+    assert(vertex_buffer_ids.HasFree());
     VertexBufferHandle handle(vertex_buffer_ids.Alloc());
-    assert(handle.IsValid());
     CreateVertexBuffer(handle, data, size, layout);
     return handle;
 }
@@ -254,20 +254,20 @@ void Render(ShaderHandle handle) {
     UnbindVertexBuffer();
     UnbindIndexBuffer();
 
-  vertex_buffer_handle = VertexBufferHandle::Invalid;
-  index_buffer_handle = IndexBufferHandle::Invalid;
+    vertex_buffer_handle = VertexBufferHandle::Invalid;
+    index_buffer_handle = IndexBufferHandle::Invalid;
 }
 
 ShaderHandle CreateShader(const std::string &source, std::initializer_list<AttributeType::Enum> in_types) {
+    assert(shader_ids.HasFree());
     ShaderHandle handle(shader_ids.Alloc());
-    assert(handle.IsValid());
-  shaders[handle.ID] = Shader(source, in_types);
+    shaders[handle.ID] = Shader(source, in_types);
     return handle;
 }
 
 TextureHandle CreateTexture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t channels) {
+    assert(texture_ids.HasFree());
     TextureHandle handle(texture_ids.Alloc());
-    assert(handle.IsValid());
     CreateTexture(handle, data, width, height, channels);
     return handle;
 }

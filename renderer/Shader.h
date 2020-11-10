@@ -2,7 +2,7 @@
 
 #include "Vector.h"
 #include "Matrix.h"
-#include "Color.h"
+#include "color.h"
 #include "GL.h"
 
 #include <string>

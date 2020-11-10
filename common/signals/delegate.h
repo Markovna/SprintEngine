@@ -212,10 +212,10 @@ public:
 
     template <
         class T,
-        class F = std::decay_t<T>,
-        class = std::enable_if_t<!std::is_same<delegate, F>::value>
+        class = std::enable_if_t<!std::is_same<delegate, std::decay_t<T>>::value>
     >
     delegate(T&& functor) {
+        using F = std::decay_t<T>;
         static const vtable_t vt {
             dispatcher::template invoke<F>,
             dispatcher::template destroy<F>,

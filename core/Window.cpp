@@ -8,7 +8,7 @@
 #include "Matrix.h"
 #include "Texture.h"
 #include "Camera.h"
-#include "Color.h"
+#include "color.h"
 
 
 namespace sprint {

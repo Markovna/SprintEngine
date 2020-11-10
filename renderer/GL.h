@@ -4,11 +4,11 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "Color.h"
+#include "color.h"
 #include "VertexLayout.h"
 #include "Log.h"
 
-#include "IntAlloc.h"
+#include "id_alloc.h"
 
 namespace sprint {
 
@@ -129,10 +129,10 @@ static VertexBuffer vertex_buffers[kMaxVertexBuffersCount];
 static Shader shaders[kMaxShadersCount];
 static Texture textures[kMaxTexturesCount];
 
-static IntAlloc<kMaxIndexBuffersCount, IndexBufferHandle::INVALID_ID>  index_buffer_ids;
-static IntAlloc<kMaxVertexBuffersCount, VertexBufferHandle::INVALID_ID> vertex_buffer_ids;
-static IntAlloc<kMaxShadersCount, ShaderHandle::INVALID_ID> shader_ids;
-static IntAlloc<kMaxTexturesCount, TextureHandle::INVALID_ID> texture_ids;
+static id_alloc<kMaxIndexBuffersCount> index_buffer_ids;
+static id_alloc<kMaxVertexBuffersCount> vertex_buffer_ids;
+static id_alloc<kMaxShadersCount> shader_ids;
+static id_alloc<kMaxTexturesCount> texture_ids;
 
 void Init();
 void Shutdown();

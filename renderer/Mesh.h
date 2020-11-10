@@ -1,6 +1,6 @@
 #pragma once
 #include "Vector.h"
-#include "Color.h"
+#include "color.h"
 
 namespace sprint {
 

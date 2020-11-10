@@ -31,7 +31,7 @@ typedef Vector<4> Vec4;
 template<>
 struct Vector<2> {
     float x, y;
-    static constexpr size_t N = 2;
+    static constexpr const size_t N = 2;
 
     static const Vector Zero;
     static const Vector One;
@@ -62,7 +62,7 @@ struct Vector<2> {
 template<>
 struct Vector<3> {
     float x, y, z;
-    static constexpr size_t N = 3;
+    static constexpr const size_t N = 3;
 
     static const Vector Zero;
     static const Vector One;
@@ -116,7 +116,7 @@ struct Vector<3> {
 template<>
 struct Vector<4> {
     float x, y, z, w;
-    static constexpr size_t N = 4;
+    static constexpr const size_t N = 4;
 
     explicit Vector(const Vec3& vec, float w = 0.0f) : x(vec.x), y(vec.y), z(vec.z), w(w) {}
     Vector() : x(0), y(0), z(0), w(0) {}

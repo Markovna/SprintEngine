@@ -6,15 +6,18 @@
 
 namespace sprint {
 
-template<size_t N, size_t INVALID_ID = N>
-class IntAlloc {
+template<size_t N>
+class id_alloc {
 public:
-    IntAlloc() noexcept : reserved_count_(0), bitset_() {
+    id_alloc() noexcept : reserved_count_(0), bitset_() {
         std::iota(std::begin(free_indices_), std::end(free_indices_), 0);
     }
 
+    bool HasFree() {
+        return reserved_count_ < N;
+    }
+
     uint32_t Alloc() {
-        if (reserved_count_ == N) return INVALID_ID;
         bitset_[reserved_count_] = 0;
         return free_indices_[reserved_count_++];
     }
