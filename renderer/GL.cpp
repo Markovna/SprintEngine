@@ -3,7 +3,7 @@
 //#include <glad/glad.h>
 //#include <GLFW/glfw3.h>
 
-#include "id_alloc.h"
+#include "IdAllocator.h"
 #include "Log.h"
 
 namespace sprint {
@@ -44,7 +44,7 @@ static void CheckCompileStatus(uint32_t shaderID) {
     if (!success) {
         char infoLog[512];
         glGetShaderInfoLog(shaderID, 512, NULL, infoLog);
-        Log::CoreError("GL::Shader compilation failed with errors:\n{}", infoLog);
+        log::core::Error("GL::Shader compilation failed with errors:\n{}", infoLog);
     }
 }
 
@@ -54,7 +54,7 @@ static void CheckLinkStatus(uint32_t shaderID) {
     if (!success) {
         char infoLog[512];
         glGetProgramInfoLog(shaderID, 512, NULL, infoLog);
-        Log::CoreError("GL::Shader linking failed with errors:\n{}", infoLog);
+        log::core::Error("GL::Shader linking failed with errors:\n{}", infoLog);
     }
 }
 
@@ -78,6 +78,7 @@ static GLbitfield ToGLBits(ClearFlag mask) {
 static GLenum ToGLenum(GLType type) {
     switch (type) {
         case GLType::FLOAT: return GL_FLOAT;
+        case GLType::INT: return GL_INT;
     }
 }
 
@@ -105,25 +106,25 @@ static void CreateTexture(TextureHandle handle, const uint8_t *data, uint32_t wi
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-  textures[handle.ID] = Texture(textureId);
+    textures[handle.ID] = Texture(textureId);
 }
 
-static void CreateIndexBuffer(IndexBufferHandle handle, uint32_t *indices, uint32_t size) {
+static void CreateIndexBuffer(IndexBufferHandle handle, const void* indices, uint32_t size, bool dynamic) {
     uint32_t bufferId;
     glGenBuffers(1, &bufferId);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, size * sizeof(uint32_t), indices, GL_STATIC_DRAW);
-
-  index_buffers[handle.ID] = IndexBuffer(bufferId, size);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, indices, dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    index_buffers[handle.ID] = IndexBuffer(bufferId, size);
 }
 
-static void CreateVertexBuffer(VertexBufferHandle handle, float *data, uint32_t size, VertexLayout layout) {
+static void CreateVertexBuffer(VertexBufferHandle handle, const void *data, size_t size, VertexLayout layout, bool dynamic) {
     uint32_t bufferId;
     glGenBuffers(1, &bufferId);
     glBindBuffer(GL_ARRAY_BUFFER, bufferId);
-    glBufferData(GL_ARRAY_BUFFER, size * sizeof(float), data, GL_STATIC_DRAW);
-
-  vertex_buffers[handle.ID] = VertexBuffer(bufferId, size, layout);
+    glBufferData(GL_ARRAY_BUFFER, size * layout.get_stride(), data, dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    vertex_buffers[handle.ID] = VertexBuffer(bufferId, size, layout);
 }
 
 static void BindVertexBuffer(const VertexBuffer& buffer) {
@@ -180,7 +181,7 @@ void Clear(const Color &color, ClearFlag options) {
     glClear(ToGLBits(options));
 }
 
-void Init() {
+void Init(Config config) {
     int loaded = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
     assert(loaded);
 
@@ -189,7 +190,7 @@ void Init() {
 
     glEnable(GL_DEPTH_TEST);
 
-  ctx_window_handle = glfwGetCurrentContext();
+    default_context = config.context;
 }
 
 void Shutdown() {
@@ -197,39 +198,49 @@ void Shutdown() {
     glDeleteVertexArrays(1, &vertex_array_id);
 }
 
-IndexBufferHandle CreateIndexBuffer(uint32_t *indices, uint32_t size) {
+IndexBufferHandle CreateIndexBuffer(const void *indices, uint32_t size, bool dynamic) {
     assert(index_buffer_ids.HasFree());
     IndexBufferHandle handle(index_buffer_ids.Alloc());
-    CreateIndexBuffer(handle, indices, size);
+    CreateIndexBuffer(handle, indices, size, dynamic);
     return handle;
 }
 
 void Destroy(IndexBufferHandle& handle) {
+    if (!handle.IsValid()) {
+        log::core::Error("GL::Destroy failed: Invalid index buffer handle");
+        return;
+    }
+
     glDeleteBuffers(1, &index_buffers[handle.ID].id);
     index_buffer_ids.Free(handle.ID);
     handle = IndexBufferHandle::Invalid;
 }
 
-VertexBufferHandle CreateVertexBuffer(float *data, uint32_t size, VertexLayout layout) {
+VertexBufferHandle CreateVertexBuffer(const void *data, size_t size, VertexLayout layout, bool dynamic) {
     assert(vertex_buffer_ids.HasFree());
     VertexBufferHandle handle(vertex_buffer_ids.Alloc());
-    CreateVertexBuffer(handle, data, size, layout);
+    CreateVertexBuffer(handle, data, size, layout, dynamic);
     return handle;
 }
 
 void Destroy(VertexBufferHandle &handle) {
+    if (!handle.IsValid()) {
+        log::core::Error("GL::Destroy failed: Invalid vertex buffer handle");
+        return;
+    }
+
     glDeleteBuffers(1, &vertex_buffers[handle.ID].id);
     vertex_buffer_ids.Free(handle.ID);
     handle = VertexBufferHandle::Invalid;
 }
 
 void Bind(IndexBufferHandle handle) {
-  index_buffer_handle = handle;
+    index_buffer_handle = handle;
     BindIndexBuffer(index_buffers[handle.ID]);
 }
 
 void Bind(VertexBufferHandle handle) {
-  vertex_buffer_handle = handle;
+    vertex_buffer_handle = handle;
     BindVertexBuffer(vertex_buffers[handle.ID]);
 }
 
@@ -273,16 +284,26 @@ TextureHandle CreateTexture(const uint8_t *data, uint32_t width, uint32_t height
 }
 
 void Destroy(ShaderHandle &handle) {
+    if (!handle.IsValid()) {
+        log::core::Error("GL::Destroy failed: Invalid shader handle");
+        return;
+    }
+
     shaders[handle.ID].Destroy();
     shader_ids.Free(handle.ID);
     handle = ShaderHandle::Invalid;
 }
 
 void SwapBuffers() {
-    glfwSwapBuffers(ctx_window_handle);
+    default_context.SwapBuffers();
 }
 
 void Destroy(TextureHandle &handle) {
+    if (!handle.IsValid()) {
+        log::core::Error("GL::Destroy failed: Invalid texture handle");
+        return;
+    }
+
     glDeleteTextures(1, &textures[handle.ID].id);
     texture_ids.Free(handle.ID);
     handle = TextureHandle::Invalid;
@@ -293,12 +314,43 @@ void Bind(TextureHandle handle, uint32_t idx) {
     glBindTexture(GL_TEXTURE_2D, textures[handle.ID].id);
 }
 
+void SetInt(ShaderHandle handle, const std::string& name, int value) {
+    SetUniform(handle, gl::UniformType::Int, name, &value);
+}
+
+void SetBool(ShaderHandle handle, const std::string& name, bool value) {
+    SetUniform(handle, gl::UniformType::Int, name, &value);
+}
+
+void SetFloat(ShaderHandle handle, const std::string& name, float value) {
+    SetUniform(handle, gl::UniformType::Float, name, &value);
+}
+
+void SetFloat3(ShaderHandle handle, const std::string& name, const Vec3& value) {
+    float values[] = {value.x, value.y, value.z };
+    SetUniform(handle, gl::UniformType::Vec3, name, &values);
+}
+
+void SetFloat4(ShaderHandle handle, const std::string& name, const Vec4& value) {
+    float values[] = {value.x, value.y, value.z, value.w };
+    SetUniform(handle, gl::UniformType::Vec4, name, &values);
+}
+
+void SetFloat4(ShaderHandle handle, const std::string &name, const Color &value) {
+    float values[] = {value.r, value.g, value.b, value.a };
+    SetUniform(handle, gl::UniformType::Vec4, name, &values);
+}
+
+void SetMat(ShaderHandle handle, const std::string& name, const Matrix& value) {
+    SetUniform(handle, gl::UniformType::Mat4, name, &value[0][0]);
+}
+
 void SetUniform(ShaderHandle handle, UniformType::Enum type, const std::string &name, const void *values) {
     shaders[handle.ID].SetUniform(type, name, values);
 }
 
 Shader::Shader(const std::string &source, std::initializer_list<AttributeType::Enum> inTypes) : attributes_mask_(0) {
-  id_ = glCreateProgram();
+    id_ = glCreateProgram();
     std::string shaders[ShaderType::Count];
     PreProcess(source, shaders);
     for (size_t i = 0; i < ShaderType::Count; i++) {
@@ -312,7 +364,7 @@ Shader::Shader(const std::string &source, std::initializer_list<AttributeType::E
 
     uint32_t location = 0;
     for (auto type : inTypes) {
-      attribute_locations_[type] = location++;
+        attribute_locations_[type] = location++;
         attributes_mask_ |= ((uint32_t) 1) << type;
     }
 }
@@ -349,7 +401,7 @@ void Shader::SetUniform(UniformType::Enum type, const std::string &name, const v
 
 void Shader::Destroy() {
     glDeleteProgram(id_);
-  id_ = 0;
+    id_ = 0;
     attributes_mask_ = 0;
 }
 

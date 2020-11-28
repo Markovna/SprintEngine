@@ -1,48 +1,55 @@
 #pragma once
 
 #include "spdlog/spdlog.h"
+#include <iostream>
 
 
 namespace sprint {
 
-class Log {
+namespace log {
+
+namespace details {
+
+spdlog::logger CreateLogger(std::string name);
+
+template<class Logger>
+struct LogBase {
 public:
     template<typename ...Args>
-    inline static void Info(const std::string &str, const Args& ...args) {
-        client_logger_->info(str, args...);
+    static void Info(const std::string &str, const Args &...args) {
+        Logger::Get()->info(str, args...);
     }
 
-    template<typename ...Args>
-    inline static void Warning(const std::string &str, const Args& ...args) {
-        client_logger_->warn(str, args...);
+    template<typename... Args>
+    static void Warning(const std::string &str, const Args &... args) {
+        Logger::Get()->warn(str, args...);
     }
 
-    template<typename ...Args>
-    inline static void Error(const std::string &str, const Args& ...args) {
-        client_logger_->error(str, args...);
+    template<typename... Args>
+    static void Error(const std::string &str, const Args &... args) {
+        Logger::Get()->error(str, args...);
     }
-
-    template<typename ...Args>
-    inline static void CoreInfo(const std::string &str, const Args& ...args) {
-        core_logger_->info(str, args...);
-    }
-
-    template<typename ...Args>
-    inline static void CoreWarning(const std::string &str, const Args& ...args) {
-        core_logger_->warn(str, args...);
-    }
-
-    template<typename ...Args>
-    inline static void CoreError(const std::string &str, const Args& ...args) {
-        core_logger_->error(str, args...);
-    }
-
-    static void Init();
-
-private:
-    static std::unique_ptr<spdlog::logger> core_logger_;
-    static std::unique_ptr<spdlog::logger> client_logger_;
 };
 
+struct CoreLog : LogBase<CoreLog> {
+    static spdlog::logger *Get() {
+        static auto logger = std::make_unique<spdlog::logger>(CreateLogger("ENGINE"));
+        return logger.get();
+    }
+};
+
+struct ClientLog : details::LogBase<ClientLog> {
+    static spdlog::logger *Get() {
+        static auto logger = std::make_unique<spdlog::logger>(CreateLogger("APP"));
+        return logger.get();
+    }
+};
+
+}
+
+using core = details::CoreLog;
+using app = details::ClientLog;
+
+}
 
 }

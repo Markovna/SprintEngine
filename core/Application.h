@@ -1,36 +1,34 @@
 #pragma once
 
+#include <clock.h>
 #include "WindowEvent.h"
 #include "Window.h"
 #include "signals/event.h"
 
-#include "chrono"
-
+#include "../editor/imgui_renderer.h"
 
 namespace sprint {
 
-typedef std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> TimeSpan;
-
 class Application {
 public:
-    event<MouseEvent&> OnMouseDown{};
-    event<MouseEvent&> OnMouseUp{};
-    event<MouseMoveEvent&> OnMouseMove{};
-    event<KeyEvent&> OnKeyPress{};
-    event<KeyEvent&> OnKeyRelease{};
+    // TODO: move it to InputSystem
+    static event<MouseEvent&> OnMouseDown;
+    static event<MouseEvent&> OnMouseUp;
+    static event<MouseMoveEvent&> OnMouseMove;
+    static event<KeyEvent&> OnKeyPress;
+    static event<KeyEvent&> OnKeyRelease;
 
 public:
     Application();
+    ~Application();
     int Run();
 private:
-    void UpdateTime();
     bool RunOneFrame();
     void OnEvent(WindowEvent &event);
 private:
     std::unique_ptr<Window> window_;
-
-    float delta_time_ = 0;
-    TimeSpan last_update_time_;
+    std::unique_ptr<ImGuiRenderer> imgui_renderer_;
+    Clock clock_;
 };
 
 

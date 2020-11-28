@@ -28,8 +28,23 @@ add_executable(SprintEngine
         core/ModelLoader.cpp core/ModelLoader.h
         renderer/Mesh.cpp renderer/Mesh.h
         common/color.cpp common/color.h
-        editor/ImGui.cpp editor/ImGui.h
-        renderer/GL.cpp renderer/GL.h common/id_alloc.h renderer/VertexLayout.cpp renderer/VertexLayout.h core/InputSystem.cpp core/InputSystem.h common/signals/delegate.h common/signals/event.cpp common/signals/event.h common/signals/function_ref.cpp common/signals/function_ref.h common/signals/delegate_tests.cpp common/signals/delegate_tests.h common/slot_map.h)
+        editor/imgui_renderer.cpp editor/imgui_renderer.h
+        renderer/GL.cpp renderer/GL.h
+        common/IdAllocator.h
+        renderer/VertexLayout.cpp renderer/VertexLayout.h
+        core/InputSystem.cpp core/InputSystem.h
+        common/signals/delegate.h
+        common/signals/event.cpp common/signals/event.h
+        common/signals/function_ref.cpp common/signals/function_ref.h
+        common/signals/delegate_tests.cpp common/signals/delegate_tests.h
+        common/slot_map.h
+        editor/imgui_impl.cpp editor/imgui_impl.h
+        common/clock.cpp common/clock.h
+        renderer/gfx.cpp renderer/gfx.h
+        renderer/vertex_layout.cpp renderer/vertex_layout.h
+        renderer/gfx_details.cpp renderer/gfx_details.h
+        renderer/renderer_api_gl.cpp renderer/renderer_api_gl.h
+        renderer/shader_utils.cpp renderer/shader_utils.h renderer/gfx_config.cpp renderer/gfx_config.h)
 
 target_include_directories(SprintEngine PRIVATE core/ renderer/ math/ common/)
 
@@ -39,3 +54,5 @@ target_link_libraries(SprintEngine PRIVATE glad)
 target_link_libraries(SprintEngine PRIVATE stb_image)
 target_link_libraries(SprintEngine PRIVATE imgui)
 target_link_libraries(SprintEngine PRIVATE assimp)
+
+target_compile_definitions(SprintEngine PRIVATE GLFW_INCLUDE_NONE)

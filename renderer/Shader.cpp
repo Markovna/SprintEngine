@@ -18,57 +18,39 @@ static std::string ReadFile(const std::string& path) {
         content = sourceStream.str();
     }
     catch (std::ifstream::failure& e) {
-        Log::CoreError("Couldn't read file {0}", path);
+        log::core::Error("Couldn't read file {0}", path);
     }
     return content;
 }
 
 Shader::Shader(const std::string& source, std::initializer_list<gl::AttributeType::Enum> inTypes) :
-    handle_(gl::CreateShader(source, std::move(inTypes)))
+    handle_(gl::CreateShader(source, inTypes))
 {
 }
 
 Shader::~Shader() {
-    gl::Destroy(handle_);
+    if (handle_.IsValid())
+        gl::Destroy(handle_);
 }
 
-void Shader::SetInt(const std::string& name, int value) const {
-    gl::SetUniform(handle_, gl::UniformType::Int, name, &value);
+Shader Shader::Load(const std::string& path, std::initializer_list<gl::AttributeType::Enum> in_types) {
+    return Shader(ReadFile(path), in_types);
 }
 
-void Shader::SetBool(const std::string& name, bool value) const {
-    gl::SetUniform(handle_, gl::UniformType::Int, name, &value);
+Shader &Shader::operator=(Shader &&other) {
+    if (handle_ != other.handle_) {
+        Swap(*this, other);
+    }
+    return *this;
 }
 
-void Shader::SetFloat(const std::string& name, float value) const {
-    gl::SetUniform(handle_, gl::UniformType::Float, name, &value);
+void Shader::Swap(Shader& lhs, Shader& rhs) {
+    std::swap(lhs.handle_, rhs.handle_);
 }
 
-void Shader::SetFloat3(const std::string& name, const Vec3& value) const {
-    float values[] = {value.x, value.y, value.z };
-    gl::SetUniform(handle_, gl::UniformType::Vec3, name, &values);
-}
-
-void Shader::SetFloat4(const std::string& name, const Vec4& value) const {
-    float values[] = {value.x, value.y, value.z, value.w };
-    gl::SetUniform(handle_, gl::UniformType::Vec4, name, &values);
-}
-
-void Shader::SetFloat4(const std::string &name, const Color &value) const {
-    float values[] = {value.r, value.g, value.b, value.a };
-    gl::SetUniform(handle_, gl::UniformType::Vec4, name, &values);
-}
-
-void Shader::SetMat(const std::string& name, const Matrix& value) const {
-    gl::SetUniform(handle_, gl::UniformType::Mat4, name, &value[0][0]);
-}
-
-void Shader::Render() const {
-    gl::Render(handle_);
-}
-
-std::shared_ptr<Shader> Shader::Load(const std::string& path, std::initializer_list<gl::AttributeType::Enum> in_types) {
-    return std::shared_ptr<Shader>(new Shader(ReadFile(path), move(in_types)));
+Shader::Shader(Shader &&other) noexcept {
+    handle_ = other.handle_;
+    other.handle_ = gl::ShaderHandle::Invalid;
 }
 
 }

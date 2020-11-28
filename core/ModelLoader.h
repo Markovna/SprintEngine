@@ -13,7 +13,7 @@ namespace model_loader {
 
         if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
-            Log::CoreError("Couldn't load {0}", importer.GetErrorString());
+            log::core::Error("Couldn't load {0}", importer.GetErrorString());
             return;
         }
 

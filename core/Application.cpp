@@ -1,3 +1,4 @@
+#include <GL.h>
 #include "Application.h"
 #include "Window.h"
 #include "Log.h"
@@ -8,17 +9,19 @@ namespace sprint {
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
+event<MouseEvent&> Application::OnMouseDown;
+event<MouseEvent&> Application::OnMouseUp;
+event<MouseMoveEvent&> Application::OnMouseMove;
+event<KeyEvent&> Application::OnKeyPress;
+event<KeyEvent&> Application::OnKeyRelease;
+
 Application::Application() {
-    Log::Init();
 
     window_ = std::make_unique<Window>(SCREEN_WIDTH, SCREEN_HEIGHT);
-}
 
-void Application::UpdateTime() {
-    using namespace std::chrono;
-    TimeSpan now = steady_clock::now();
-    delta_time_ = duration_cast<microseconds>(now - last_update_time_).count() / 1000000.0f;
-    last_update_time_ = now;
+    gl::Init(gl::Config { gl::GraphicContext(window_->get_handle()) });
+
+    imgui_renderer_ = std::make_unique<ImGuiRenderer>();
 }
 
 int Application::Run() {
@@ -49,7 +52,7 @@ void Application::OnEvent(WindowEvent& event) {
 }
 
 bool Application::RunOneFrame() {
-    UpdateTime();
+    TimeSpan delta = clock_.Restart();
 
     WindowEvent event;
     while (window_->PollEvent(event)) {
@@ -60,7 +63,17 @@ bool Application::RunOneFrame() {
         OnEvent(event);
     }
 
+    imgui_renderer_->BeginFrame(window_.get(), delta.AsSeconds());
+
     window_->OnUpdate();
+
+    imgui_renderer_->EndFrame();
+
     return true;
 }
+
+Application::~Application() {
+    gl::Shutdown();
+}
+
 }

@@ -31,12 +31,13 @@ class Texture {
     };
 
 public:
+    Texture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t channels);
     static std::shared_ptr<Texture> Load(const std::string& path);
     void Bind(uint32_t slot = 0) const;
     ~Texture();
-private:
-    Texture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t channels);
+    gl::TextureHandle get_handle() const;
 
+    private:
     gl::TextureHandle handle_;
 };
 

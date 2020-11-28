@@ -7,19 +7,21 @@ namespace sprint {
 
 Texture::Loader::Loader(const std::string& path) {
     stbi_set_flip_vertically_on_load(true);
-  data_ = stbi_load(path.c_str(), &width_, &height_, &channels_, 0);
+    data_ = stbi_load(path.c_str(), &width_, &height_, &channels_, 0);
 }
 
 Texture::Loader::~Loader() {
-    if (data_)
+    if (data_) {
         stbi_image_free(data_);
+        data_ = nullptr;
+    }
 }
 
 Texture::Loader::Loader(Loader&& loader) noexcept {
-  data_ = loader.data_;
-  width_ = loader.width_;
-  height_ = loader.width_;
-  channels_ = loader.channels_;
+    data_ = loader.data_;
+    width_ = loader.width_;
+    height_ = loader.width_;
+    channels_ = loader.channels_;
 
     loader.data_ = nullptr;
     loader.width_ = 0;
@@ -30,10 +32,10 @@ Texture::Loader::Loader(Loader&& loader) noexcept {
 Texture::Loader& Texture::Loader::operator=(Loader&& loader) noexcept {
     if (data_ == loader.data_) return *this;
 
-  data_ = loader.data_;
-  width_ = loader.width_;
-  height_ = loader.width_;
-  channels_ = loader.channels_;
+    data_ = loader.data_;
+    width_ = loader.width_;
+    height_ = loader.width_;
+    channels_ = loader.channels_;
 
     loader.data_ = nullptr;
     loader.width_ = 0;
@@ -52,7 +54,7 @@ std::shared_ptr<Texture> Texture::Load(const std::string& path) {
                             loader.get_channels_num()));
     }
 
-    Log::CoreError("Failed to load texture {0}", path);
+    log::core::Error("Failed to load texture {0}", path);
     return nullptr;
 }
 
@@ -65,7 +67,11 @@ void Texture::Bind(uint32_t slot) const {
 }
 
 Texture::~Texture() {
-    gl::Destroy(handle_);
+    if (handle_.IsValid())
+        gl::Destroy(handle_);
+}
+gl::TextureHandle Texture::get_handle() const {
+    return handle_;
 }
 
 }

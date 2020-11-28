@@ -8,7 +8,7 @@ namespace gl {
 
 constexpr static uint16_t kMaxAttributesCount = 16;
 
-enum class GLType : uint8_t { FLOAT };
+enum class GLType : uint8_t { FLOAT, INT };
 
 struct AttributeType {
     enum Enum : uint8_t {

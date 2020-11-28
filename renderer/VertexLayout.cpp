@@ -12,6 +12,7 @@ const AttributeFormat AttributeFormat::Vec4(GLType::FLOAT, 4);
 static uint32_t SizeOf(const AttributeFormat& type) {
     switch (type.type) {
         case GLType::FLOAT: return type.size * sizeof(float);
+        case GLType::INT: return type.size * sizeof(int);
     }
 }
 
@@ -19,9 +20,9 @@ VertexLayout::VertexLayout(std::initializer_list<Attribute> attributes) {
     assert(attributes.size() <= kMaxAttributesCount);
 
     for (const auto& attr : attributes) {
-      attributes_[size_].attribute = attr;
-      attributes_[size_].offset = stride_;
-      stride_ += SizeOf(attr.format);
+        attributes_[size_].attribute = attr;
+        attributes_[size_].offset = stride_;
+        stride_ += SizeOf(attr.format);
         size_++;
     }
 }
