@@ -1,4 +1,5 @@
 #include <GL.h>
+#include <gfx.h>
 #include "Application.h"
 #include "Window.h"
 #include "Log.h"
@@ -19,7 +20,8 @@ Application::Application() {
 
     window_ = std::make_unique<Window>(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    gl::Init(gl::Config { gl::GraphicContext(window_->get_handle()) });
+//    gl::Init(gl::Config { gl::GraphicContext(window_->get_handle()) });
+    gfx::Init(gfx::Config { .window_handle = window_->get_handle() } );
 
     imgui_renderer_ = std::make_unique<ImGuiRenderer>();
 }
@@ -63,6 +65,9 @@ bool Application::RunOneFrame() {
         OnEvent(event);
     }
 
+    float fps = 1.0f / delta.AsSeconds();
+//    log::core ::Info("====== fps {0}", fps);
+
     imgui_renderer_->BeginFrame(window_.get(), delta.AsSeconds());
 
     window_->OnUpdate();
@@ -73,7 +78,8 @@ bool Application::RunOneFrame() {
 }
 
 Application::~Application() {
-    gl::Shutdown();
+//    gl::Shutdown();
+    gfx::Shutdown();
 }
 
 }

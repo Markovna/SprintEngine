@@ -15,17 +15,17 @@ struct Color {
 
     float r, g, b, a;
 
-    inline Color operator*(const Color& rhs) const;
-    inline void operator*=(const Color& other);
+    Color operator*(const Color& rhs) const;
+    void operator*=(const Color& other);
 
-    inline Color operator+(const Color& rhs) const;
-    inline void operator+=(const Color& other);
+    Color operator+(const Color& rhs) const;
+    void operator+=(const Color& other);
 
-    inline Color operator-(const Color& rhs) const;
-    inline void operator-=(const Color& other);
+    Color operator-(const Color& rhs) const;
+    void operator-=(const Color& other);
 
-    inline bool operator==(const Color& other) const;
-    inline bool operator!=(const Color& other) const;
+    bool operator==(const Color& other) const;
+    bool operator!=(const Color& other) const;
 };
 
 }

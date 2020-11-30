@@ -9,12 +9,17 @@ namespace sprint {
 namespace gfx {
 
 void Init(Config config) {
+
+    log::core::Info("gfx::Init");
+
     details::g_config = config;
     details::g_renderer.Init(details::g_config);
 }
 
 void Shutdown() {
     details::g_renderer.Shutdown();
+
+    log::core::Info("gfx::Shutdown");
 }
 
 bool ShaderType::TryParse(std::string_view str, ShaderType::Enum &type) {
@@ -29,19 +34,23 @@ bool ShaderType::TryParse(std::string_view str, ShaderType::Enum &type) {
     return false;
 }
 
-VertexBufferHandle CreateVertexBuffer(const void *data, uint32_t size, VertexLayout layout) {
+VertexBufferHandle CreateVertexBuffer(void *data, uint32_t size, VertexLayout layout) {
+    log::core::Info("gfx::CreateVertexBuffer");
     return details::g_renderer.CreateVertexBuffer(data, size, layout);
 }
 
-IndexBufferHandle CreateIndexBuffer(const void *data, uint32_t size) {
+IndexBufferHandle CreateIndexBuffer(void *data, uint32_t size) {
+    log::core::Info("gfx::CreateIndexBuffer");
     return details::g_renderer.CreateIndexBuffer(data, size);
 }
 
 ShaderHandle CreateShader(const std::string &source, std::initializer_list<Attribute::Binding::Enum> in_types) {
+    log::core::Info("gfx::CreateShader");
     return details::g_renderer.CreateShader(source, in_types);
 }
 
-TextureHandle CreateTexture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t channels) {
+TextureHandle CreateTexture(uint8_t *data, uint32_t width, uint32_t height, uint32_t channels) {
+    log::core::Info("gfx::CreateTexture");
     return details::g_renderer.CreateTexture(data, width, height, channels);
 }
 
@@ -89,7 +98,7 @@ void SetProjection(CameraId camera_id, const Matrix& matrix) {
     details::g_renderer.SetProjection(camera_id, matrix);
 }
 
-void SetClear(CameraId camera_id, ClearFlag clear_flag) {
+void SetClear(CameraId camera_id, ClearFlagMask clear_flag) {
     details::g_renderer.SetClear(camera_id, clear_flag);
 }
 
@@ -121,8 +130,12 @@ void SetUniform(ShaderHandle handle, const std::string& name, const Matrix& valu
     details::g_renderer.SetUniform(handle, name, value);
 }
 
-void SetUniform(ShaderHandle handle, const std::string& name, TextureHandle value) {
-    details::g_renderer.SetUniform(handle, name, value);
+void SetUniform(ShaderHandle handle, const std::string& name, TextureHandle value, TexSlotId slot) {
+    details::g_renderer.SetUniform(handle, name, value, slot);
+}
+
+void SetClearColor(CameraId camera_id, const Color& color) {
+    details::g_renderer.SetClearColor(camera_id, color);
 }
 
 }

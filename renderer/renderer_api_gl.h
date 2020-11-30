@@ -15,7 +15,9 @@ class GLContext {
 public:
     using WindowHandle = GLFWwindow*;
 
-    explicit GLContext(void* handle) : handle_((WindowHandle) handle) {}
+    explicit GLContext(void* handle) : handle_((WindowHandle) handle) {
+        log::core::Info("New OpenGL context created");
+    }
 
     void MakeCurrent();
     void SwapBuffers();
@@ -51,12 +53,12 @@ private:
     class Shader {
     public:
         Shader() noexcept : attributes_mask_(0), id_(0) {}
-        Shader(uint32_t id, const std::string& source, std::initializer_list<Attribute::Binding::Enum> bindings);
-        bool TryGetLocation(Attribute::Binding::Enum type, uint32_t& location) const;
+        Shader(uint32_t id, const std::string& source, const Attribute::BindingPack& bindings);
+        bool TryGetLocation(Attribute::Binding::Enum type, uint16_t& location) const;
         uint32_t get_id() const { return id_; }
     private:
-        uint32_t attributes_mask_;
-        uint32_t attribute_locations_[Attribute::Binding::Count]{};
+        uint16_t attributes_mask_;
+        uint16_t attribute_locations_[Attribute::Binding::Count]{};
         uint32_t id_;
     };
 
@@ -73,22 +75,40 @@ public:
 
     void CreateVertexBuffer(VertexBufferHandle handle, const void* data, uint32_t size, VertexLayout layout) override;
     void CreateIndexBuffer(IndexBufferHandle handle, const void* data, uint32_t size) override;
-    void CreateShader(ShaderHandle handle, const std::string& source, std::initializer_list<Attribute::Binding::Enum> in_types) override;
+    void CreateShader(ShaderHandle handle, const std::string& source, const Attribute::BindingPack& bindings) override;
     void CreateTexture(TextureHandle handle, const uint8_t* data, uint32_t width, uint32_t height, uint32_t channels) override;
 
     void Destroy(VertexBufferHandle) override;
     void Destroy(IndexBufferHandle) override;
     void Destroy(ShaderHandle) override;
     void Destroy(TextureHandle) override;
+    void Frame(const RendererContext* context, iterator_range<const DrawUnit*> draws) override;
 
-    void SetUniform(ShaderHandle, const std::string&, int) override;
-    void SetUniform(ShaderHandle, const std::string&, bool) override;
-    void SetUniform(ShaderHandle, const std::string&, float) override;
-    void SetUniform(ShaderHandle, const std::string&, const Vec3&) override;
-    void SetUniform(ShaderHandle, const std::string&, const Vec4&) override;
-    void SetUniform(ShaderHandle, const std::string&, const Color&) override;
-    void SetUniform(ShaderHandle, const std::string&, const Matrix&) override;
-    void SetUniform(ShaderHandle, const std::string&, TextureHandle, int slot_idx) override;
+private:
+    void SetUniform(ShaderHandle, const std::string&, int);
+    void SetUniform(ShaderHandle, const std::string&, bool);
+    void SetUniform(ShaderHandle, const std::string&, float);
+    void SetUniform(ShaderHandle, const std::string&, const Vec3&);
+    void SetUniform(ShaderHandle, const std::string&, const Vec4&);
+    void SetUniform(ShaderHandle, const std::string&, const Color&);
+    void SetUniform(ShaderHandle, const std::string&, const Matrix&);
+    void SetUniform(TextureHandle, int slot_idx);
+    void Draw(const RendererContext*, const DrawUnit&);
+
+    template <class TCommand>
+    void ExecuteCommand(const TCommand& command);
+
+    template <>
+    void ExecuteCommand<SetUniformCommand>(const SetUniformCommand& command) {
+        mpark::visit([this, &command](const auto& val){
+                SetUniform(command.shader_handle, command.name, val);
+            }, command.value);
+    }
+
+    template <>
+    void ExecuteCommand<SetTextureCommand>(const SetTextureCommand& command) {
+        SetUniform(command.texture_handle, command.slot);
+    }
 
 private:
     GLContext default_context_;

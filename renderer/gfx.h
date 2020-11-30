@@ -57,6 +57,9 @@ using ShaderHandle = Handle<HandleType::Shader>;
 using TextureHandle = Handle<HandleType::Texture>;
 
 using CameraId = uint16_t;
+using TexSlotId = uint16_t;
+
+using ClearFlagMask = uint8_t;
 
 struct ClearFlag {
     enum Enum {
@@ -73,13 +76,10 @@ struct Config {
 void Init(Config);
 void Shutdown();
 
-class VertexLayout;
-//class Attribute;
-
-VertexBufferHandle CreateVertexBuffer(const void* data, uint32_t size, VertexLayout layout);
-IndexBufferHandle CreateIndexBuffer(const void* data, uint32_t size);
+VertexBufferHandle CreateVertexBuffer(void* data, uint32_t size, VertexLayout layout);
+IndexBufferHandle CreateIndexBuffer(void* data, uint32_t size);
 ShaderHandle CreateShader(const std::string& source, std::initializer_list<gfx::Attribute::Binding::Enum> in_types);
-TextureHandle CreateTexture(const uint8_t* data, uint32_t width, uint32_t height, uint32_t channels);
+TextureHandle CreateTexture(uint8_t* data, uint32_t width, uint32_t height, uint32_t channels);
 
 void Destroy(VertexBufferHandle&);
 void Destroy(IndexBufferHandle&);
@@ -93,7 +93,7 @@ void SetUniform(ShaderHandle, const std::string&, const Vec3&);
 void SetUniform(ShaderHandle, const std::string&, const Vec4&);
 void SetUniform(ShaderHandle, const std::string&, const Color&);
 void SetUniform(ShaderHandle, const std::string&, const Matrix&);
-void SetUniform(ShaderHandle, const std::string&, TextureHandle);
+void SetUniform(ShaderHandle, const std::string&, TextureHandle, TexSlotId);
 
 void SetBuffer(VertexBufferHandle);
 void SetBuffer(IndexBufferHandle);
@@ -102,16 +102,48 @@ void SetTransform(const Matrix&);
 
 void SetView(CameraId, const Matrix&);
 void SetProjection(CameraId, const Matrix&);
-void SetClear(CameraId, ClearFlag);
+void SetClear(CameraId, ClearFlagMask);
+void SetClearColor(CameraId, const Color&);
 
 void Render(CameraId, ShaderHandle);
 void Frame();
 
 /*
+
 void Begin(CameraId);
-void Render(ShaderHandle);
+void Draw(ShaderHandle);
 void End();
-void RenderFrame();
+void Render();
+
+ */
+
+/*
+
+ SetView(0, view_camera0);
+ SetProjection(0, proj_camera0);
+ SetView(1, view_camera1);
+ SetProjection(1, proj_camera1);
+
+ Begin(0);
+
+ SetTransform(tr1);
+ SetBuffer(vb1);
+ SetBuffer(ib1);
+ Draw(shader1);
+
+ SetTransform(tr2);
+ SetBuffer(vb2);
+ SetBuffer(ib2);
+ Draw(shader2);
+
+ End(); // end camera0 render
+
+ Begin(1);
+ Draw(shader1);
+ End(); // end camera1 render
+
+ Render();
+
 */
 
 };

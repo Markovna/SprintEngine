@@ -59,18 +59,15 @@ std::shared_ptr<Texture> Texture::Load(const std::string& path) {
 }
 
 Texture::Texture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t channels) :
-    handle_(gl::CreateTexture(data, width, height, channels)) {
-}
-
-void Texture::Bind(uint32_t slot) const {
-    gl::Bind(handle_, slot);
+// TODO: get rid of const cast
+    handle_(gfx::CreateTexture(const_cast<uint8_t*>(data), width, height, channels)) {
 }
 
 Texture::~Texture() {
     if (handle_.IsValid())
-        gl::Destroy(handle_);
+        gfx::Destroy(handle_);
 }
-gl::TextureHandle Texture::get_handle() const {
+gfx::TextureHandle Texture::get_handle() const {
     return handle_;
 }
 

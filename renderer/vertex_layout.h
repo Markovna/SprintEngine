@@ -30,6 +30,23 @@ struct Attribute {
         constexpr static const uint32_t Count = 11;
     };
 
+    struct BindingPack {
+        using Mask = uint16_t;
+
+        BindingPack(std::initializer_list<Binding::Enum> list) {
+            uint16_t location = 0;
+            for (Binding::Enum bnd : list) {
+                mask |= (1u << bnd);
+                locations[bnd] = location++;
+            }
+        }
+
+        BindingPack() : mask(0) {}
+
+        Mask mask = 0;
+        uint16_t locations[Binding::Count];
+    };
+
     struct Format {
         const static Format Float;
         const static Format Vec2;

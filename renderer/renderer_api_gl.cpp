@@ -55,28 +55,25 @@ static uint32_t CompileShader(ShaderType::Enum type, const std::string& source) 
     return shaderID;
 }
 
-GLRendererAPI::Shader::Shader(uint32_t id, const std::string &source, std::initializer_list<Attribute::Binding::Enum> bindings)
+GLRendererAPI::Shader::Shader(uint32_t id, const std::string &source, const Attribute::BindingPack& bindings)
         : id_(id) {
     std::string shaders[ShaderType::Count];
     PreProcess(source, shaders);
     for (size_t i = 0; i < ShaderType::Count; i++) {
-        auto id = CompileShader((ShaderType::Enum) i, shaders[i]);
-        glAttachShader(id_, id);
-        glDeleteShader(id);
+        auto shader_id = CompileShader((ShaderType::Enum) i, shaders[i]);
+        glAttachShader(id_, shader_id);
+        glDeleteShader(shader_id);
     }
 
     glLinkProgram(id_);
     CheckLinkStatus(id_);
 
-    uint32_t location = 0;
-    for (auto binding : bindings) {
-        attribute_locations_[binding] = location++;
-        attributes_mask_ |= ((uint32_t) 1) << binding;
-    }
+    attributes_mask_ = bindings.mask;
+    std::memcpy(attribute_locations_, bindings.locations, Attribute::Binding::Count);
 }
 
-bool GLRendererAPI::Shader::TryGetLocation(Attribute::Binding::Enum type, uint32_t &location) const {
-    if (attributes_mask_ & (((uint32_t) 1) << type)) {
+bool GLRendererAPI::Shader::TryGetLocation(Attribute::Binding::Enum type, uint16_t& location) const {
+    if (attributes_mask_ & (1u << type)) {
         location = attribute_locations_[type];
         return true;
     }
@@ -96,15 +93,15 @@ void GLRendererAPI::CreateIndexBuffer(IndexBufferHandle handle, const void *data
     uint32_t bufferId;
     glGenBuffers(1, &bufferId);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, GL_STATIC_DRAW); // TODO: static / dynamic ?
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * size * sizeof(uint32_t), data, GL_STATIC_DRAW); // TODO: static / dynamic ?
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     index_buffers_[handle.ID] = IndexBuffer(bufferId, size);
 }
 
 void GLRendererAPI::CreateShader(ShaderHandle handle,
                                  const std::string &source,
-                                 std::initializer_list<Attribute::Binding::Enum> in_types) {
-    shaders_[handle.ID] = Shader(glCreateProgram(), source, in_types);
+                                 const Attribute::BindingPack& bindings) {
+    shaders_[handle.ID] = Shader(glCreateProgram(), source, bindings);
 }
 
 void GLRendererAPI::CreateTexture(TextureHandle handle,
@@ -113,17 +110,17 @@ void GLRendererAPI::CreateTexture(TextureHandle handle,
                                   uint32_t height,
                                   uint32_t channels) {
     uint32_t textureId;
+    GLenum format = ToGLenum(channels);
     glGenTextures(1, &textureId);
     glBindTexture(GL_TEXTURE_2D, textureId);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    GLenum format = ToGLenum(channels);
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
+    glBindTexture(GL_TEXTURE_2D, 0);
     textures_[handle.ID] = Texture(textureId);
 }
 
@@ -139,6 +136,8 @@ GLRendererAPI::GLRendererAPI(const Config &config)
 
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
+
+    glEnable(GL_DEPTH_TEST);
 }
 
 void GLRendererAPI::Destroy(VertexBufferHandle handle) {
@@ -155,12 +154,6 @@ void GLRendererAPI::Destroy(ShaderHandle handle) {
 
 void GLRendererAPI::Destroy(TextureHandle handle) {
     glDeleteTextures(1, &textures_[handle.ID].id);
-}
-
-void GLRendererAPI::SetUniform(ShaderHandle handle, const std::string& name, TextureHandle texture_handle, int slot_idx) {
-    glActiveTexture(GL_TEXTURE0 + slot_idx);
-    glBindTexture(GL_TEXTURE_2D, textures_[handle.ID].id);
-    SetUniform(handle, name, slot_idx);
 }
 
 void GLRendererAPI::SetUniform(ShaderHandle handle, const std::string& name, int value) {
@@ -212,8 +205,119 @@ void GLRendererAPI::SetUniform(ShaderHandle handle, const std::string& name, con
     glUseProgram(0);
 }
 
+void GLRendererAPI::SetUniform(TextureHandle handle, int slot_idx) {
+    glActiveTexture(GL_TEXTURE0 + slot_idx);
+    glBindTexture(GL_TEXTURE_2D, textures_[handle.ID].id);
+}
+
+static GLenum ToGLenum(Attribute::Type type) {
+    switch (type) {
+        case Attribute::Type::FLOAT: return GL_FLOAT;
+        case Attribute::Type::INT: return GL_INT;
+    }
+    assert("You are not supposed to be here");
+}
+
+static GLbitfield ToGLBits(ClearFlagMask mask) {
+    GLbitfield bitfield = 0;
+    if (mask & ClearFlag::Depth) bitfield |= (uint32_t) GL_DEPTH_BUFFER_BIT;
+    if (mask & ClearFlag::Color) bitfield |= (uint32_t) GL_COLOR_BUFFER_BIT;
+    if (mask & ClearFlag::Stencil) bitfield |= (uint32_t) GL_STENCIL_BUFFER_BIT;
+    return bitfield;
+}
+
+void GLRendererAPI::Frame(const RendererContext* context, iterator_range<const DrawUnit*> draws) {
+
+    default_context_.MakeCurrent();
+
+    for (auto& camera : context->cameras) {
+        glClearColor(camera.clear_color.r, camera.clear_color.g, camera.clear_color.b, camera.clear_color.a);
+        glClear(ToGLBits(camera.clear_flag));
+    }
+
+    for (const DrawUnit& draw : draws) {
+        Draw(context, draw);
+    }
+
+    default_context_.SwapBuffers();
+}
+
+void CheckErrors1(const std::string& from) {
+    auto err = glGetError();
+    if (err != GL_NO_ERROR) {
+        log::core::Error("!!!!! error: {0} !!!! from: {1}", err, from);
+    }
+}
+
+static void DisableAttributes(uint16_t mask) {
+    while (mask) {
+        uint16_t index = __builtin_ctzl(mask);
+        glDisableVertexAttribArray(index);
+        mask ^= 1u << index;
+    }
+}
+
+void GLRendererAPI::Draw(const RendererContext* context, const DrawUnit& draw) {
+    for (const auto& command : draw.command_buffer) {
+        mpark::visit([this](const auto& c){
+                ExecuteCommand(c);
+            }, command);
+    }
+
+    const Camera& camera = context->cameras[draw.camera_id];
+
+    SetUniform(draw.shader_handle, "model", draw.transform);
+    SetUniform(draw.shader_handle, "view", camera.view);
+    SetUniform(draw.shader_handle, "projection", camera.projection);
+
+    if (draw.vb_handle.IsValid()) {
+        VertexBuffer& vb = vertex_buffers_[draw.vb_handle.ID];
+        Shader& shader = shaders_[draw.shader_handle.ID];
+
+        glBindBuffer(GL_ARRAY_BUFFER, vb.id);
+        if (draw.ib_handle.IsValid()) {
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers_[draw.ib_handle.ID].id);
+        }
+
+        glUseProgram(shader.get_id());
+        uint16_t enabledAttribMask = 0;
+        for (const auto& item : vb.layout) {
+            uint16_t idx;
+            if (shader.TryGetLocation(item.attribute.binding, idx)) {
+                glVertexAttribPointer(
+                    idx,
+                    item.attribute.format.size,
+                    ToGLenum(item.attribute.format.type),
+                    item.attribute.normalized,
+                    vb.layout.get_stride(),
+                    (void*)(item.offset)
+                );
+                glEnableVertexAttribArray(idx);
+                enabledAttribMask |= (1u << idx);
+            }
+        }
+        DisableAttributes(~enabledAttribMask);
+
+        if (draw.ib_handle.IsValid()) {
+            glDrawElements(GL_TRIANGLES, index_buffers_[draw.ib_handle.ID].size, GL_UNSIGNED_INT, 0);
+        } else {
+            glDrawArrays(GL_TRIANGLES, 0, vb.size);
+        }
+
+        glUseProgram(0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+}
+
 void GLContext::MakeCurrent() {
+    static WindowHandle current_handle;
+
+    if (handle_ == current_handle)
+        return;
+
     glfwMakeContextCurrent(handle_);
+    current_handle = handle_;
 }
 
 void GLContext::Init(GLContext &context) {

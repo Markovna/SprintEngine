@@ -6,6 +6,8 @@
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 #include <IdAllocator.h>
+#include <variant.hpp>
+#include "iterator_range.h"
 
 namespace sprint {
 
@@ -14,6 +16,76 @@ namespace gfx {
 namespace details {
 
 static Config g_config;
+
+using Uniform = mpark::variant<int, bool, float, Vec3, Vec4, Color, Matrix>;
+
+struct SetUniformCommand {
+    ShaderHandle shader_handle;
+    std::string name;
+    Uniform value;
+};
+
+struct SetTextureCommand {
+    TextureHandle texture_handle;
+    TexSlotId slot;
+};
+
+using DrawUnitCommand = mpark::variant<SetUniformCommand, SetTextureCommand>;
+
+class DrawUnitCommandBuffer {
+public:
+    using iterator = DrawUnitCommand*;
+    using const_iterator = const DrawUnitCommand*;
+
+public:
+    void Push(DrawUnitCommand command) {
+        assert(commands_count_ < static_config::kMaxCommandCountPerDrawCall);
+        commands_[commands_count_++] = std::move(command);
+    }
+
+    void Clear() {
+        commands_count_ = 0;
+    }
+
+    iterator begin() { return commands_; }
+    iterator end() { return commands_ + commands_count_; }
+
+    const_iterator begin() const { return commands_; }
+    const_iterator end() const { return commands_ + commands_count_; }
+
+private:
+    DrawUnitCommand commands_[static_config::kMaxCommandCountPerDrawCall];
+    uint32_t commands_count_ = 0;
+};
+
+struct DrawUnit {
+    Matrix transform = Matrix::Identity;
+    IndexBufferHandle ib_handle = IndexBufferHandle::Invalid;
+    VertexBufferHandle vb_handle = VertexBufferHandle::Invalid;
+    ShaderHandle shader_handle = ShaderHandle::Invalid;
+    CameraId camera_id = UINT16_MAX;
+    DrawUnitCommandBuffer command_buffer;
+};
+
+static void Clear(DrawUnit& draw) {
+    draw.transform = Matrix::Identity;
+    draw.ib_handle = IndexBufferHandle::Invalid;
+    draw.vb_handle = VertexBufferHandle::Invalid;
+    draw.shader_handle = ShaderHandle::Invalid;
+    draw.camera_id = UINT16_MAX;
+    draw.command_buffer.Clear();
+}
+
+struct Camera {
+    Matrix view;
+    Matrix projection;
+    ClearFlagMask clear_flag;
+    Color clear_color;
+};
+
+struct RendererContext {
+    Camera cameras[static_config::kCamerasCapacity];
+};
 
 class RendererAPI {
 public:
@@ -28,7 +100,7 @@ public:
 
     virtual void CreateVertexBuffer(VertexBufferHandle, const void* data, uint32_t size, VertexLayout layout) = 0;
     virtual void CreateIndexBuffer(IndexBufferHandle, const void* data, uint32_t size) = 0;
-    virtual void CreateShader(ShaderHandle, const std::string& source, std::initializer_list<Attribute::Binding::Enum> in_types) = 0;
+    virtual void CreateShader(ShaderHandle, const std::string& source, const Attribute::BindingPack& bindings) = 0;
     virtual void CreateTexture(TextureHandle, const uint8_t* data, uint32_t width, uint32_t height, uint32_t channels) = 0;
 
     virtual void Destroy(VertexBufferHandle) = 0;
@@ -36,45 +108,90 @@ public:
     virtual void Destroy(ShaderHandle) = 0;
     virtual void Destroy(TextureHandle) = 0;
 
-    virtual void SetUniform(ShaderHandle, const std::string&, int) = 0;
-    virtual void SetUniform(ShaderHandle, const std::string&, bool) = 0;
-    virtual void SetUniform(ShaderHandle, const std::string&, float) = 0;
-    virtual void SetUniform(ShaderHandle, const std::string&, const Vec3&) = 0;
-    virtual void SetUniform(ShaderHandle, const std::string&, const Vec4&) = 0;
-    virtual void SetUniform(ShaderHandle, const std::string&, const Color&) = 0;
-    virtual void SetUniform(ShaderHandle, const std::string&, const Matrix&) = 0;
-    virtual void SetUniform(ShaderHandle, const std::string&, TextureHandle, int slot_idx) = 0;
+    virtual void Frame(const RendererContext*, iterator_range<const DrawUnit*>) = 0;
 };
 
 std::unique_ptr<RendererAPI> CreateRendererApi(const Config&);
 
-struct UniformData {
-    union Data {
-        int int_value;
-        bool bool_value;
-        float float_value;
-        Vec3 vec3_value;
-        Vec4 vec4_value;
-        Color color_value;
-        Matrix matrix_value;
-    };
-
-
+struct CreateIndexBufferCommand {
+    IndexBufferHandle handle = IndexBufferHandle::Invalid;
+    void* data = nullptr; // TODO
+    uint32_t size = 0;
 };
 
-struct Camera {
-    Matrix view;
-    Matrix projection;
-    ClearFlag clear_flag;
+struct CreateVertexBufferCommand {
+    VertexBufferHandle handle = VertexBufferHandle::Invalid;
+    void* data = nullptr;   // TODO
+    uint32_t size = 0;
+    VertexLayout layout;
 };
 
-struct DrawUnit {
-    Matrix transform;
-    IndexBufferHandle ib_handle;
-    VertexBufferHandle vb_handle;
-    ShaderHandle shader_handle;
-    CameraId camera_id = UINT16_MAX;
+struct CreateTextureCommand {
+    TextureHandle handle = TextureHandle::Invalid;
+    uint8_t *data = nullptr;  // TODO
+    uint32_t width = 0;
+    uint32_t height = 0;
+    uint32_t channels = 0;
+};
 
+struct CreateShaderCommand {
+    ShaderHandle handle = ShaderHandle::Invalid;
+    std::string source;
+    Attribute::BindingPack bindings;
+};
+
+struct DestroyIndexBufferCommand {
+    IndexBufferHandle handle;
+};
+
+struct DestroyVertexBufferCommand {
+    VertexBufferHandle handle;
+};
+
+struct DestroyTextureCommand {
+    TextureHandle handle;
+};
+
+struct DestroyShaderCommand {
+    ShaderHandle handle;
+};
+
+using FrameContextCommand =
+    mpark::variant<
+        CreateIndexBufferCommand,
+        CreateVertexBufferCommand,
+        CreateTextureCommand,
+        CreateShaderCommand,
+        DestroyIndexBufferCommand,
+        DestroyVertexBufferCommand,
+        DestroyTextureCommand,
+        DestroyShaderCommand
+    >;
+
+class FrameContextCommandBuffer {
+public:
+    using iterator = FrameContextCommand*;
+    using const_iterator = const FrameContextCommand*;
+
+public:
+    void Push(FrameContextCommand command) {
+        assert(commands_count_ < static_config::kMaxFrameCommandsCount);
+        commands_[commands_count_++] = std::move(command);
+    }
+
+    void Clear() {
+        commands_count_ = 0;
+    }
+
+    iterator begin() { return commands_; }
+    iterator end() { return commands_ + commands_count_; }
+
+    const_iterator begin() const { return commands_; }
+    const_iterator end() const { return commands_ + commands_count_; }
+
+private:
+    FrameContextCommand commands_[static_config::kMaxFrameCommandsCount];
+    uint32_t commands_count_ = 0;
 };
 
 class Frame {
@@ -84,16 +201,32 @@ public:
         return draws_[draws_count_];
     }
 
+    void PushCommand(FrameContextCommand command) {
+        command_buffer_.Push(std::move(command));
+    }
+
     void Next() {
         draws_count_++;
+        Clear(draws_[draws_count_]);
     }
 
     void Reset() {
         draws_count_ = 0;
+        Clear(draws_[draws_count_]);
+        command_buffer_.Clear();
+    }
+
+    iterator_range<const FrameContextCommand*> get_commands() const {
+        return { command_buffer_.begin(), command_buffer_.end() };
+    }
+
+    iterator_range<const DrawUnit*> get_draws() const {
+        return { draws_, draws_ + draws_count_ };
     }
 
 private:
     DrawUnit draws_[static_config::kMaxDrawCallsCount];
+    FrameContextCommandBuffer command_buffer_;
     uint32_t draws_count_ = 0;
 };
 
@@ -112,7 +245,12 @@ public:
     }
 
     void RenderFrame() {
+        for (const auto& command : frame_.get_commands()) {
+            mpark::visit([this](const auto& c){ ExecuteCommand(c); }, command);
+        }
 
+        api_->Frame(&context_, frame_.get_draws());
+        frame_.Reset();
     }
 
     void Draw(CameraId camera_id, ShaderHandle shader_handle) {
@@ -123,34 +261,34 @@ public:
         frame_.Next();
     }
 
-    VertexBufferHandle CreateVertexBuffer(const void* data, uint32_t size, VertexLayout layout) {
+    VertexBufferHandle CreateVertexBuffer(void* data, uint32_t size, VertexLayout layout) {
         VertexBufferHandle handle(vertex_buffer_handles_.Alloc());
-        //TODO
+        frame_.PushCommand(FrameContextCommand { CreateVertexBufferCommand { handle, data, size, layout } });
         return handle;
     }
 
-    IndexBufferHandle CreateIndexBuffer(const void* data, uint32_t size) {
+    IndexBufferHandle CreateIndexBuffer(void* data, uint32_t size) {
         IndexBufferHandle handle(index_buffer_handles_.Alloc());
-        //TODO
+        frame_.PushCommand(FrameContextCommand { CreateIndexBufferCommand { handle, data, size } });
         return handle;
     }
 
-    ShaderHandle CreateShader(const std::string &source, std::initializer_list<Attribute::Binding::Enum> in_types) {
+    ShaderHandle CreateShader(const std::string &source, std::initializer_list<Attribute::Binding::Enum> bindings) {
         ShaderHandle handle(shader_handles_.Alloc());
-        //TODO
+        frame_.PushCommand(FrameContextCommand { CreateShaderCommand { handle, source, Attribute::BindingPack(bindings) } } );
         return handle;
     }
 
-    TextureHandle CreateTexture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t channels) {
+    TextureHandle CreateTexture(uint8_t *data, uint32_t width, uint32_t height, uint32_t channels) {
         TextureHandle handle(texture_handles_.Alloc());
-        //TODO
+        frame_.PushCommand( FrameContextCommand { CreateTextureCommand { handle, data, width, height, channels } });
         return handle;
     }
 
     void Destroy(VertexBufferHandle& handle) {
         assert(handle.IsValid() && "Renderer::Destroy failed: Invalid vertex buffer handle");
 
-        //TODO
+        frame_.PushCommand(FrameContextCommand { DestroyVertexBufferCommand { handle } } );
         vertex_buffer_handles_.Free(handle.ID);
         handle = VertexBufferHandle::Invalid;
     }
@@ -158,7 +296,7 @@ public:
     void Destroy(IndexBufferHandle& handle) {
         assert(handle.IsValid() && "Renderer::Destroy failed: Invalid index buffer handle");
 
-        //TODO
+        frame_.PushCommand(FrameContextCommand { DestroyIndexBufferCommand { handle } } );
         index_buffer_handles_.Free(handle.ID);
         handle = IndexBufferHandle::Invalid;
     }
@@ -166,7 +304,7 @@ public:
     void Destroy(TextureHandle& handle) {
         assert(handle.IsValid() && "Renderer::Destroy failed: Invalid texture handle");
 
-        //TODO
+        frame_.PushCommand(FrameContextCommand { DestroyTextureCommand { handle } } );
         texture_handles_.Free(handle.ID);
         handle = TextureHandle::Invalid;
     }
@@ -174,41 +312,21 @@ public:
     void Destroy(ShaderHandle& handle) {
         assert(handle.IsValid() && "Renderer::Destroy failed: Invalid shader handle");
 
-        //TODO
+        frame_.PushCommand(FrameContextCommand { DestroyShaderCommand { handle } } );
         shader_handles_.Free(handle.ID);
         handle = ShaderHandle::Invalid;
     }
 
-    void SetUniform(ShaderHandle handle, const std::string& name, int value) {
-
+    template<class T>
+    void SetUniform(ShaderHandle handle, const std::string& name, T value) {
+        DrawUnit& draw = frame_.GetDraw();
+        draw.command_buffer.Push( DrawUnitCommand { SetUniformCommand { handle, name, value} } );
     }
 
-    void SetUniform(ShaderHandle handle, const std::string& name, bool value) {
-
-    }
-
-    void SetUniform(ShaderHandle handle, const std::string& name, float value) {
-
-    }
-
-    void SetUniform(ShaderHandle handle, const std::string& name, const Vec3& value) {
-
-    }
-
-    void SetUniform(ShaderHandle handle, const std::string& name, const Vec4& value) {
-
-    }
-
-    void SetUniform(ShaderHandle handle, const std::string& name, const Color& value) {
-
-    }
-
-    void SetUniform(ShaderHandle handle, const std::string& name, const Matrix& value) {
-
-    }
-
-    void SetUniform(ShaderHandle handle, const std::string& name, TextureHandle value) {
-
+    void SetUniform(ShaderHandle handle, const std::string& name, TextureHandle value, TexSlotId slot_id) {
+        DrawUnit& draw = frame_.GetDraw();
+        draw.command_buffer.Push( DrawUnitCommand { SetTextureCommand { value, slot_id } } );
+        SetUniform(handle, name, slot_id);
     }
 
     void SetBuffer(IndexBufferHandle handle) {
@@ -227,15 +345,62 @@ public:
     }
 
     void SetView(CameraId id, const Matrix& value) {
-        cameras_[id].view = value;
+        context_.cameras[id].view = value;
     }
 
     void SetProjection(CameraId id, const Matrix& value) {
-        cameras_[id].projection = value;
+        context_.cameras[id].projection = value;
     }
 
-    void SetClear(CameraId id, ClearFlag flag) {
-        cameras_[id].clear_flag = flag;
+    void SetClear(CameraId id, ClearFlagMask flag) {
+        context_.cameras[id].clear_flag = flag;
+    }
+
+    void SetClearColor(CameraId id, const Color& color) {
+        context_.cameras[id].clear_color = color;
+    }
+private:
+    template <class TCommand>
+    void ExecuteCommand(const TCommand& command);
+
+    template <>
+    void ExecuteCommand<CreateIndexBufferCommand>(const CreateIndexBufferCommand& command) {
+        api_->CreateIndexBuffer(command.handle, command.data, command.size);
+    }
+
+    template <>
+    void ExecuteCommand<CreateVertexBufferCommand>(const CreateVertexBufferCommand& command) {
+        api_->CreateVertexBuffer(command.handle, command.data, command.size, command.layout);
+    }
+
+    template <>
+    void ExecuteCommand<CreateTextureCommand>(const CreateTextureCommand& command) {
+        api_->CreateTexture(command.handle, command.data, command.width, command.height, command.channels);
+    }
+
+    template <>
+    void ExecuteCommand<CreateShaderCommand>(const CreateShaderCommand& command) {
+        api_->CreateShader(command.handle, command.source, command.bindings);
+    }
+
+    template <>
+    void ExecuteCommand<DestroyIndexBufferCommand>(const DestroyIndexBufferCommand& command) {
+        api_->Destroy(command.handle);
+    }
+
+    template <>
+    void ExecuteCommand<DestroyVertexBufferCommand>(const DestroyVertexBufferCommand& command) {
+        api_->Destroy(command.handle);
+    }
+
+    template <>
+    void ExecuteCommand<DestroyTextureCommand>(const DestroyTextureCommand& command) {
+        api_->Destroy(command.handle);
+    }
+
+    template <>
+    void ExecuteCommand<DestroyShaderCommand>(const DestroyShaderCommand& command) {
+        api_->Destroy(command.handle);
     }
 
 private:
@@ -248,7 +413,7 @@ private:
     handle_alloc<static_config::kShadersCapacity> shader_handles_;
     handle_alloc<static_config::kTexturesCapacity> texture_handles_;
 
-    Camera cameras_[static_config::kCamerasCapacity];
+    RendererContext context_;
     Frame frame_;
 };
 

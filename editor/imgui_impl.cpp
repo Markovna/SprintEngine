@@ -1,5 +1,5 @@
 #include <Shader.h>
-#include <VertexLayout.h>
+//#include <VertexLayout.h>
 #include <Texture.h>
 #include <Application.h>
 #include "imgui_impl.h"
@@ -42,7 +42,7 @@ void SetupGraphics(ImGuiIO& io) {
     shader_ = std::make_unique<Shader>(Shader::Load(
         "assets/shaders/GUIShader.shader",
         {
-            gl::AttributeType::POSITION, gl::AttributeType::TEXCOORD0, gl::AttributeType::COLOR0
+            gfx::Attribute::Binding::POSITION, gfx::Attribute::Binding::TEXCOORD0, gfx::Attribute::Binding::COLOR0
         }));
 }
 

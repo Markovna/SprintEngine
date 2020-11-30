@@ -10,7 +10,7 @@
 #include "Camera.h"
 #include "color.h"
 #include "gfx.h"
-
+#include "Application.h"
 
 namespace sprint {
 
@@ -29,7 +29,7 @@ Window::Window(size_t width, size_t height) : width_(width), height_(height) {
     // TODO: move gl version to config
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, true);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     window_ = glfwCreateWindow(width_, height_, "SprintEngine", NULL, NULL);
@@ -76,15 +76,15 @@ Window::~Window() {
     glfwTerminate();
 }
 
+void RenderTrianglezzz();
+
 void Window::OnUpdate() {
 
     PrepareRenderTriangles(width_, height_);
 
-    gl::Clear(Color(0.2f, 0.2f, 0.2f, 1.0f), gl::kClearColor | gl::kClearDepth);
+    RenderTrianglezzz();
 
-    RenderTriangle();
-
-    gl::SwapBuffers();
+    gfx::Frame();
 
     glfwPollEvents();
 }
@@ -139,11 +139,13 @@ void Window::SetMouseCursor(Window::Cursor::Type cursor_type) {
     }
 }
 
-gl::VertexBufferHandle m_VBHandle;
 std::unique_ptr<Shader> m_Shader;
-std::shared_ptr<Texture> m_Texture;
+std::shared_ptr<Texture> m_Texture1;
 std::shared_ptr<Texture> m_Texture2;
-std::shared_ptr<Camera> m_Camera;
+
+gfx::VertexBufferHandle vb_handle;
+gfx::IndexBufferHandle ib_handle;
+
 
 float* GetVertices() {
     static float vertices[] = {
@@ -190,6 +192,7 @@ float* GetVertices() {
             -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
             -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
         };
+
     return vertices;
 }
 
@@ -213,65 +216,77 @@ uint32_t* GetIndices(size_t& count) {
 }
 
 void PrepareRenderTriangles(int width, int height) {
-    if (m_Camera)
-        return;
+    static bool inited = false;
+    if (inited) return;
 
-    m_Camera   = std::make_shared<Camera>(Matrix::Perspective(60.0f * M_PI / 180.0f, (float)width, (float)height, 0.1f, 100.0f));
-    m_Texture  = Texture::Load("assets/textures/container.jpg");
+    inited = true;
+
+    m_Texture1  = Texture::Load("assets/textures/container.jpg");
     m_Texture2 = Texture::Load("assets/textures/seal.png");
     m_Shader   = std::make_unique<Shader>(Shader::Load(
                     "assets/shaders/TestShader.shader",
                     {
-                            gl::AttributeType::POSITION,
-                            gl::AttributeType::TEXCOORD0
+                            gfx::Attribute::Binding::POSITION,
+                            gfx::Attribute::Binding::TEXCOORD0
                     })
                 );
 
-    if (m_Texture) {
-        gl::Bind(m_Texture->get_handle(), 0);
-    }
 
-    if (m_Texture2) {
-        gl::Bind(m_Texture2->get_handle(), 1);
-    }
+    Matrix view_mat = Matrix::Translation(Vec3(0.0f, 0.0f, 3.0f)) * Matrix::Rotation(Quat(Vec3::Right, 0.0f * M_PI / 180.0f));
+    gfx::SetView(0, view_mat);
+    gfx::SetProjection(0, Matrix::Perspective(60.0f * M_PI / 180.0f, (float)width, (float)height, 0.1f, 100.0f));
+    gfx::SetClear(0, gfx::ClearFlag::Color | gfx::ClearFlag::Depth);
+    gfx::SetClearColor(0, Color(0.1, 0.1, 0.1, 1.0));
 
-    gl::SetInt(m_Shader->get_handle(), "Texture1", 0);
-    gl::SetInt(m_Shader->get_handle(), "Texture2", 1);
+    gfx::SetUniform(m_Shader->get_handle(), "Texture1", m_Texture1->get_handle(), 0);
+    gfx::SetUniform(m_Shader->get_handle(), "Texture2", m_Texture2->get_handle(), 1);
 
     size_t count;
     float* vertices = GetVertices();
     uint32_t* indices = GetIndices(count);
 
-    m_VBHandle = gl::CreateVertexBuffer(
+    vb_handle = gfx::CreateVertexBuffer(
         (void*) vertices,
-        5 * count,
+        count,
         {
-            {gl::AttributeType::POSITION,  gl::AttributeFormat::Vec3 },
-            {gl::AttributeType::TEXCOORD0, gl::AttributeFormat::Vec2 }
+            {gfx::Attribute::Binding::POSITION,  gfx::Attribute::Format::Vec3 },
+            {gfx::Attribute::Binding::TEXCOORD0, gfx::Attribute::Format::Vec2 }
         }
     );
+
+    ib_handle = gfx::CreateIndexBuffer(indices, count);
 }
 
-void RenderTriangle() {
-    float timeValue =  0.5 * glfwGetTime();
+void RenderTriangle(float timeValue, Vec3 position) {
 
     Color color(sin(timeValue) / 2.0f + 0.5f,0.3f,cos(timeValue) / 2.0f + 0.5f,1.0f);
 
     Matrix model = Matrix::Identity;
     model *= Matrix::Rotation(Quat(Vec3::Forward, 1.0f * timeValue));
     model *= Matrix::Rotation(Quat(Vec3::Left, 1.25f * timeValue));
-    model *= Matrix::Translation(Vec3::Zero);
+    model *= Matrix::Translation(position);
 
-    m_Camera->set_position(Vec3(0.0f, 0.0f, 3.0f));
-    m_Camera->set_rotation(Quat(Vec3::Right, 0.0f * M_PI / 180.0f));
+    gfx::SetUniform(m_Shader->get_handle(), "Texture1", m_Texture1->get_handle(), 0);
+    gfx::SetUniform(m_Shader->get_handle(), "Texture2", m_Texture2->get_handle(), 1);
 
-    gl::SetFloat4(m_Shader->get_handle(), "mainColor", color);
-    gl::SetMat(m_Shader->get_handle(), "model", model);
-    gl::SetMat(m_Shader->get_handle(), "view", m_Camera->GetViewMatrix());
-    gl::SetMat(m_Shader->get_handle(), "projection", m_Camera->get_projection_matrix());
+    gfx::SetUniform(m_Shader->get_handle(), "mainColor", color);
+    gfx::SetTransform(model);
+    gfx::SetBuffer(vb_handle);
+    gfx::SetBuffer(ib_handle);
 
-    gl::Bind(m_VBHandle);
-    gl::Render(m_Shader->get_handle());
+    gfx::Render(0, m_Shader->get_handle());
+}
+
+void RenderTrianglezzz() {
+    float timeValue =  0.5f * glfwGetTime();
+    RenderTriangle(timeValue, Vec3::Up);
+
+    for (int i = 1; i < 25; i++) {
+        RenderTriangle(timeValue + i * 0.1, (i * 1.5 + 1) * Vec3::Up + (i * 0.6)*Vec3::Forward);
+        RenderTriangle(timeValue - i * 0.1, (i * 1.5 + 1) * Vec3::Up + (i * 0.6)*Vec3::Backward);
+        RenderTriangle(timeValue + i * 0.1, (i * 1.5 + 1) * Vec3::Up + (i * 0.6)*Vec3::Right);
+        RenderTriangle(timeValue - i * 0.1, (i * 1.5 + 1) * Vec3::Up + (i * 0.6)*Vec3::Left);
+    }
 }
 
 }

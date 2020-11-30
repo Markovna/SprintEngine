@@ -23,21 +23,21 @@ static std::string ReadFile(const std::string& path) {
     return content;
 }
 
-Shader::Shader(const std::string& source, std::initializer_list<gl::AttributeType::Enum> inTypes) :
-    handle_(gl::CreateShader(source, inTypes))
+Shader::Shader(const std::string& source, std::initializer_list<gfx::Attribute::Binding::Enum> bindings)
+    : handle_(gfx::CreateShader(source, bindings))
 {
 }
 
 Shader::~Shader() {
     if (handle_.IsValid())
-        gl::Destroy(handle_);
+        gfx::Destroy(handle_);
 }
 
-Shader Shader::Load(const std::string& path, std::initializer_list<gl::AttributeType::Enum> in_types) {
-    return Shader(ReadFile(path), in_types);
+Shader Shader::Load(const std::string& path, std::initializer_list<gfx::Attribute::Binding::Enum> bindings) {
+    return Shader(ReadFile(path), bindings);
 }
 
-Shader &Shader::operator=(Shader &&other) {
+Shader &Shader::operator=(Shader &&other) noexcept {
     if (handle_ != other.handle_) {
         Swap(*this, other);
     }
@@ -50,7 +50,7 @@ void Shader::Swap(Shader& lhs, Shader& rhs) {
 
 Shader::Shader(Shader &&other) noexcept {
     handle_ = other.handle_;
-    other.handle_ = gl::ShaderHandle::Invalid;
+    other.handle_ = gfx::ShaderHandle::Invalid;
 }
 
 }
