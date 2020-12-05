@@ -7,7 +7,7 @@ namespace sprint {
 
 using MouseCode = uint16_t;
 
-namespace mouse
+namespace mouse_key
 {
     enum : MouseCode
     {

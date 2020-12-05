@@ -10,7 +10,7 @@ namespace gfx {
 
 struct Attribute {
 
-    enum class Type : uint8_t { FLOAT, INT };
+    enum class Type : uint8_t { FLOAT, INT, UINT, BYTE };
 
     struct Binding {
         enum Enum : uint8_t {
@@ -48,10 +48,14 @@ struct Attribute {
     };
 
     struct Format {
+        const static Format Byte;
+        const static Format Int;
+        const static Format Uint;
         const static Format Float;
         const static Format Vec2;
         const static Format Vec3;
         const static Format Vec4;
+        const static Format Vec4Byte;
 
         Format(Type type, int size) noexcept : type(type), size(size) {}
 

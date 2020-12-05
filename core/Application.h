@@ -15,8 +15,10 @@ public:
     static event<MouseEvent&> OnMouseDown;
     static event<MouseEvent&> OnMouseUp;
     static event<MouseMoveEvent&> OnMouseMove;
+    static event<ScrollEvent&> OnScroll;
     static event<KeyEvent&> OnKeyPress;
     static event<KeyEvent&> OnKeyRelease;
+    static event<TextEvent&> OnTextInput;
 
 public:
     Application();

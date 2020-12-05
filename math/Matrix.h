@@ -28,6 +28,8 @@ struct Matrix {
     inline Vec3 GetColumn(size_t index) const;
     inline void SetColumn(size_t index, const Vec3& vec);
 
+    inline Vec3 GetRow(size_t index) const;
+
     inline Matrix operator*(const Matrix& other) const;
     inline void operator*=(const Matrix& other);
 
@@ -43,13 +45,17 @@ struct Matrix {
     inline bool Equals(const Matrix& other, float tolerance) const;
 
     inline float Determinant() const;
+    Matrix& Inverse();
 
     inline Vec3 Transform(const Vec3& vec) const;
+    inline Vec4 Transform(const Vec4& vec) const;
 
+    static Matrix GetInverse(const Matrix&);
     static Matrix Translation(const Vec3& trans);
     static Matrix Scale(float scale);
     static Matrix Scale(const Vec3& scale);
     static Matrix Rotation(const Quat& rot);
+    static Matrix Ortho(float x, float width, float y, float height, float minZ, float maxZ);
     static Matrix Ortho(float width, float height, float minZ, float maxZ);
     static Matrix Perspective(float fov, float width, float height, float minZ, float maxZ);
     static Matrix LookAt(const Vec3& position, const Vec3& target);
@@ -69,6 +75,11 @@ inline void Matrix::SetOrigin(const Vec3& vec) {
     data_[3][0] = vec.x;
     data_[3][1] = vec.y;
     data_[3][2] = vec.z;
+}
+
+inline Vec3 Matrix::GetRow(size_t index) const {
+    assert(index >= 0 && index < 4);
+    return Vec3(data_[index][0], data_[index][1], data_[index][2]);
 }
 
 inline Vec3 Matrix::GetColumn(size_t index) const {
@@ -183,7 +194,7 @@ inline float Matrix::Determinant() const {
 
 inline Vec3 Matrix::Transform(const Vec3& vec) const {
     Vec3 res;
-    for (size_t r = 0; r < 4; ++r) {
+    for (size_t r = 0; r < 3; ++r) {
         float sum = 0;
         for (int i = 0; i < 3; ++i) {
             sum += (*this)[r][i] * vec[i];
@@ -191,6 +202,29 @@ inline Vec3 Matrix::Transform(const Vec3& vec) const {
         res[r] = sum;
     }
     return res;
+}
+
+inline Vec4 Matrix::Transform(const Vec4& vec) const {
+    Vec4 res;
+    for (size_t r = 0; r < 4; ++r) {
+        float sum = 0;
+        for (int i = 0; i < 4; ++i) {
+            sum += (*this)[r][i] * vec[i];
+        }
+        res[r] = sum;
+    }
+    return res;
+}
+
+template<class T>
+typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
+inline Approximately(T x, T y, int ulp = 1)
+{
+    // the machine epsilon has to be scaled to the magnitude of the values used
+    // and multiplied by the desired precision in ULPs (units in the last place)
+    return std::fabs(x-y) <= std::numeric_limits<T>::epsilon() * std::fabs(x+y) * ulp
+        // unless the result is subnormal
+        || std::fabs(x-y) < std::numeric_limits<T>::min();
 }
 
 }

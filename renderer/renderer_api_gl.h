@@ -17,16 +17,20 @@ public:
 
     explicit GLContext(void* handle) : handle_((WindowHandle) handle) {
         log::core::Info("New OpenGL context created");
+        int w, h; glfwGetWindowSize(handle_, &w, &h);
+        size_ = Vec2Int{ w, h };
     }
 
     void MakeCurrent();
     void SwapBuffers();
+    inline Vec2Int GetSize() const { return size_; }
 
     static void Init(GLContext& context);
     static GLContext CreateDefault(const Config& config);
 
 private:
     WindowHandle handle_;
+    Vec2Int size_;
 };
 
 class GLRendererAPI : public RendererAPI {
@@ -73,10 +77,13 @@ public:
     explicit GLRendererAPI(const Config& config);
     ~GLRendererAPI() override;
 
-    void CreateVertexBuffer(VertexBufferHandle handle, const void* data, uint32_t size, VertexLayout layout) override;
-    void CreateIndexBuffer(IndexBufferHandle handle, const void* data, uint32_t size) override;
+    void CreateVertexBuffer(VertexBufferHandle handle, const void* data, uint32_t data_size, uint32_t size, VertexLayout layout) override;
+    void CreateIndexBuffer(IndexBufferHandle handle, const void* data, uint32_t data_size, uint32_t size) override;
     void CreateShader(ShaderHandle handle, const std::string& source, const Attribute::BindingPack& bindings) override;
-    void CreateTexture(TextureHandle handle, const uint8_t* data, uint32_t width, uint32_t height, uint32_t channels) override;
+    void CreateTexture(TextureHandle handle, const void* data, uint32_t data_size, uint32_t width, uint32_t height, uint32_t channels) override;
+
+    void UpdateVertexBuffer(VertexBufferHandle handle, uint32_t offset, const void* data, uint32_t data_size) override;
+    void UpdateIndexBuffer(IndexBufferHandle handle, uint32_t offset, const void* data, uint32_t data_sizer) override;
 
     void Destroy(VertexBufferHandle) override;
     void Destroy(IndexBufferHandle) override;

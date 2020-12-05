@@ -3,9 +3,11 @@
 #include "vertex_layout.h"
 
 #include <cstdint>
+#include <utility>
 #include <Vector.h>
 #include <color.h>
 #include <Matrix.h>
+#include <rect.h>
 
 namespace sprint {
 
@@ -69,17 +71,68 @@ struct ClearFlag {
     };
 };
 
+class MemoryPtr {
+public:
+    MemoryPtr(std::shared_ptr<void> ptr, uint32_t size) noexcept : ptr_(std::move(ptr)), size_(size) {}
+
+    MemoryPtr() = default;
+
+    MemoryPtr(MemoryPtr&&) = default;
+    MemoryPtr(const MemoryPtr&) = default;
+
+    MemoryPtr& operator=(MemoryPtr&& other) noexcept {
+        MemoryPtr(std::move(other)).swap(*this);
+        return *this;
+    }
+
+    MemoryPtr& operator=(const MemoryPtr& other) noexcept {
+        MemoryPtr(other).swap(*this);
+        return *this;
+    }
+
+    void reset() {
+        ptr_.reset();
+        size_ = 0;
+    }
+
+    uint32_t size() const { return size_; }
+    void* get() const { return ptr_.get(); }
+
+    explicit operator bool() const noexcept { return get() != 0; }
+
+private:
+    void swap(MemoryPtr& other) noexcept {
+        std::swap(ptr_, other.ptr_);
+        std::swap(size_, other.size_);
+    }
+private:
+    std::shared_ptr<void> ptr_;
+    uint32_t size_ = 0;
+};
+
 struct Config {
     void* window_handle;
+};
+
+struct DrawConfig {
+    enum Option {
+        NONE = 0,
+        DEPTH_TEST = 1
+    };
+
+    using Options = uint32_t;
 };
 
 void Init(Config);
 void Shutdown();
 
-VertexBufferHandle CreateVertexBuffer(void* data, uint32_t size, VertexLayout layout);
-IndexBufferHandle CreateIndexBuffer(void* data, uint32_t size);
+VertexBufferHandle CreateVertexBuffer(MemoryPtr ptr, uint32_t size, VertexLayout layout);
+IndexBufferHandle CreateIndexBuffer(MemoryPtr ptr, uint32_t size);
 ShaderHandle CreateShader(const std::string& source, std::initializer_list<gfx::Attribute::Binding::Enum> in_types);
-TextureHandle CreateTexture(uint8_t* data, uint32_t width, uint32_t height, uint32_t channels);
+TextureHandle CreateTexture(MemoryPtr ref, uint32_t width, uint32_t height, uint32_t channels);
+
+void UpdateVertexBuffer(VertexBufferHandle handle, MemoryPtr ptr, uint32_t offset = 0);
+void UpdateIndexBuffer(IndexBufferHandle handle, MemoryPtr ptr, uint32_t offset = 0);
 
 void Destroy(VertexBufferHandle&);
 void Destroy(IndexBufferHandle&);
@@ -95,8 +148,8 @@ void SetUniform(ShaderHandle, const std::string&, const Color&);
 void SetUniform(ShaderHandle, const std::string&, const Matrix&);
 void SetUniform(ShaderHandle, const std::string&, TextureHandle, TexSlotId);
 
-void SetBuffer(VertexBufferHandle);
-void SetBuffer(IndexBufferHandle);
+void SetBuffer(VertexBufferHandle, uint32_t offset = 0, uint32_t num = 0);
+void SetBuffer(IndexBufferHandle, uint32_t offset = 0, uint32_t num = 0);
 
 void SetTransform(const Matrix&);
 
@@ -104,47 +157,14 @@ void SetView(CameraId, const Matrix&);
 void SetProjection(CameraId, const Matrix&);
 void SetClear(CameraId, ClearFlagMask);
 void SetClearColor(CameraId, const Color&);
+void SetScissor(Rect rect);
+void SetOptions(DrawConfig::Options);
+
+MemoryPtr Copy(const void*, uint32_t);
+MemoryPtr MakeRef(void*, uint32_t);
 
 void Render(CameraId, ShaderHandle);
 void Frame();
-
-/*
-
-void Begin(CameraId);
-void Draw(ShaderHandle);
-void End();
-void Render();
-
- */
-
-/*
-
- SetView(0, view_camera0);
- SetProjection(0, proj_camera0);
- SetView(1, view_camera1);
- SetProjection(1, proj_camera1);
-
- Begin(0);
-
- SetTransform(tr1);
- SetBuffer(vb1);
- SetBuffer(ib1);
- Draw(shader1);
-
- SetTransform(tr2);
- SetBuffer(vb2);
- SetBuffer(ib2);
- Draw(shader2);
-
- End(); // end camera0 render
-
- Begin(1);
- Draw(shader1);
- End(); // end camera1 render
-
- Render();
-
-*/
 
 };
 

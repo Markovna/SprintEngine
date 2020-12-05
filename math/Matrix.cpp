@@ -41,29 +41,40 @@ Matrix Matrix::Rotation(const Quat& rot) {
         );
 }
 
+Matrix Matrix::Ortho(float x, float width, float y, float height, float minZ, float maxZ) {
+    float scale = 1.0f / (maxZ - minZ);
+    return Matrix(
+        Vec4(2.0f / width, 0.0f, 0.0f, 0.0f),
+        Vec4(0.0f, 2.0f / height, 0.0f, 0.0f),
+        Vec4(0.0f, 0.0f, scale, 0.0f),
+        Vec4(- (2 * x + width) / width, - (2 * y + height) / height, -(minZ + maxZ) * scale, 1.0f)
+    );
+}
+
 Matrix Matrix::Ortho(float width, float height, float minZ, float maxZ) {
     float scale = 1.0f / (maxZ - minZ);
     return Matrix(
-            Vec4(1.0f / width, 0.0f, 0.0f, 0.0f),
-            Vec4(0.0f, 1.0f / height, 0.0f, 0.0f),
+            Vec4(2.0f / width, 0.0f, 0.0f, 0.0f),
+            Vec4(0.0f, 2.0f / height, 0.0f, 0.0f),
             Vec4(0.0f, 0.0f, scale, 0.0f),
             Vec4(0.0f, 0.0f, -(minZ + maxZ) * scale, 1.0f)
         );
 }
 
 Matrix Matrix::Perspective(float fov, float width, float height, float minZ, float maxZ) {
-    const float tan = 1.0f / std::tan(fov * 0.5f);
+    const float cot = 1.0f / std::tan(fov * 0.5f);
     const float scale = 1.0f / (maxZ - minZ);
+    const float r = height / width;
     return Matrix(
-            Vec4(tan, 0.0f, 0.0f, 0.0f),
-            Vec4(0.0f, width * tan / height, 0.0f, 0.0f),
+            Vec4(r * cot, 0.0f, 0.0f, 0.0f),
+            Vec4(0.0f, cot, 0.0f, 0.0f),
             Vec4(0.0f, 0.0f, maxZ * scale, 1.0f),
             Vec4(0.0f, 0.0f, - minZ * maxZ * scale, 0.0f)
         );
 }
 
 Matrix Matrix::LookAt(const Vec3& position, const Vec3& target) {
-    Vec3 fwd = Normalized(position - target);
+    Vec3 fwd = Normalized(target - position);
     Vec3 right = Vec3::Up ^ fwd;
     return Matrix(
             right,
@@ -74,7 +85,7 @@ Matrix Matrix::LookAt(const Vec3& position, const Vec3& target) {
 }
 
 Matrix Matrix::LookAt(const Vec3& position, const Vec3& target, const Vec3& up) {
-    Vec3 fwd = Normalized(position - target);
+    Vec3 fwd = Normalized(target - position);
     Vec3 right = Normalized(up ^ fwd);
     return Matrix(
             right,
@@ -110,5 +121,77 @@ Matrix::Matrix() :
         { 0.0f, 0.0f, 0.0f, 1.0f }
     }
 {}
+
+Matrix &Matrix::Inverse() {
+    *this = Matrix::GetInverse(*this);
+    return *this;
+}
+
+
+Matrix Matrix::GetInverse(const Matrix& mat) {
+
+    Vec3 x = mat.GetRow(0);
+    Vec3 y = mat.GetRow(1);
+    Vec3 z = mat.GetRow(2);
+    Vec3 w = -mat.GetRow(3);
+
+    Matrix res;
+    res[0][0] = mat[0][0]; res[0][1] = mat[1][0]; res[0][2] = mat[2][0]; res[0][3] = 0;
+    res[1][0] = mat[0][1]; res[1][1] = mat[1][1]; res[1][2] = mat[2][1]; res[1][3] = 0;
+    res[2][0] = mat[0][2]; res[2][1] = mat[1][2]; res[2][2] = mat[2][2]; res[2][3] = 0;
+    res[3][0] = w | x;     res[3][1] = w | y;     res[3][2] = w | z;     res[3][3] = 1.0f;
+
+    return res;
+}
+
+Matrix GetInverse2(const Matrix& mat) {
+    const float det = mat.Determinant();
+    if (Approximately(det, 0.0f))
+    {
+        static const float nan = std::numeric_limits<float>::quiet_NaN();
+        return Matrix(
+            { nan,nan,nan,nan },
+            { nan,nan,nan,nan },
+            { nan,nan,nan,nan },
+            { nan,nan,nan,nan }
+        );
+    }
+
+    const float inv_det = 1.0f / det;
+    const float* row0 = mat[0];
+    const float* row1 = mat[1];
+    const float* row2 = mat[2];
+    const float* row3 = mat[3];
+
+    Vec4 x(row0[0], row0[1], row0[2], row0[3]);
+    Vec4 y(row1[0], row1[1], row1[2], row1[3]);
+    Vec4 z(row2[0], row2[1], row2[2], row2[3]);
+    Vec4 w(row3[0], row3[1], row3[2], row3[3]);
+
+    x[0] = inv_det  * (y[1] * (z[2] * w[3] - w[2] * z[3]) + z[1] * (w[2] * y[3] - y[2] * w[3]) + w[1] * (y[2] * z[3] - z[2] * y[3]));
+    y[0] = -inv_det * (y[0] * (z[2] * w[3] - w[2] * z[3]) + z[0] * (w[2] * y[3] - y[2] * w[3]) + w[0] * (y[2] * z[3] - z[2] * y[3]));
+    z[0] = inv_det  * (y[0] * (z[1] * w[3] - w[1] * z[3]) + z[0] * (w[1] * y[3] - y[1] * w[3]) + w[0] * (y[1] * z[3] - z[1] * y[3]));
+    w[0] = -inv_det * (y[0] * (z[1] * w[2] - w[1] * z[2]) + z[0] * (w[1] * y[2] - y[1] * w[2]) + w[0] * (y[1] * z[2] - z[1] * y[2]));
+    x[1] = -inv_det * (x[1] * (z[2] * w[3] - w[2] * z[3]) + z[1] * (w[2] * x[3] - x[2] * w[3]) + w[1] * (x[2] * z[3] - z[2] * x[3]));
+    y[1] = inv_det  * (x[0] * (z[2] * w[3] - w[2] * z[3]) + z[0] * (w[2] * x[3] - x[2] * w[3]) + w[0] * (x[2] * z[3] - z[2] * x[3]));
+    z[1] = -inv_det * (x[0] * (z[1] * w[3] - w[1] * z[3]) + z[0] * (w[1] * x[3] - x[1] * w[3]) + w[0] * (x[1] * z[3] - z[1] * x[3]));
+    w[1] = inv_det  * (x[0] * (z[1] * w[2] - w[1] * z[2]) + z[0] * (w[1] * x[2] - x[1] * w[2]) + w[0] * (x[1] * z[2] - z[1] * x[2]));
+    x[2] = inv_det  * (x[1] * (y[2] * w[3] - w[2] * y[3]) + y[1] * (w[2] * x[3] - x[2] * w[3]) + w[1] * (x[2] * y[3] - y[2] * x[3]));
+    y[2] = -inv_det * (x[0] * (y[2] * w[3] - w[2] * y[3]) + y[0] * (w[2] * x[3] - x[2] * w[3]) + w[0] * (x[2] * y[3] - y[2] * x[3]));
+    z[2] = inv_det  * (x[0] * (y[1] * w[3] - w[1] * y[3]) + y[0] * (w[1] * x[3] - x[1] * w[3]) + w[0] * (x[1] * y[3] - y[1] * x[3]));
+    w[2] = -inv_det * (x[0] * (y[1] * w[2] - w[1] * y[2]) + y[0] * (w[1] * x[2] - x[1] * w[2]) + w[0] * (x[1] * y[2] - y[1] * x[2]));
+//    x[3] = -inv_det * (x[1] * (y[2] * z[3] - z[2] * y[3]) + y[1] * (z[2] * x[3] - x[2] * z[3]) + z[1] * (x[2] * y[3] - y[2] * x[3]));
+//    y[3] = inv_det  * (x[0] * (y[2] * z[3] - z[2] * y[3]) + y[0] * (z[2] * x[3] - x[2] * z[3]) + z[0] * (x[2] * y[3] - y[2] * x[3]));
+//    z[3] = -inv_det * (x[0] * (y[1] * z[3] - z[1] * y[3]) + y[0] * (z[1] * x[3] - x[1] * z[3]) + z[0] * (x[1] * y[3] - y[1] * x[3]));
+//    w[3] = inv_det  * (x[0] * (y[1] * z[2] - z[1] * y[2]) + y[0] * (z[1] * x[2] - x[1] * z[2]) + z[0] * (x[1] * y[2] - y[1] * x[2]));
+
+
+    x[3] = 0.0f;
+    y[3] = 0.0f;
+    z[3] = 0.0f;
+    w[3] = 1.0f;
+
+    return Matrix(x, y, z, w);
+}
 
 }

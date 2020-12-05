@@ -44,10 +44,10 @@ Texture::Loader& Texture::Loader::operator=(Loader&& loader) noexcept {
     return *this;
 }
 
-std::shared_ptr<Texture> Texture::Load(const std::string& path) {
+std::unique_ptr<Texture> Texture::Load(const std::string& path) {
     Loader loader(path);
     if (loader) {
-        return std::shared_ptr<Texture>(
+        return std::unique_ptr<Texture>(
                 new Texture(loader.get_data(),
                             loader.get_width(),
                             loader.get_height(),
@@ -59,8 +59,7 @@ std::shared_ptr<Texture> Texture::Load(const std::string& path) {
 }
 
 Texture::Texture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t channels) :
-// TODO: get rid of const cast
-    handle_(gfx::CreateTexture(const_cast<uint8_t*>(data), width, height, channels)) {
+    handle_(gfx::CreateTexture(gfx::Copy(data, sizeof(uint8_t) * width * height * channels), width, height, channels)) {
 }
 
 Texture::~Texture() {
@@ -69,6 +68,15 @@ Texture::~Texture() {
 }
 gfx::TextureHandle Texture::get_handle() const {
     return handle_;
+}
+
+Texture::Texture(Texture&& other) noexcept {
+    std::swap(handle_, other.handle_);
+}
+
+Texture &Texture::operator=(Texture && other) noexcept {
+    std::swap(handle_, other.handle_);
+    return *this;
 }
 
 }

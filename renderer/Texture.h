@@ -33,7 +33,13 @@ class Texture {
 
 public:
     Texture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t channels);
-    static std::shared_ptr<Texture> Load(const std::string& path);
+    Texture(const Texture&) = delete;
+    Texture(Texture&&) noexcept;
+
+    Texture& operator=(const Texture&) = delete;
+    Texture& operator=(Texture&&) noexcept;
+
+    static std::unique_ptr<Texture> Load(const std::string& path);
     ~Texture();
     gfx::TextureHandle get_handle() const;
 

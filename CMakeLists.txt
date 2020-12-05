@@ -38,13 +38,12 @@ add_executable(SprintEngine
         common/signals/function_ref.cpp common/signals/function_ref.h
         common/signals/delegate_tests.cpp common/signals/delegate_tests.h
         common/slot_map.h
-        editor/imgui_impl.cpp editor/imgui_impl.h
         common/clock.cpp common/clock.h
         renderer/gfx.cpp renderer/gfx.h
         renderer/vertex_layout.cpp renderer/vertex_layout.h
         renderer/gfx_details.cpp renderer/gfx_details.h
         renderer/renderer_api_gl.cpp renderer/renderer_api_gl.h
-        renderer/shader_utils.cpp renderer/shader_utils.h renderer/gfx_config.cpp renderer/gfx_config.h common/iterator_range.h)
+        renderer/shader_utils.cpp renderer/shader_utils.h renderer/gfx_config.cpp renderer/gfx_config.h common/iterator_range.h common/rect.cpp common/rect.h)
 
 target_include_directories(SprintEngine PRIVATE core/ renderer/ math/ common/)
 

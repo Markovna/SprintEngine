@@ -10,18 +10,27 @@
 namespace sprint {
 
 struct MouseMoveEvent {
-    explicit MouseMoveEvent(Vec2 position) : Position(position) {}
-    Vec2 Position;
+    Vec2 position;
 };
 
 struct MouseEvent {
-    explicit MouseEvent(MouseCode mouseCode) : MouseCode(mouseCode) {}
-    MouseCode MouseCode;
+    MouseCode mouse_code;
+};
+
+struct ScrollEvent {
+    Vec2 offset;
 };
 
 struct KeyEvent {
-    explicit KeyEvent(KeyCode keyCode) : KeyCode(keyCode) {}
-    KeyCode KeyCode;
+    KeyCode key_code;
+    bool control;
+    bool shift;
+    bool alt;
+    bool super;
+};
+
+struct TextEvent {
+    uint32_t unicode;
 };
 
 struct CloseEvent {};
@@ -35,8 +44,10 @@ public:
         MOUSE_UP,
         MOUSE_DOWN,
         MOUSE_MOVE,
+        SCROLL,
         KEY_PRESS,
         KEY_RELEASE,
+        TEXT,
         CLOSE
     };
 
@@ -45,6 +56,8 @@ public:
     WindowEvent(MouseEvent mouse_event, bool down);
     WindowEvent(MouseMoveEvent move_event);
     WindowEvent(CloseEvent close_event);
+    WindowEvent(ScrollEvent scroll_event);
+    WindowEvent(TextEvent text_event);
     WindowEvent();
 
     inline Type get_type() const;
@@ -54,11 +67,13 @@ private:
 
 public:
     union {
-        MouseEvent Mouse;
-        MouseMoveEvent MouseMove;
-        KeyEvent Key;
-        CloseEvent Close;
-        NoneEvent None;
+        MouseEvent mouse_event;
+        MouseMoveEvent mouse_move_event;
+        ScrollEvent scroll_event;
+        KeyEvent key_event;
+        TextEvent text_event;
+        CloseEvent close_event;
+        NoneEvent none;
     };
 };
 

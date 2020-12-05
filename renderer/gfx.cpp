@@ -9,16 +9,13 @@ namespace sprint {
 namespace gfx {
 
 void Init(Config config) {
-
     log::core::Info("gfx::Init");
-
     details::g_config = config;
     details::g_renderer.Init(details::g_config);
 }
 
 void Shutdown() {
     details::g_renderer.Shutdown();
-
     log::core::Info("gfx::Shutdown");
 }
 
@@ -34,14 +31,14 @@ bool ShaderType::TryParse(std::string_view str, ShaderType::Enum &type) {
     return false;
 }
 
-VertexBufferHandle CreateVertexBuffer(void *data, uint32_t size, VertexLayout layout) {
+VertexBufferHandle CreateVertexBuffer(MemoryPtr ptr, uint32_t size, VertexLayout layout) {
     log::core::Info("gfx::CreateVertexBuffer");
-    return details::g_renderer.CreateVertexBuffer(data, size, layout);
+    return details::g_renderer.CreateVertexBuffer(std::move(ptr), size, layout);
 }
 
-IndexBufferHandle CreateIndexBuffer(void *data, uint32_t size) {
+IndexBufferHandle CreateIndexBuffer(MemoryPtr ptr, uint32_t size) {
     log::core::Info("gfx::CreateIndexBuffer");
-    return details::g_renderer.CreateIndexBuffer(data, size);
+    return details::g_renderer.CreateIndexBuffer(std::move(ptr), size);
 }
 
 ShaderHandle CreateShader(const std::string &source, std::initializer_list<Attribute::Binding::Enum> in_types) {
@@ -49,9 +46,17 @@ ShaderHandle CreateShader(const std::string &source, std::initializer_list<Attri
     return details::g_renderer.CreateShader(source, in_types);
 }
 
-TextureHandle CreateTexture(uint8_t *data, uint32_t width, uint32_t height, uint32_t channels) {
+TextureHandle CreateTexture(MemoryPtr ptr, uint32_t width, uint32_t height, uint32_t channels) {
     log::core::Info("gfx::CreateTexture");
-    return details::g_renderer.CreateTexture(data, width, height, channels);
+    return details::g_renderer.CreateTexture(std::move(ptr), width, height, channels);
+}
+
+void UpdateVertexBuffer(VertexBufferHandle handle, MemoryPtr ptr, uint32_t offset) {
+    details::g_renderer.UpdateVertexBuffer(handle, std::move(ptr), offset);
+}
+
+void UpdateIndexBuffer(IndexBufferHandle handle, MemoryPtr ptr, uint32_t offset) {
+    details::g_renderer.UpdateIndexBuffer(handle, std::move(ptr), offset);
 }
 
 void Render(CameraId camera_id, ShaderHandle shader_handle) {
@@ -62,27 +67,23 @@ void Frame() {
     details::g_renderer.RenderFrame();
 }
 
-void SetBuffer(IndexBufferHandle handle) {
-    details::g_renderer.SetBuffer(handle);
-}
-
-void SetBuffer(VertexBufferHandle handle) {
-    details::g_renderer.SetBuffer(handle);
-}
-
 void Destroy(VertexBufferHandle& handle) {
+    log::core::Info("gfx::Destroy VertexBuffer");
     details::g_renderer.Destroy(handle);
 }
 
 void Destroy(IndexBufferHandle& handle) {
+    log::core::Info("gfx::Destroy IndexBuffer");
     details::g_renderer.Destroy(handle);
 }
 
 void Destroy(TextureHandle& handle) {
+    log::core::Info("gfx::Destroy Texture");
     details::g_renderer.Destroy(handle);
 }
 
 void Destroy(ShaderHandle& handle) {
+    log::core::Info("gfx::Destroy Shader");
     details::g_renderer.Destroy(handle);
 }
 
@@ -100,6 +101,10 @@ void SetProjection(CameraId camera_id, const Matrix& matrix) {
 
 void SetClear(CameraId camera_id, ClearFlagMask clear_flag) {
     details::g_renderer.SetClear(camera_id, clear_flag);
+}
+
+void SetClearColor(CameraId camera_id, const Color& color) {
+    details::g_renderer.SetClearColor(camera_id, color);
 }
 
 void SetUniform(ShaderHandle handle, const std::string& name, int value) {
@@ -134,8 +139,30 @@ void SetUniform(ShaderHandle handle, const std::string& name, TextureHandle valu
     details::g_renderer.SetUniform(handle, name, value, slot);
 }
 
-void SetClearColor(CameraId camera_id, const Color& color) {
-    details::g_renderer.SetClearColor(camera_id, color);
+MemoryPtr Copy(const void *data, uint32_t size) {
+    std::shared_ptr<void> ptr(operator new(size), [](void* p){ operator delete(p); });
+    memcpy(ptr.get(), data, size);
+    return { ptr, size };
+}
+
+MemoryPtr MakeRef(void* data, uint32_t size) {
+    std::shared_ptr<void> ptr(data, [](void*){});
+    return MemoryPtr { ptr, size };
+}
+
+void SetBuffer(VertexBufferHandle handle, uint32_t offset, uint32_t num) {
+    details::g_renderer.SetBuffer(handle, offset, num);
+}
+
+void SetBuffer(IndexBufferHandle handle, uint32_t offset, uint32_t num) {
+    details::g_renderer.SetBuffer(handle, offset, num);
+}
+
+void SetScissor(Rect rect) {
+    details::g_renderer.SetScissor(rect);
+}
+void SetOptions(DrawConfig::Options options) {
+    details::g_renderer.SetOptions(options);
 }
 
 }

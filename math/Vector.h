@@ -283,4 +283,8 @@ Vec Normalized(const Vec& vec) {
     return vec / std::sqrt(vec | vec);
 }
 
+struct Vec2Int {
+    int x, y;
+};
+
 }

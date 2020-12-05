@@ -26,7 +26,7 @@ public:
     }
 
     template<typename... Args>
-    static void Error(const std::string &str, const Args &... args) {
+    static void Error(const std::string &str, const Args&... args) {
         Logger::Get()->error(str, args...);
     }
 };
@@ -49,6 +49,13 @@ struct ClientLog : details::LogBase<ClientLog> {
 
 using core = details::CoreLog;
 using app = details::ClientLog;
+
+template<typename... Args>
+static std::string Format(const std::string& str, const Args&... args) {
+    spdlog::memory_buf_t buf;
+    fmt::format_to(buf, str, args...);
+    return { buf.data(), buf.size() };
+}
 
 }
 
