@@ -5,6 +5,7 @@
 [submodule "thirdparty/imgui"]
 	path = thirdparty/imgui
 	url = https://github.com/Markovna/imgui
+	branch = docking
 [submodule "thirdparty/assimp"]
 	path = thirdparty/assimp
 	url = https://github.com/Markovna/assimp
