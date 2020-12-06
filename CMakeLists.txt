@@ -29,9 +29,7 @@ add_executable(SprintEngine
         renderer/Mesh.cpp renderer/Mesh.h
         common/color.cpp common/color.h
         editor/imgui_renderer.cpp editor/imgui_renderer.h
-        renderer/GL.cpp renderer/GL.h
         common/IdAllocator.h
-        renderer/VertexLayout.cpp renderer/VertexLayout.h
         core/InputSystem.cpp core/InputSystem.h
         common/signals/delegate.h
         common/signals/event.cpp common/signals/event.h
