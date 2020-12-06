@@ -10,12 +10,12 @@ namespace sprint {
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
-event<MouseEvent&> Application::OnMouseDown;
-event<MouseEvent&> Application::OnMouseUp;
+event<MouseDownEvent&> Application::OnMouseDown;
+event<MouseUpEvent&> Application::OnMouseUp;
 event<MouseMoveEvent&> Application::OnMouseMove;
 event<ScrollEvent&> Application::OnScroll;
-event<KeyEvent&> Application::OnKeyPress;
-event<KeyEvent&> Application::OnKeyRelease;
+event<KeyPressEvent&> Application::OnKeyPress;
+event<KeyReleaseEvent&> Application::OnKeyRelease;
 event<TextEvent&> Application::OnTextInput;
 
 Application::Application() {
@@ -32,32 +32,16 @@ int Application::Run() {
     return 0;
 }
 
+template<> void Application::OnEvent(MouseDownEvent& e) { OnMouseDown(e); }
+template<> void Application::OnEvent(MouseUpEvent& e) { OnMouseUp(e); }
+template<> void Application::OnEvent(MouseMoveEvent& e) { OnMouseMove(e); }
+template<> void Application::OnEvent(KeyPressEvent& e) { OnKeyPress(e); }
+template<> void Application::OnEvent(KeyReleaseEvent& e) { OnKeyRelease(e); }
+template<> void Application::OnEvent(ScrollEvent& e) { OnScroll(e); }
+template<> void Application::OnEvent(TextEvent& e) { OnTextInput(e); }
+
 void Application::OnEvent(WindowEvent& event) {
-    switch (event.get_type()) {
-        case WindowEvent::MOUSE_DOWN:
-            OnMouseDown(event.mouse_event);
-            break;
-        case WindowEvent::MOUSE_UP:
-            OnMouseUp(event.mouse_event);
-            break;
-        case WindowEvent::MOUSE_MOVE:
-            OnMouseMove(event.mouse_move_event);
-            break;
-        case WindowEvent::SCROLL:
-            OnScroll(event.scroll_event);
-            break;
-        case WindowEvent::KEY_PRESS:
-            OnKeyPress(event.key_event);
-            break;
-        case WindowEvent::KEY_RELEASE:
-            OnKeyRelease(event.key_event);
-            break;
-        case WindowEvent::TEXT:
-            OnTextInput(event.text_event);
-            break;
-        default:
-            break;
-    }
+    mpark::visit([this](auto& e) { OnEvent(e); }, event);
 }
 
 bool Application::RunOneFrame() {
@@ -65,7 +49,7 @@ bool Application::RunOneFrame() {
 
     WindowEvent event;
     while (window_->PollEvent(event)) {
-        if (event.get_type() == WindowEvent::CLOSE) {
+        if (event.get_type() == EventType::CLOSE) {
             return false;
         }
 
@@ -86,24 +70,30 @@ bool Application::RunOneFrame() {
 //        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 //        ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
-        if (ImGui::Button("test")) {
+
+
+        static char buf[1024];
+        buf[0] = '>'; buf[1] = ' ';
+
+//        ImGui::Text(">");
+//        ImGui::SameLine();
+        ImGui::InputTextMultiline("", buf, 1024);
+//        ImGui::SameLine();
+//        if (ImGui::Button("test")) {
+//
+//        }
+        if (ImGui::Button("test2")) {
 
         }
 
-        static char buf[1024];
-
-        ImGui::Text(">");
-        ImGui::SameLine();
-        ImGui::InputTextMultiline("", buf, 1024);
-//        ImGui::SameLine();
-        ImGui::Text("%s", log::Format("fps={0}", fps).c_str());
+        ImGui::Text("%s", log::Format("fps={0:03.3f}", fps).c_str());
 
         ImGui::End();
 
-        ImGui::Begin("Window");
-        ImGui::Text("Text");
-        ImGui::End();
 
+//        ImGui::Begin("Window");
+//        ImGui::Text("Text");
+//        ImGui::End();
     }
 
     imgui_renderer_->EndFrame();

@@ -43,57 +43,55 @@ Window::Window(size_t width, size_t height) : width_(width), height_(height) {
     glfwSetKeyCallback(window_, [](GLFWwindow *w, int key, int scancode, int action, int mods) {
         Window* window = (Window*) glfwGetWindowUserPointer(w);
         if (action == GLFW_PRESS) {
-            window->PushEvent(WindowEvent(
-                KeyEvent{
+            window->PushEvent(
+                KeyPressEvent {
                     (KeyCode)key,
                     bool(mods & GLFW_MOD_CONTROL),
                     bool(mods & GLFW_MOD_SHIFT),
                     bool(mods & GLFW_MOD_ALT),
                     bool(mods & GLFW_MOD_SUPER)
-                    },
-                    true));
+                    });
         }
         else if (action == GLFW_RELEASE) {
-            window->PushEvent(WindowEvent(
-                KeyEvent{
+            window->PushEvent(
+                KeyReleaseEvent {
                     KeyCode(key),
                     bool(mods & GLFW_MOD_CONTROL),
                     bool(mods & GLFW_MOD_SHIFT),
                     bool(mods & GLFW_MOD_ALT),
                     bool(mods & GLFW_MOD_SUPER)
-                    },
-                   false));
+                    });
         }
     });
 
     glfwSetMouseButtonCallback(window_, [](GLFWwindow *w, int button, int action, int mods) {
         Window* window = (Window*)glfwGetWindowUserPointer(w);
         if (action == GLFW_PRESS) {
-            window->PushEvent(WindowEvent(MouseEvent{(MouseCode)button}, true));
+            window->PushEvent(MouseDownEvent{(MouseCode)button});
         }
         else if (action == GLFW_RELEASE) {
-            window->PushEvent(WindowEvent(MouseEvent{(MouseCode)button}, false));
+            window->PushEvent(MouseUpEvent{(MouseCode)button});
         }
     });
 
     glfwSetScrollCallback(window_, [](GLFWwindow* w, double xoffset, double yoffset){
         Window* window = (Window*)glfwGetWindowUserPointer(w);
-        window->PushEvent(WindowEvent(ScrollEvent { Vec2(float(xoffset), float(yoffset)) }));
+        window->PushEvent(ScrollEvent { Vec2(float(xoffset), float(yoffset)) });
     });
 
     glfwSetCursorPosCallback(window_, [](GLFWwindow *w, double xpos, double ypos) {
         Window* window = (Window*)glfwGetWindowUserPointer(w);
-        window->PushEvent(WindowEvent(MouseMoveEvent { Vec2(float(xpos), float(ypos)) }));
+        window->PushEvent(MouseMoveEvent { Vec2(float(xpos), float(ypos)) });
     });
 
     glfwSetWindowCloseCallback(window_, [](GLFWwindow *w) {
         Window* window = (Window*)glfwGetWindowUserPointer(w);
-        window->PushEvent(WindowEvent(CloseEvent()));
+        window->PushEvent(CloseEvent());
     });
 
     glfwSetCharCallback(window_, [](GLFWwindow* w, unsigned int codepoint) {
         Window* window = (Window*)glfwGetWindowUserPointer(w);
-        window->PushEvent(WindowEvent(TextEvent { codepoint } ));
+        window->PushEvent(TextEvent { codepoint } );
     });
 }
 
@@ -270,7 +268,7 @@ void PrepareRenderTriangles(int width, int height) {
     gfx::SetClear(0, gfx::ClearFlag::Color | gfx::ClearFlag::Depth);
     gfx::SetClearColor(0, Color(0.1, 0.1, 0.1, 1.0));
 
-    Application::OnKeyPress.connect([](KeyEvent& key){
+    Application::OnKeyPress.connect([](KeyPressEvent& key){
         if (key.key_code == key::Left || key.key_code == key::Right) {
             float a = key.key_code == key::Left ? -1 : 1;
             view_mat = Matrix::Rotation(Quat(Vec3::Right, a * 0.01f * M_PI)) * view_mat;

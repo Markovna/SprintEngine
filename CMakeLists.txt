@@ -14,7 +14,7 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/assimp)
 add_executable(SprintEngine
         core/main.cpp
         core/Log.cpp core/Log.h
-        core/WindowEvent.cpp core/WindowEvent.h
+        core/WindowEvent.h
         core/Application.cpp core/Application.h
         core/Window.cpp core/Window.h
         renderer/Shader.cpp renderer/Shader.h

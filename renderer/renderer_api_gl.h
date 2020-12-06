@@ -16,14 +16,18 @@ public:
     using WindowHandle = GLFWwindow*;
 
     explicit GLContext(void* handle) : handle_((WindowHandle) handle) {
-        log::core::Info("New OpenGL context created");
         int w, h; glfwGetWindowSize(handle_, &w, &h);
         size_ = Vec2Int{ w, h };
+
+        float x, y; glfwGetWindowContentScale(handle_, &x, &y);
+        scale_ = Vec2{x, y};
+        log::core::Info("New OpenGL context created. size: {}x{}, scale: {}x{}", w, h, x, y);
     }
 
     void MakeCurrent();
     void SwapBuffers();
     inline Vec2Int GetSize() const { return size_; }
+    inline Vec2 GetScale() const { return scale_; }
 
     static void Init(GLContext& context);
     static GLContext CreateDefault(const Config& config);
@@ -31,6 +35,7 @@ public:
 private:
     WindowHandle handle_;
     Vec2Int size_;
+    Vec2 scale_;
 };
 
 class GLRendererAPI : public RendererAPI {

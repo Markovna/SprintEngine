@@ -294,6 +294,29 @@ static void DisableAttributes(uint16_t mask) {
     }
 }
 
+static void SetDepthTest(bool enable) {
+    if (enable) {
+        CHECK_ERRORS(glEnable(GL_DEPTH_TEST));
+    } else {
+        CHECK_ERRORS(glDisable(GL_DEPTH_TEST));
+    }
+}
+
+static void SetScissor(Rect scissor, Vec2Int size, Vec2 scale) {
+    if (Valid(scissor)) {
+        CHECK_ERRORS(glEnable(GL_SCISSOR_TEST));
+        CHECK_ERRORS(glScissor(
+            scissor.x * scale.x,
+            (size.y - (scissor.y + scissor.height)) * scale.y,
+            scissor.width * scale.x,
+            scissor.height * scale.y
+        ));
+    }
+    else {
+        CHECK_ERRORS(glDisable(GL_SCISSOR_TEST));
+    }
+}
+
 void GLRendererAPI::Draw(const RendererContext* context, const DrawUnit& draw) {
     for (const auto& command : draw.command_buffer) {
         mpark::visit([this](const auto& c){
@@ -307,34 +330,14 @@ void GLRendererAPI::Draw(const RendererContext* context, const DrawUnit& draw) {
     SetUniform(draw.shader_handle, "view", camera.view);
     SetUniform(draw.shader_handle, "projection", camera.projection);
 
-    if (Valid(draw.scissor)) {
-        CHECK_ERRORS(glEnable(GL_SCISSOR_TEST));
-        CHECK_ERRORS(glScissor(
-            draw.scissor.x,
-            default_context_.GetSize().y - (draw.scissor.y + draw.scissor.height),
-            draw.scissor.width,
-            draw.scissor.height
-        ));
-    }
-    else {
-        CHECK_ERRORS(glDisable(GL_SCISSOR_TEST));
-    }
-
-    if (draw.options & DrawConfig::Option::DEPTH_TEST) {
-        CHECK_ERRORS(glEnable(GL_DEPTH_TEST));
-    }
-    else {
-        CHECK_ERRORS(glDisable(GL_DEPTH_TEST));
-    }
+    SetScissor(draw.scissor, default_context_.GetSize(), default_context_.GetScale());
+    SetDepthTest(draw.options & DrawConfig::Option::DEPTH_TEST);
 
     if (draw.vb_handle.IsValid()) {
         VertexBuffer& vb = vertex_buffers_[draw.vb_handle.ID];
         Shader& shader = shaders_[draw.shader_handle.ID];
 
         CHECK_ERRORS(glBindBuffer(GL_ARRAY_BUFFER, vb.id));
-        if (draw.ib_handle.IsValid()) {
-            CHECK_ERRORS(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers_[draw.ib_handle.ID].id));
-        }
 
         CHECK_ERRORS(glUseProgram(shader.get_id()));
         uint16_t enabledAttribMask = 0;
@@ -357,6 +360,7 @@ void GLRendererAPI::Draw(const RendererContext* context, const DrawUnit& draw) {
         DisableAttributes(~enabledAttribMask);
 
         if (draw.ib_handle.IsValid()) {
+            CHECK_ERRORS(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers_[draw.ib_handle.ID].id));
             CHECK_ERRORS(glDrawElements(
                 GL_TRIANGLES,
                 draw.ib_size ? draw.ib_size : index_buffers_[draw.ib_handle.ID].size,

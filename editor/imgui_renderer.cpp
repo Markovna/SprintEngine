@@ -38,7 +38,7 @@ static void SetupKeyMap(ImGuiIO &io) {
     io.KeyMap[ImGuiKey_Backspace] = key::Backspace;
     io.KeyMap[ImGuiKey_Space] = key::Space;
     io.KeyMap[ImGuiKey_Enter] = key::Enter;
-    io.KeyMap[ImGuiKey_Escape] = key::Space;
+    io.KeyMap[ImGuiKey_Escape] = key::Escape;
     io.KeyMap[ImGuiKey_KeyPadEnter] = key::KPEnter;
     io.KeyMap[ImGuiKey_A] = key::A;
     io.KeyMap[ImGuiKey_C] = key::C;
@@ -48,30 +48,30 @@ static void SetupKeyMap(ImGuiIO &io) {
     io.KeyMap[ImGuiKey_Z] = key::Z;
 }
 
-void OnKeyPressed(KeyEvent& key_event) {
+void OnKeyPressed(KeyPressEvent& event) {
     ImGuiIO& io = ImGui::GetIO();
-    io.KeysDown[key_event.key_code] = true;
-    io.KeyCtrl = key_event.control;
-    io.KeyShift = key_event.shift;
-    io.KeyAlt = key_event.alt;
-    io.KeySuper = key_event.super;
+    io.KeysDown[event.key_code] = true;
+    io.KeyCtrl = event.control;
+    io.KeyShift = event.shift;
+    io.KeyAlt = event.alt;
+    io.KeySuper = event.super;
 }
 
-void OnKeyReleased(KeyEvent& key_event) {
+void OnKeyReleased(KeyReleaseEvent& event) {
     ImGuiIO& io = ImGui::GetIO();
-    io.KeysDown[key_event.key_code] = false;
-    io.KeyCtrl = key_event.control;
-    io.KeyShift = key_event.shift;
-    io.KeyAlt = key_event.alt;
-    io.KeySuper = key_event.super;
+    io.KeysDown[event.key_code] = false;
+    io.KeyCtrl = event.control;
+    io.KeyShift = event.shift;
+    io.KeyAlt = event.alt;
+    io.KeySuper = event.super;
 }
 
-void OnMouseDown(MouseEvent& e) {
+void OnMouseDown(MouseDownEvent& e) {
     ImGuiIO& io = ImGui::GetIO();
     io.MouseDown[e.mouse_code] = true;
 }
 
-void OnMouseUp(MouseEvent& e) {
+void OnMouseUp(MouseUpEvent& e) {
     ImGuiIO& io = ImGui::GetIO();
     io.MouseDown[e.mouse_code] = false;
 }

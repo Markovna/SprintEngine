@@ -2,6 +2,7 @@
 
 #include <string>
 #include <variant>
+#include <variant.hpp>
 
 #include "KeyCode.h"
 #include "MouseCodes.h"
@@ -9,19 +10,48 @@
 
 namespace sprint {
 
+enum EventType : uint8_t {
+    MOUSE_UP,
+    MOUSE_DOWN,
+    MOUSE_MOVE,
+    SCROLL,
+    KEY_PRESS,
+    KEY_RELEASE,
+    TEXT,
+    CLOSE
+};
+
 struct MouseMoveEvent {
+    static EventType Type() { return EventType::MOUSE_MOVE; }
     Vec2 position;
 };
 
-struct MouseEvent {
+struct MouseUpEvent {
+    static EventType Type() { return EventType::MOUSE_UP; }
+    MouseCode mouse_code;
+};
+
+struct MouseDownEvent {
+    static EventType Type() { return EventType::MOUSE_DOWN; }
     MouseCode mouse_code;
 };
 
 struct ScrollEvent {
+    static EventType Type() { return EventType::SCROLL; }
     Vec2 offset;
 };
 
-struct KeyEvent {
+struct KeyPressEvent {
+    static EventType Type() { return EventType::KEY_PRESS; }
+    KeyCode key_code;
+    bool control;
+    bool shift;
+    bool alt;
+    bool super;
+};
+
+struct KeyReleaseEvent {
+    static EventType Type() { return EventType::KEY_RELEASE; }
     KeyCode key_code;
     bool control;
     bool shift;
@@ -30,53 +60,50 @@ struct KeyEvent {
 };
 
 struct TextEvent {
+    static EventType Type() { return EventType::TEXT; }
     uint32_t unicode;
 };
 
-struct CloseEvent {};
-
-struct NoneEvent {};
-
-class WindowEvent {
-public:
-    enum Type : uint8_t {
-        NONE,
-        MOUSE_UP,
-        MOUSE_DOWN,
-        MOUSE_MOVE,
-        SCROLL,
-        KEY_PRESS,
-        KEY_RELEASE,
-        TEXT,
-        CLOSE
-    };
-
-public:
-    WindowEvent(KeyEvent key_event, bool pressed);
-    WindowEvent(MouseEvent mouse_event, bool down);
-    WindowEvent(MouseMoveEvent move_event);
-    WindowEvent(CloseEvent close_event);
-    WindowEvent(ScrollEvent scroll_event);
-    WindowEvent(TextEvent text_event);
-    WindowEvent();
-
-    inline Type get_type() const;
-
-private:
-    Type type_;
-
-public:
-    union {
-        MouseEvent mouse_event;
-        MouseMoveEvent mouse_move_event;
-        ScrollEvent scroll_event;
-        KeyEvent key_event;
-        TextEvent text_event;
-        CloseEvent close_event;
-        NoneEvent none;
-    };
+struct CloseEvent {
+    static EventType Type() { return EventType::CLOSE; }
 };
 
-inline WindowEvent::Type WindowEvent::get_type() const { return type_; }
+using WindowEventVariant = mpark::variant<
+    MouseMoveEvent,
+    MouseUpEvent,
+    MouseDownEvent,
+    ScrollEvent,
+    KeyPressEvent,
+    KeyReleaseEvent,
+    TextEvent,
+    CloseEvent>;
+
+class WindowEvent : public WindowEventVariant {
+public:
+    WindowEvent() : WindowEventVariant() {}
+
+    template<class T>
+    WindowEvent(T&& event) : WindowEventVariant(std::forward<T>(event)) {}
+
+    inline EventType get_type() const {
+        return mpark::visit([](const auto& e) { return get_type(e); }, *this);
+    }
+
+    template<class T>
+    T& Get() {
+        return mpark::get<T>(*this);
+    }
+
+    template<class T>
+    const T& Get() const {
+        return mpark::get<T>(*this);
+    }
+
+private:
+    template<class T>
+    static EventType get_type(const T&) {
+        return T::Type();
+    }
+};
 
 }

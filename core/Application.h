@@ -12,12 +12,12 @@ namespace sprint {
 class Application {
 public:
     // TODO: move it to InputSystem
-    static event<MouseEvent&> OnMouseDown;
-    static event<MouseEvent&> OnMouseUp;
+    static event<MouseDownEvent&> OnMouseDown;
+    static event<MouseUpEvent&> OnMouseUp;
     static event<MouseMoveEvent&> OnMouseMove;
     static event<ScrollEvent&> OnScroll;
-    static event<KeyEvent&> OnKeyPress;
-    static event<KeyEvent&> OnKeyRelease;
+    static event<KeyPressEvent&> OnKeyPress;
+    static event<KeyReleaseEvent&> OnKeyRelease;
     static event<TextEvent&> OnTextInput;
 
 public:
@@ -27,6 +27,11 @@ public:
 private:
     bool RunOneFrame();
     void OnEvent(WindowEvent &event);
+
+    template<class T> void OnEvent(T&) {
+        assert(false);
+    }
+
 private:
     std::unique_ptr<Window> window_;
     std::unique_ptr<ImGuiRenderer> imgui_renderer_;
