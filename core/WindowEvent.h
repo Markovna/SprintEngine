@@ -48,6 +48,7 @@ struct KeyPressEvent {
     bool shift;
     bool alt;
     bool super;
+    bool repeat;
 };
 
 struct KeyReleaseEvent {
@@ -90,20 +91,14 @@ public:
     }
 
     template<class T>
-    T& Get() {
-        return mpark::get<T>(*this);
-    }
+    T& Get() { return mpark::get<T>(*this); }
 
     template<class T>
-    const T& Get() const {
-        return mpark::get<T>(*this);
-    }
+    const T& Get() const { return mpark::get<T>(*this); }
 
 private:
     template<class T>
-    static EventType get_type(const T&) {
-        return T::Type();
-    }
+    static EventType get_type(const T&) { return T::Type(); }
 };
 
 }
