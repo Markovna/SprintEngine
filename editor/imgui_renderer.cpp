@@ -109,13 +109,17 @@ ImGuiRenderer::~ImGuiRenderer() {
 
 ImGuiRenderer::ImGuiRenderer() : context_(RenderContext::Create()) {
 
-    ImGuiIO &io = ImGui::GetIO();
-
     ImGui::StyleColorsDark();
 
-    // Setup back-end capabilities flags
+    ImGuiIO &io = ImGui::GetIO();
+
+    io.Fonts->TexID = (ImTextureID) &context_.texture;
+
     io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
     io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
+
+//    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // TODO
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     SetupKeyMap(io);
 
@@ -132,7 +136,7 @@ ImGuiRenderer::ImGuiRenderer() : context_(RenderContext::Create()) {
     gfx::SetClearColor(1, Color(0.1, 0.1, 0.1, 1.0));
 }
 
-void ImGuiRenderer::BeginFrame(sprint::Window *window, float delta_time) {
+void ImGuiRenderer::BeginFrame(sprint::Window *window) {
     ImGuiIO& io = gui::GetIO();
 
     if (!(io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange)) {
@@ -147,7 +151,7 @@ void ImGuiRenderer::BeginFrame(sprint::Window *window, float delta_time) {
 
     io.DisplaySize = ImVec2(window->get_width(), window->get_height());
     io.DisplayFramebufferScale = {1.0,1.0};
-    io.DeltaTime = delta_time;
+    io.DeltaTime = time::delta().AsSeconds();
 
     gfx::SetProjection(1, Matrix::Ortho(0, io.DisplaySize.x, 0, io.DisplaySize.y,0,1));
 
@@ -160,11 +164,9 @@ void ImGuiRenderer::EndFrame() {
 }
 
 void ImGuiRenderer::Render(ImDrawData *draw_data) {
-
     uint32_t vertices_offset = 0;
     uint32_t indices_offset = 0;
 
-    // Render command lists
     for (int n = 0; n < draw_data->CmdListsCount; n++) {
         const ImDrawList* cmd_list = draw_data->CmdLists[n];
         uint32_t num_vertices = cmd_list->VtxBuffer.size();
@@ -186,24 +188,19 @@ void ImGuiRenderer::Render(ImDrawData *draw_data) {
              cmd != cmdEnd;
              ++cmd)
         {
-            if(cmd->UserCallback != nullptr)
-            {
+            if (cmd->UserCallback) {
                 cmd->UserCallback(cmd_list, cmd);
             }
-            else if(0 != cmd->ElemCount)
-            {
+            else if (cmd->ElemCount) {
                 const std::uint16_t x = std::uint16_t(std::max(cmd->ClipRect.x, 0.0f));
                 const std::uint16_t y = std::uint16_t(std::max(cmd->ClipRect.y, 0.0f));
                 const std::uint16_t width = std::uint16_t(std::min(cmd->ClipRect.z, 65535.0f) - x);
                 const std::uint16_t height = std::uint16_t(std::min(cmd->ClipRect.w, 65535.0f) - y);
 
-//                auto tex_id = context_.texture.get_handle();
-//                if (cmd->TextureId) {
-//                }
-
+                Texture* texture = static_cast<Texture*>(cmd->TextureId);
                 gfx::SetScissor({ x, y, width, height });
                 gfx::SetOptions(gfx::DrawConfig::Option::NONE);
-                gfx::SetUniform(context_.shader.get_handle(), "Texture", context_.texture.get_handle(), 0);
+                gfx::SetUniform(context_.shader.get_handle(), "Texture", texture->get_handle(), 0);
                 gfx::SetBuffer(context_.vb_handle, vertices_offset, num_vertices);
                 gfx::SetBuffer(context_.ib_handle, indices_offset + offset, cmd->ElemCount);
                 gfx::Render(1, context_.shader.get_handle());
@@ -214,10 +211,7 @@ void ImGuiRenderer::Render(ImDrawData *draw_data) {
 
         vertices_offset += num_vertices;
         indices_offset += num_indices;
-
     }
-
-
 }
 
 }

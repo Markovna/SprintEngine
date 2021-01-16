@@ -16,7 +16,7 @@ class ImGuiRenderer {
 private:
     struct RenderContext {
 
-        constexpr static const size_t kBufferMaxSize  = 20 * 2048;
+        constexpr static const size_t kBufferMaxSize  = 100 * 2048;
 
         struct Buffer {
             std::aligned_storage_t<kBufferMaxSize> vertices;
@@ -84,7 +84,6 @@ private:
             // consider calling GetTexDataAsAlpha8() instead to save on GPU memory.
             io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
             Texture texture(pixels, width, height, 4);
-            io.Fonts->TexID = (ImTextureID)(intptr_t) texture.get_handle().ID;
 
             Shader shader = Shader::Load(
                 "assets/shaders/GUIShader.shader",
@@ -100,7 +99,7 @@ public:
     ImGuiRenderer();
     ~ImGuiRenderer();
 
-    void BeginFrame(Window* window, float delta_time);
+    void BeginFrame(Window* window);
     void EndFrame();
 
 private:
