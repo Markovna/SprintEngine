@@ -251,6 +251,16 @@ void GLRendererAPI::SetUniform(TextureHandle handle, int slot_idx) {
     CHECK_ERRORS(glBindTexture(GL_TEXTURE_2D, textures_[handle.ID].id));
 }
 
+template<> void GLRendererAPI::ExecuteCommand(const SetUniformCommand& command) {
+    mpark::visit([this, &command](const auto& val){
+        SetUniform(command.shader_handle, command.name, val);
+    }, command.value);
+}
+
+template<> void GLRendererAPI::ExecuteCommand(const SetTextureCommand& command) {
+    SetUniform(command.texture_handle, command.slot);
+}
+
 static GLenum ToGLenum(Attribute::Type type) {
     switch (type) {
         case Attribute::Type::FLOAT: return GL_FLOAT;

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <clock.h>
 #include "WindowEvent.h"
 #include "Window.h"
 #include "signals/event.h"
 
 #include "../editor/imgui_renderer.h"
+#include "engine.h"
 
 namespace sprint {
 
@@ -25,7 +25,7 @@ public:
     ~Application();
     int Run();
 private:
-    bool RunOneFrame();
+    void Frame();
     void OnEvent(WindowEvent &event);
 
     template<class T> void OnEvent(T&) {
@@ -35,7 +35,8 @@ private:
 private:
     std::unique_ptr<Window> window_;
     std::unique_ptr<ImGuiRenderer> imgui_renderer_;
-    Clock clock_;
+    std::unique_ptr<Engine> engine_;
+    bool running_ = true;
 };
 
 

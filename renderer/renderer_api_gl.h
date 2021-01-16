@@ -107,20 +107,7 @@ private:
     void SetUniform(TextureHandle, int slot_idx);
     void Draw(const RendererContext*, const DrawUnit&);
 
-    template <class TCommand>
-    void ExecuteCommand(const TCommand& command);
-
-    template <>
-    void ExecuteCommand<SetUniformCommand>(const SetUniformCommand& command) {
-        mpark::visit([this, &command](const auto& val){
-                SetUniform(command.shader_handle, command.name, val);
-            }, command.value);
-    }
-
-    template <>
-    void ExecuteCommand<SetTextureCommand>(const SetTextureCommand& command) {
-        SetUniform(command.texture_handle, command.slot);
-    }
+    template<class T> void ExecuteCommand(const T&) {}
 
 private:
     GLContext default_context_;

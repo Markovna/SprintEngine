@@ -34,7 +34,7 @@ public:
     Window(size_t width, size_t height);
     ~Window();
 
-    void OnUpdate();
+    void Update();
     bool PollEvent(Event& event);
     void SetMouseCursor(Cursor::Type cursor_type);
 

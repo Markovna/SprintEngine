@@ -98,7 +98,7 @@ public:
     uint32_t size() const { return size_; }
     void* get() const { return ptr_.get(); }
 
-    explicit operator bool() const noexcept { return get() != 0; }
+    explicit operator bool() const noexcept { return get(); }
 
 private:
     void swap(MemoryPtr& other) noexcept {

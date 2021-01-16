@@ -37,16 +37,15 @@ private:
     microseconds_t microseconds_;
 
 public:
-    explicit TimeSpan(microseconds_t microseconds) : microseconds_(microseconds) {}
+    explicit TimeSpan(microseconds_t microseconds) noexcept : microseconds_(microseconds) {}
+    TimeSpan() noexcept : microseconds_(0) {}
 };
 
 class Clock {
 private:
     using time_point_t = std::chrono::steady_clock::time_point;
 public:
-    Clock() {
-        time_point_ = std::chrono::steady_clock::now();
-    }
+    Clock() noexcept : time_point_(std::chrono::steady_clock::now()) {}
 
     TimeSpan Restart() {
         TimeSpan time = GetTime();
