@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(SprintEngine)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/spdlog)
@@ -24,9 +24,6 @@ add_executable(SprintEngine
         math/Quat.cpp math/Quat.h
         core/KeyCode.h
         core/MouseCodes.h
-        renderer/Camera.cpp renderer/Camera.h
-        core/ModelLoader.cpp core/ModelLoader.h
-        renderer/Mesh.cpp renderer/Mesh.h
         common/color.cpp common/color.h
         editor/imgui_renderer.cpp editor/imgui_renderer.h
         common/IdAllocator.h
@@ -36,12 +33,12 @@ add_executable(SprintEngine
         common/signals/function_ref.cpp common/signals/function_ref.h
         common/signals/delegate_tests.cpp common/signals/delegate_tests.h
         common/slot_map.h
-        common/clock.cpp common/clock.h
+        common/time_span.cpp common/time_span.h
         renderer/gfx.cpp renderer/gfx.h
         renderer/vertex_layout.cpp renderer/vertex_layout.h
         renderer/gfx_details.cpp renderer/gfx_details.h
         renderer/renderer_api_gl.cpp renderer/renderer_api_gl.h
-        renderer/shader_utils.cpp renderer/shader_utils.h renderer/gfx_config.cpp renderer/gfx_config.h common/iterator_range.h common/rect.cpp common/rect.h)
+        renderer/shader_utils.cpp renderer/shader_utils.h renderer/gfx_config.cpp renderer/gfx_config.h common/iterator_range.h common/rect.cpp common/rect.h core/engine.cpp core/engine.h core/app_time.h common/ecs/ecs.cpp common/ecs/ecs.h common/sparse_set.cpp common/sparse_set.h)
 
 target_include_directories(SprintEngine PRIVATE core/ renderer/ math/ common/)
 
