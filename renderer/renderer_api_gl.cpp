@@ -456,10 +456,9 @@ void GLRendererAPI::Draw(const RendererContext* context, const DrawUnit& draw) {
 
     const Camera& camera = context->cameras[draw.camera_id];
 
-    if (camera.frame_buffer != FrameBufferHandle::Invalid) {
+    if (camera.frame_buffer.IsValid()) {
         CHECK_ERRORS(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffers_[camera.frame_buffer.ID].id));
     }
-
 
     SetViewport(camera.viewport, context->resolution);
 

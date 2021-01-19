@@ -334,8 +334,6 @@ public:
         api_.reset();
     }
 
-
-
     void RenderFrame() {
         for (auto& command : frame_.get_commands()) {
             mpark::visit([this](auto& c){ c.Execute(api_.get()); }, command);

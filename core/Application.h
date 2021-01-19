@@ -17,6 +17,7 @@ public:
 private:
     void Frame();
     void OnClose(CloseEvent&);
+    void OnResize(ResizeEvent&);
 
 private:
     std::unique_ptr<Window> window_;

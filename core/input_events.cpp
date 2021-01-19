@@ -12,6 +12,7 @@ event<KeyPressEvent&> OnKeyPress;
 event<KeyReleaseEvent&> OnKeyRelease;
 event<TextEvent&> OnTextInput;
 event<CloseEvent&> OnClose;
+event<ResizeEvent&> OnResize;
 
 template<class T> void OnEvent(T&);
 
@@ -23,6 +24,7 @@ template<> void OnEvent(KeyReleaseEvent& e) { OnKeyRelease(e); }
 template<> void OnEvent(ScrollEvent& e) { OnScroll(e); }
 template<> void OnEvent(TextEvent& e) { OnTextInput(e); }
 template<> void OnEvent(CloseEvent& e) { OnClose(e); }
+template<> void OnEvent(ResizeEvent& e) { OnResize(e); }
 
 void OnEvent(WindowEvent& event) {
     mpark::visit([](auto& e) { OnEvent(e); }, event);

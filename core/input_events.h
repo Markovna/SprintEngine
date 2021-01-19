@@ -16,6 +16,7 @@ extern event<KeyPressEvent&> OnKeyPress;
 extern event<KeyReleaseEvent&> OnKeyRelease;
 extern event<TextEvent&> OnTextInput;
 extern event<CloseEvent&> OnClose;
+extern event<ResizeEvent&> OnResize;
 
 void OnEvent(WindowEvent &event);
 

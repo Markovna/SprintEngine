@@ -18,7 +18,8 @@ enum EventType : uint8_t {
     KEY_PRESS,
     KEY_RELEASE,
     TEXT,
-    CLOSE
+    CLOSE,
+    RESIZE
 };
 
 struct MouseMoveEvent {
@@ -69,6 +70,10 @@ struct CloseEvent {
     static EventType Type() { return EventType::CLOSE; }
 };
 
+struct ResizeEvent {
+    static EventType Type() { return EventType::RESIZE; }
+};
+
 using WindowEventVariant = mpark::variant<
     MouseMoveEvent,
     MouseUpEvent,
@@ -77,7 +82,8 @@ using WindowEventVariant = mpark::variant<
     KeyPressEvent,
     KeyReleaseEvent,
     TextEvent,
-    CloseEvent>;
+    CloseEvent,
+    ResizeEvent>;
 
 class WindowEvent : public WindowEventVariant {
 public:

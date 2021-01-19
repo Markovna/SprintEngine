@@ -85,15 +85,29 @@ Window::Window(size_t width, size_t height) : width_(width), height_(height) {
         window->PushEvent(MouseMoveEvent { Vec2(float(xpos), float(ypos)) });
     });
 
+    glfwSetCharCallback(window_, [](GLFWwindow* w, unsigned int codepoint) {
+        Window* window = (Window*)glfwGetWindowUserPointer(w);
+        window->PushEvent(TextEvent { codepoint } );
+    });
+
     glfwSetWindowCloseCallback(window_, [](GLFWwindow *w) {
         Window* window = (Window*)glfwGetWindowUserPointer(w);
         window->PushEvent(CloseEvent());
     });
 
-    glfwSetCharCallback(window_, [](GLFWwindow* w, unsigned int codepoint) {
-        Window* window = (Window*)glfwGetWindowUserPointer(w);
-        window->PushEvent(TextEvent { codepoint } );
+    glfwSetWindowSizeCallback(window_, [](GLFWwindow *w, int width, int height) {
+        Window* window = (Window*) glfwGetWindowUserPointer(w);
+        window->width_ = width;
+        window->height_ = height;
+
+        int buffer_w, buffer_h; glfwGetFramebufferSize(w, &buffer_w, &buffer_h);
+        window->resolution_ = { buffer_w, buffer_h };
+
+        window->PushEvent(ResizeEvent{});
     });
+
+//    glfwSetWindowRefreshCallback(window_, [](GLFWwindow *w) {
+//    });
 }
 
 Window::~Window() {

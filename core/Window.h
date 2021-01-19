@@ -41,7 +41,7 @@ public:
     [[nodiscard]] size_t get_width() const { return width_; }
     [[nodiscard]] size_t get_height() const { return height_; }
 
-    Vec2Int get_resolution() const { return resolution_;  }
+    [[nodiscard]] Vec2Int get_resolution() const { return resolution_;  }
 
     [[nodiscard]] GLFWwindow* get_handle() const { return window_; }
 

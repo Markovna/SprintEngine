@@ -30,6 +30,7 @@ Application::Application() {
     engine_ = std::make_unique<Engine>(*window_);
 
     input_events::OnClose.connect(this, &Application::OnClose);
+    input_events::OnResize.connect(this, &Application::OnResize);
 }
 
 int Application::Run() {
@@ -63,10 +64,15 @@ Application::~Application() {
     gfx::Shutdown();
 
     input_events::OnClose.disconnect(this, &Application::OnClose);
+    input_events::OnResize.disconnect(this, &Application::OnResize);
 }
 
 void Application::OnClose(CloseEvent&) {
     running_ = false;
+}
+
+void Application::OnResize(ResizeEvent &) {
+    gfx::SetResolution(window_->get_resolution());
 }
 
 }
