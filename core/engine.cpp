@@ -9,6 +9,7 @@
 #include "time.h"
 #include "sparse_set.h"
 #include "ecs/ecs.h"
+#include "input_events.h"
 
 namespace sprint {
 
@@ -195,11 +196,21 @@ static void TestEcs() {
 
 }
 
+static std::unique_ptr<Texture> render_tex;
+static gfx::TextureHandle depth_tex;
+static gfx::FrameBufferHandle frame_buffer;
+
 static void PrepareRenderTriangles(int width, int height) {
     static bool inited = false;
     if (inited) return;
 
     inited = true;
+
+//    render_tex = std::make_unique<Texture>(Texture{
+//        {}, 1024, 700, gfx::TextureFormat::RGBA8, gfx::TextureWrap{}, gfx::TextureFilter{}, gfx::TextureFlags::None});
+//
+//    depth_tex = gfx::CreateTexture(1024, 700, gfx::TextureFormat::D24S8, {}, {}, gfx::TextureFlags::RenderTarget, {});
+//    frame_buffer = gfx::CreateFrameBuffer({render_tex->get_handle(), depth_tex});
 
     TestEcs();
 
@@ -219,11 +230,13 @@ static void PrepareRenderTriangles(int width, int height) {
 //    proj_mat = Matrix::Ortho((float)width*0.05f, (float)height*0.05f, 0.1f, 100.0f);
 
     gfx::SetView(0, Matrix::GetInverse(view_mat));
+//    gfx::SetViewBuffer(0, frame_buffer);
+    gfx::SetViewRect(0, {0, 0, (uint32_t) width, (uint32_t) height});
     gfx::SetProjection(0, proj_mat);
     gfx::SetClear(0, gfx::ClearFlag::Color | gfx::ClearFlag::Depth);
     gfx::SetClearColor(0, Color(0.1, 0.1, 0.1, 1.0));
 
-    Application::OnKeyPress.connect([](KeyPressEvent& key){
+    input_events::OnKeyPress.connect([](KeyPressEvent& key){
         if (key.key_code == key::Left || key.key_code == key::Right) {
             float a = key.key_code == key::Left ? -1 : 1;
             view_mat = Matrix::Rotation(Quat(Vec3::Right, a * 0.01f * M_PI)) * view_mat;
@@ -328,12 +341,15 @@ static void TestGui(float delta) {
 
 void Engine::Update() {
     ImGui::Text("%s", log::Format("fps={0:.5f}", 1.0f / time::delta().AsSeconds()).c_str());
+
     RenderTrianglezzz();
     TestGui(time::delta().AsSeconds());
+
+//    ImGui::Image(render_tex.get(), {(float)render_tex->get_width(), (float)render_tex->get_height()});
 }
 
 Engine::Engine(const Window& window) {
-    PrepareRenderTriangles(window.get_width(), window.get_height());
+    PrepareRenderTriangles(window.get_resolution().x, window.get_resolution().y);
 }
 
 Engine::~Engine() {

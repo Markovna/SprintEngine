@@ -62,7 +62,7 @@ struct SetTextureCommand {
 using DrawUnitCommand = mpark::variant<SetUniformCommand, SetTextureCommand>;
 using DrawUnitCommandQueue = static_command_queue<DrawUnitCommand, static_config::kMaxCommandCountPerDrawCall>;
 
-static const DrawConfig::Options DefaultOptions = DrawConfig::Option::DEPTH_TEST;
+static const DrawConfig::Options DefaultOptions = DrawConfig::DEPTH_TEST;
 
 struct DrawUnit {
     Matrix transform = Matrix::Identity;
@@ -99,12 +99,15 @@ static void Clear(DrawUnit& draw) {
 struct Camera {
     Matrix view;
     Matrix projection;
+    Rect viewport;
     ClearFlagMask clear_flag = 0;
     Color clear_color;
+    FrameBufferHandle frame_buffer = FrameBufferHandle::Invalid;
 };
 
 struct RendererContext {
     Camera cameras[static_config::kCamerasCapacity];
+    Vec2Int resolution;
 };
 
 class RendererAPI {
@@ -120,14 +123,17 @@ public:
 
     virtual void CreateVertexBuffer(VertexBufferHandle, const void* data, uint32_t data_size, uint32_t size, VertexLayout layout) = 0;
     virtual void CreateIndexBuffer(IndexBufferHandle, const void* data, uint32_t data_size, uint32_t size) = 0;
+    virtual void CreateFrameBuffer(FrameBufferHandle, TextureHandle*, uint32_t num, bool destroy_tex = false) = 0;
     virtual void CreateShader(ShaderHandle, const std::string& source, const Attribute::BindingPack& bindings) = 0;
-    virtual void CreateTexture(TextureHandle, const void* data, uint32_t data_size, uint32_t width, uint32_t height, uint32_t channels) = 0;
+    virtual void CreateTexture(TextureHandle, const void* data, uint32_t data_size, uint32_t width, uint32_t height,
+                               TextureFormat::Enum, TextureWrap wrap, TextureFilter filter, TextureFlags::Type flags) = 0;
 
     virtual void UpdateVertexBuffer(VertexBufferHandle handle, uint32_t offset, const void* data, uint32_t data_size) = 0;
     virtual void UpdateIndexBuffer(IndexBufferHandle handle, uint32_t offset, const void* data, uint32_t data_size) = 0;
 
     virtual void Destroy(VertexBufferHandle) = 0;
     virtual void Destroy(IndexBufferHandle) = 0;
+    virtual void Destroy(FrameBufferHandle) = 0;
     virtual void Destroy(ShaderHandle) = 0;
     virtual void Destroy(TextureHandle) = 0;
 
@@ -159,6 +165,17 @@ struct CreateVertexBufferCommand {
     }
 };
 
+struct CreateFrameBufferCommand {
+    FrameBufferHandle handle = FrameBufferHandle::Invalid;
+    TextureHandle handles[static_config::kFrameBufferMaxAttachments];
+    uint32_t size = 0;
+    bool destroy_tex = false;
+
+    void Execute(RendererAPI* api) {
+        api->CreateFrameBuffer(handle, handles, size, destroy_tex);
+    }
+};
+
 struct UpdateIndexBufferCommand {
     IndexBufferHandle handle = IndexBufferHandle::Invalid;
     MemoryPtr ptr;
@@ -186,10 +203,13 @@ struct CreateTextureCommand {
     MemoryPtr ptr;
     uint32_t width = 0;
     uint32_t height = 0;
-    uint32_t channels = 0;
+    TextureFormat::Enum format = TextureFormat::Enum::RGBA8;
+    TextureWrap wrap;
+    TextureFilter filter;
+    TextureFlags::Type flags;
 
     void Execute(RendererAPI* api) {
-        api->CreateTexture(handle, ptr.get(), ptr.size(), width, height, channels);
+        api->CreateTexture(handle, ptr.get(), ptr.size(), width, height, format, wrap, filter, flags);
     }
 };
 
@@ -205,6 +225,14 @@ struct CreateShaderCommand {
 
 struct DestroyIndexBufferCommand {
     IndexBufferHandle handle;
+
+    void Execute(RendererAPI* api) {
+        api->Destroy(handle);
+    }
+};
+
+struct DestroyFrameBufferCommand {
+    FrameBufferHandle handle;
 
     void Execute(RendererAPI* api) {
         api->Destroy(handle);
@@ -239,11 +267,13 @@ using FrameContextCommand =
     mpark::variant<
         CreateIndexBufferCommand,
         CreateVertexBufferCommand,
+        CreateFrameBufferCommand,
         CreateTextureCommand,
         CreateShaderCommand,
         UpdateVertexBufferCommand,
         UpdateIndexBufferCommand,
         DestroyIndexBufferCommand,
+        DestroyFrameBufferCommand,
         DestroyVertexBufferCommand,
         DestroyTextureCommand,
         DestroyShaderCommand
@@ -304,11 +334,14 @@ public:
         api_.reset();
     }
 
+
+
     void RenderFrame() {
         for (auto& command : frame_.get_commands()) {
             mpark::visit([this](auto& c){ c.Execute(api_.get()); }, command);
         }
 
+        context_.resolution = g_config.resolution;
         api_->Frame(&context_, frame_.get_draws());
         frame_.Reset();
     }
@@ -332,15 +365,35 @@ public:
         return handle;
     }
 
+    FrameBufferHandle CreateFrameBuffer(uint32_t width, uint32_t height, TextureFormat::Enum format, TextureWrap wrap) {
+        auto color_tex_handle = CreateTexture({}, width, height, format, wrap);
+        auto depth_tex_handle = CreateTexture({}, width, height, TextureFormat::D24S8, TextureWrap::All_Repeat(), TextureFilter::Default(), TextureFlags::RenderTarget);
+        return CreateFrameBuffer({color_tex_handle, depth_tex_handle}, true);
+    }
+
+    FrameBufferHandle CreateFrameBuffer(std::initializer_list<TextureHandle> textures, bool destroy_tex) {
+        assert(textures.size() < static_config::kFrameBufferMaxAttachments);
+        FrameBufferHandle handle(frame_buffer_handles_.Alloc());
+        CreateFrameBufferCommand command;
+        command.handle = handle;
+        command.destroy_tex = destroy_tex;
+        for (auto tex : textures) command.handles[command.size++] = tex;
+        frame_.PushCommand(command);
+        return handle;
+    }
+
     ShaderHandle CreateShader(const std::string &source, std::initializer_list<Attribute::Binding::Enum> bindings) {
         ShaderHandle handle(shader_handles_.Alloc());
         frame_.PushCommand(CreateShaderCommand { handle, source, Attribute::BindingPack(bindings) } );
         return handle;
     }
 
-    TextureHandle CreateTexture(MemoryPtr ptr, uint32_t width, uint32_t height, uint32_t channels) {
+    TextureHandle CreateTexture(MemoryPtr ptr, uint32_t width, uint32_t height,
+                                TextureFormat::Enum format, TextureWrap wrap,
+                                TextureFilter filter = { TextureFilter::Linear, TextureFilter::Linear, TextureFilter::Linear },
+                                TextureFlags::Type flags = TextureFlags::None) {
         TextureHandle handle(texture_handles_.Alloc());
-        frame_.PushCommand(CreateTextureCommand { handle, std::move(ptr), width, height, channels } );
+        frame_.PushCommand(CreateTextureCommand { handle, std::move(ptr), width, height, format, wrap, filter, flags } );
         return handle;
     }
 
@@ -366,6 +419,12 @@ public:
         frame_.PushCommand(DestroyIndexBufferCommand { handle } );
         index_buffer_handles_.Free(handle.ID);
         handle = IndexBufferHandle::Invalid;
+    }
+
+    void Destroy(FrameBufferHandle& handle) {
+        assert(handle.IsValid() && "Renderer::Destroy failed: Invalid frame buffer handle");
+
+        frame_.PushCommand(DestroyFrameBufferCommand { handle });
     }
 
     void Destroy(TextureHandle& handle) {
@@ -443,6 +502,10 @@ public:
         context_.cameras[id].view = value;
     }
 
+    void SetViewRect(CameraId id, const Rect& rect) {
+        context_.cameras[id].viewport = rect;
+    }
+
     void SetProjection(CameraId id, const Matrix& value) {
         context_.cameras[id].projection = value;
     }
@@ -455,6 +518,10 @@ public:
         context_.cameras[id].clear_color = color;
     }
 
+    void SetViewBuffer(CameraId id, FrameBufferHandle handle) {
+        context_.cameras[id].frame_buffer = handle;
+    }
+
 private:
     std::unique_ptr<RendererAPI> api_;
 
@@ -462,6 +529,7 @@ private:
 
     handle_alloc<static_config::kIndexBuffersCapacity> index_buffer_handles_;
     handle_alloc<static_config::kVertexBuffersCapacity> vertex_buffer_handles_;
+    handle_alloc<static_config::kFrameBuffersCapacity> frame_buffer_handles_;
     handle_alloc<static_config::kShadersCapacity> shader_handles_;
     handle_alloc<static_config::kTexturesCapacity> texture_handles_;
 

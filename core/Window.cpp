@@ -33,6 +33,10 @@ Window::Window(size_t width, size_t height) : width_(width), height_(height) {
 
     glfwMakeContextCurrent(window_);
 
+//    float x, y; glfwGetWindowContentScale(window_, &x, &y);
+    int buffer_w, buffer_h; glfwGetFramebufferSize(window_, &buffer_w, &buffer_h);
+    resolution_ = { buffer_w, buffer_h };
+
     glfwSetWindowUserPointer(window_, this);
 
     // set input callbacks

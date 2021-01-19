@@ -38,15 +38,19 @@ public:
     bool PollEvent(Event& event);
     void SetMouseCursor(Cursor::Type cursor_type);
 
-    size_t get_width() const { return width_; }
-    size_t get_height() const { return height_; }
-    GLFWwindow* get_handle() const { return window_; }
+    [[nodiscard]] size_t get_width() const { return width_; }
+    [[nodiscard]] size_t get_height() const { return height_; }
+
+    Vec2Int get_resolution() const { return resolution_;  }
+
+    [[nodiscard]] GLFWwindow* get_handle() const { return window_; }
 
 private:
     void PushEvent(Event event);
 
 private:
     size_t width_, height_;
+    Vec2Int resolution_;
     GLFWwindow* window_;
     std::queue<Event> events_;
 };

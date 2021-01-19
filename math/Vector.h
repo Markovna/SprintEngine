@@ -287,4 +287,9 @@ struct Vec2Int {
     int x, y;
 };
 
+template<typename OStream>
+OStream &operator<<(OStream &out, const Vec2Int& vec) {
+    return out << '[' << vec.x << ", " << vec.y << ']';
+}
+
 }

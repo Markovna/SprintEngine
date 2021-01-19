@@ -1,11 +1,7 @@
 #pragma once
 
-namespace sprint {
-
-namespace time {
+namespace sprint::time {
 
 TimeSpan delta();
-
-}
 
 }

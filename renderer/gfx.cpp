@@ -4,9 +4,7 @@
 #include "gfx_details.h"
 #include "Log.h"
 
-namespace sprint {
-
-namespace gfx {
+namespace sprint::gfx {
 
 void Init(Config config) {
     log::core::Info("gfx::Init");
@@ -46,9 +44,28 @@ ShaderHandle CreateShader(const std::string &source, std::initializer_list<Attri
     return details::g_renderer.CreateShader(source, in_types);
 }
 
-TextureHandle CreateTexture(MemoryPtr ptr, uint32_t width, uint32_t height, uint32_t channels) {
+TextureHandle CreateTexture(uint32_t width, uint32_t height, TextureFormat::Enum format, MemoryPtr ptr) {
     log::core::Info("gfx::CreateTexture");
-    return details::g_renderer.CreateTexture(std::move(ptr), width, height, channels);
+    return CreateTexture(width, height, format,
+                         { TextureWrap::Repeat, TextureWrap::Repeat, TextureWrap::Repeat },
+                         { TextureFilter::Linear, TextureFilter::Linear, TextureFilter::Linear },
+                         TextureFlags::None,
+                         std::move(ptr));
+}
+
+TextureHandle CreateTexture(uint32_t width, uint32_t height,
+                            TextureFormat::Enum format, TextureWrap wrap, TextureFilter filter, TextureFlags::Type flags,
+                            MemoryPtr ptr) {
+    log::core::Info("gfx::CreateTexture");
+    return details::g_renderer.CreateTexture(std::move(ptr), width, height, format, wrap, filter, flags);
+}
+
+FrameBufferHandle CreateFrameBuffer(uint32_t width, uint32_t height, TextureFormat::Enum format, TextureWrap wrap) {
+    return details::g_renderer.CreateFrameBuffer(width, height, format, wrap);
+}
+
+FrameBufferHandle CreateFrameBuffer(std::initializer_list<TextureHandle> textures) {
+    return details::g_renderer.CreateFrameBuffer(textures, false);
 }
 
 void UpdateVertexBuffer(VertexBufferHandle handle, MemoryPtr ptr, uint32_t offset) {
@@ -77,6 +94,11 @@ void Destroy(IndexBufferHandle& handle) {
     details::g_renderer.Destroy(handle);
 }
 
+void Destroy(FrameBufferHandle& handle) {
+    log::core::Info("gfx::Destroy FrameBuffer");
+    details::g_renderer.Destroy(handle);
+}
+
 void Destroy(TextureHandle& handle) {
     log::core::Info("gfx::Destroy Texture");
     details::g_renderer.Destroy(handle);
@@ -93,6 +115,10 @@ void SetTransform(const Matrix& matrix) {
 
 void SetView(CameraId camera_id, const Matrix& matrix) {
     details::g_renderer.SetView(camera_id, matrix);
+}
+
+void SetViewRect(CameraId camera_id, const Rect& rect) {
+    details::g_renderer.SetViewRect(camera_id, rect);
 }
 
 void SetProjection(CameraId camera_id, const Matrix& matrix) {
@@ -161,10 +187,17 @@ void SetBuffer(IndexBufferHandle handle, uint32_t offset, uint32_t num) {
 void SetScissor(Rect rect) {
     details::g_renderer.SetScissor(rect);
 }
+
 void SetOptions(DrawConfig::Options options) {
     details::g_renderer.SetOptions(options);
 }
 
+void SetViewBuffer(CameraId camera_id, FrameBufferHandle handle) {
+    details::g_renderer.SetViewBuffer(camera_id, handle);
+}
+
+void SetResolution(const Vec2Int& resolution) {
+    details::g_config.resolution = resolution;
 }
 
 }

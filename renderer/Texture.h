@@ -33,18 +33,23 @@ class Texture {
 
 public:
     Texture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t channels);
+    Texture(gfx::MemoryPtr ptr, uint32_t width, uint32_t height, gfx::TextureFormat::Enum, gfx::TextureWrap, gfx::TextureFilter, gfx::TextureFlags::Type);
     Texture(const Texture&) = delete;
     Texture(Texture&&) noexcept;
 
     Texture& operator=(const Texture&) = delete;
     Texture& operator=(Texture&&) noexcept;
 
+    uint32_t get_width() const { return width_; }
+    uint32_t get_height() const { return height_; }
+
     static std::unique_ptr<Texture> Load(const std::string& path);
     ~Texture();
     gfx::TextureHandle get_handle() const;
 
-    private:
+private:
     gfx::TextureHandle handle_;
+    uint32_t width_, height_;
 };
 
 }

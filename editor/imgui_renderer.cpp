@@ -1,6 +1,7 @@
 #include <gfx.h>
 #include <Application.h>
 #include "imgui_renderer.h"
+#include "input_events.h"
 
 namespace sprint {
 
@@ -80,9 +81,6 @@ void OnMouseMove(MouseMoveEvent& e) {
     ImGuiIO& io = ImGui::GetIO();
     io.MousePos.x = e.position.x;
     io.MousePos.y = e.position.y;
-
-    io.MousePos.x *= io.DisplayFramebufferScale.x;
-    io.MousePos.y *= io.DisplayFramebufferScale.y;
 }
 
 void OnScroll(ScrollEvent& e) {
@@ -98,13 +96,13 @@ void OnTextInput(TextEvent& e) {
 }
 
 ImGuiRenderer::~ImGuiRenderer() {
-    Application::OnKeyPress.disconnect(OnKeyPressed);
-    Application::OnKeyRelease.disconnect(OnKeyReleased);
-    Application::OnMouseDown.disconnect(OnMouseDown);
-    Application::OnMouseMove.disconnect(OnMouseMove);
-    Application::OnMouseUp.disconnect(OnMouseUp);
-    Application::OnScroll.disconnect(OnScroll);
-    Application::OnTextInput.disconnect(OnTextInput);
+    input_events::OnKeyPress.disconnect(OnKeyPressed);
+    input_events::OnKeyRelease.disconnect(OnKeyReleased);
+    input_events::OnMouseDown.disconnect(OnMouseDown);
+    input_events::OnMouseMove.disconnect(OnMouseMove);
+    input_events::OnMouseUp.disconnect(OnMouseUp);
+    input_events::OnScroll.disconnect(OnScroll);
+    input_events::OnTextInput.disconnect(OnTextInput);
 }
 
 ImGuiRenderer::ImGuiRenderer() : context_(RenderContext::Create()) {
@@ -123,13 +121,13 @@ ImGuiRenderer::ImGuiRenderer() : context_(RenderContext::Create()) {
 
     SetupKeyMap(io);
 
-    Application::OnKeyPress.connect(OnKeyPressed);
-    Application::OnKeyRelease.connect(OnKeyReleased);
-    Application::OnMouseDown.connect(OnMouseDown);
-    Application::OnMouseMove.connect(OnMouseMove);
-    Application::OnMouseUp.connect(OnMouseUp);
-    Application::OnScroll.connect(OnScroll);
-    Application::OnTextInput.connect(OnTextInput);
+    input_events::OnKeyPress.connect(OnKeyPressed);
+    input_events::OnKeyRelease.connect(OnKeyReleased);
+    input_events::OnMouseDown.connect(OnMouseDown);
+    input_events::OnMouseMove.connect(OnMouseMove);
+    input_events::OnMouseUp.connect(OnMouseUp);
+    input_events::OnScroll.connect(OnScroll);
+    input_events::OnTextInput.connect(OnTextInput);
 
     gfx::SetView(1, Matrix::Identity);
     gfx::SetClear(1, gfx::ClearFlag::Color | gfx::ClearFlag::Depth);
@@ -149,11 +147,13 @@ void ImGuiRenderer::BeginFrame(sprint::Window *window) {
         last_cursor_type = gui::GetMouseCursor();
     }
 
+    Vec2Int resolution = window->get_resolution();
     io.DisplaySize = ImVec2(window->get_width(), window->get_height());
-    io.DisplayFramebufferScale = {1.0,1.0};
+    io.DisplayFramebufferScale = { (float) resolution.x / io.DisplaySize.x, (float) resolution.y / io.DisplaySize.y };
     io.DeltaTime = time::delta().AsSeconds();
 
     gfx::SetProjection(1, Matrix::Ortho(0, io.DisplaySize.x, 0, io.DisplaySize.y,0,1));
+    gfx::SetViewRect(1, {0, 0, (uint32_t) resolution.x, (uint32_t) resolution.y });
 
     gui::NewFrame();
 }
@@ -166,6 +166,9 @@ void ImGuiRenderer::EndFrame() {
 void ImGuiRenderer::Render(ImDrawData *draw_data) {
     uint32_t vertices_offset = 0;
     uint32_t indices_offset = 0;
+
+    ImVec2 clip_off = draw_data->DisplayPos;         // (0,0) unless using multi-viewports
+    ImVec2 clip_scale = draw_data->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
 
     for (int n = 0; n < draw_data->CmdListsCount; n++) {
         const ImDrawList* cmd_list = draw_data->CmdLists[n];
@@ -192,12 +195,12 @@ void ImGuiRenderer::Render(ImDrawData *draw_data) {
                 cmd->UserCallback(cmd_list, cmd);
             }
             else if (cmd->ElemCount) {
-                const std::uint16_t x = std::uint16_t(std::max(cmd->ClipRect.x, 0.0f));
-                const std::uint16_t y = std::uint16_t(std::max(cmd->ClipRect.y, 0.0f));
-                const std::uint16_t width = std::uint16_t(std::min(cmd->ClipRect.z, 65535.0f) - x);
-                const std::uint16_t height = std::uint16_t(std::min(cmd->ClipRect.w, 65535.0f) - y);
+                const std::uint16_t x = (cmd->ClipRect.x - clip_off.x)* clip_scale.x;
+                const std::uint16_t y = (cmd->ClipRect.y - clip_off.y) * clip_scale.x;
+                const std::uint16_t width  = (cmd->ClipRect.z - clip_off.x) * clip_scale.x - x;
+                const std::uint16_t height = (cmd->ClipRect.w - clip_off.y) * clip_scale.x - y;
 
-                Texture* texture = static_cast<Texture*>(cmd->TextureId);
+                auto texture = static_cast<Texture*>(cmd->TextureId);
                 gfx::SetScissor({ x, y, width, height });
                 gfx::SetOptions(gfx::DrawConfig::Option::NONE);
                 gfx::SetUniform(context_.shader.get_handle(), "Texture", texture->get_handle(), 0);

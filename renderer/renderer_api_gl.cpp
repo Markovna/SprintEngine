@@ -2,11 +2,7 @@
 #include "Log.h"
 #include "shader_utils.h"
 
-namespace sprint {
-
-namespace gfx {
-
-namespace details {
+namespace sprint::gfx::details {
 
 #define RENDERER_API_DEBUG 1
 
@@ -25,17 +21,6 @@ static void CheckErrors(const std::string_view msg) {
     if (err != GL_NO_ERROR) {
         log::core::Error("GLRendererAPI error #{0}: {1}", err, msg);
     }
-}
-
-static GLenum ToGLenum(uint32_t channels) {
-    GLenum format = 0;
-    if (channels == 1)
-        format = GL_RED;
-    else if (channels == 3)
-        format = GL_RGB;
-    else if (channels == 4)
-        format = GL_RGBA;
-    return format;
 }
 
 static void CheckCompileStatus(uint32_t shaderID) {
@@ -58,20 +43,51 @@ static void CheckLinkStatus(uint32_t shaderID) {
     }
 }
 
-static GLenum ToGLenum(ShaderType::Enum type) {
-    switch (type) {
-        case ShaderType::Fragment: return GL_FRAGMENT_SHADER;
-        case ShaderType::Vertex: return GL_VERTEX_SHADER;
-    }
+static GLenum GetShaderType(ShaderType::Enum type) {
+    static GLenum shader_types[] = {
+        GL_VERTEX_SHADER, GL_FRAGMENT_SHADER
+    };
+    return shader_types[type];
 }
 
 static uint32_t CompileShader(ShaderType::Enum type, const std::string& source) {
-    uint32_t shaderID = glCreateShader(ToGLenum(type));
+    uint32_t shaderID = glCreateShader(GetShaderType(type));
     const GLchar* sourceCStr = source.c_str();
     CHECK_ERRORS(glShaderSource(shaderID, 1, &sourceCStr, NULL));
     CHECK_ERRORS(glCompileShader(shaderID));
     CheckCompileStatus(shaderID);
     return shaderID;
+}
+
+static GLenum GetWrap(TextureWrap::Enum type) {
+    static GLenum wraps[] = {
+        GL_REPEAT, GL_MIRRORED_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER
+    };
+    return wraps[type];
+}
+
+static std::tuple<GLenum, GLenum, GLenum> GetWrap(const TextureWrap& type) {
+   return std::make_tuple(GetWrap(type.u), GetWrap(type.v), GetWrap(type.w));
+}
+
+static GLenum GetMagFilter(TextureFilter::Enum type) {
+    static GLenum filters[] = {
+        GL_LINEAR, GL_NEAREST
+    };
+    return filters[type];
+}
+
+static GLenum GetMinFilter(TextureFilter::Enum min, TextureFilter::Enum map, bool has_mipmaps) {
+    static GLenum filters[][3] = {
+        { GL_LINEAR, GL_LINEAR_MIPMAP_LINEAR, GL_NEAREST_MIPMAP_LINEAR},
+        { GL_NEAREST, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_NEAREST}
+    };
+
+    return filters[min][has_mipmaps ? map : 0];
+}
+
+static std::tuple<GLenum, GLenum> GetFilters(const TextureFilter& type, bool has_mipmaps) {
+    return std::make_tuple( GetMinFilter(type.min, type.mag, has_mipmaps), GetMagFilter(type.mag));
 }
 
 GLRendererAPI::Shader::Shader(uint32_t id, const std::string &source, const Attribute::BindingPack& bindings)
@@ -117,6 +133,49 @@ void GLRendererAPI::CreateIndexBuffer(IndexBufferHandle handle, const void* data
     index_buffers_[handle.ID] = IndexBuffer(bufferId, size);
 }
 
+void GLRendererAPI::CreateFrameBuffer(FrameBufferHandle handle, TextureHandle* handles, uint32_t num, bool destroy_tex) {
+    uint32_t bufferId;
+    glGenFramebuffers(1, &bufferId);
+    glBindFramebuffer(GL_FRAMEBUFFER, bufferId);
+
+    for (int i = 0; i < num; i++) {
+        TextureHandle tex = handles[i];
+        uint32_t tex_id = textures_[tex.ID].id;
+        TextureFormat::Enum format = textures_[tex.ID].format;
+        GLenum attachment;
+
+        bool is_depth = TextureFormat::IsDepth(format);
+        if (is_depth) {
+            uint8_t stencil_bits = TextureFormat::GetStencilBits(format);
+            uint8_t depth_bits = TextureFormat::GetDepthBits(format);
+            if (stencil_bits && depth_bits) {
+                attachment = GL_DEPTH_STENCIL_ATTACHMENT;
+            } else if (depth_bits) {
+                attachment = GL_DEPTH_ATTACHMENT;
+            } else {
+                attachment = GL_STENCIL_ATTACHMENT;
+            }
+        } else {
+            attachment = GL_COLOR_ATTACHMENT0;
+        }
+
+        if (textures_[tex.ID].render_buffer) {
+            CHECK_ERRORS(glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, tex_id));
+        } else {
+            CHECK_ERRORS(glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex_id, 0));
+        }
+
+        frame_buffers_[handle.ID].tex_handles[i] = tex;
+    }
+
+    assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    frame_buffers_[handle.ID].id = bufferId;
+    frame_buffers_[handle.ID].tex_num = num;
+    frame_buffers_[handle.ID].destroy_tex = destroy_tex;
+}
+
 void GLRendererAPI::UpdateVertexBuffer(VertexBufferHandle handle, uint32_t offset, const void* data, uint32_t data_size) {
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers_[handle.ID].id);
     CHECK_ERRORS(glBufferSubData(GL_ARRAY_BUFFER, offset, data_size, data));
@@ -135,23 +194,56 @@ void GLRendererAPI::CreateShader(ShaderHandle handle,
     shaders_[handle.ID] = Shader(glCreateProgram(), source, bindings);
 }
 
+static const TextureFormatInfo& GetTextureFormat(TextureFormat::Enum format) {
+    static TextureFormatInfo texture_formats[] =
+        {
+            { GL_RED,                   GL_RED,                     GL_UNSIGNED_BYTE },     // R8
+            { GL_RGB,                   GL_RGB,                     GL_UNSIGNED_BYTE },     // RGB8
+            { GL_RGBA,                  GL_RGBA,                    GL_UNSIGNED_BYTE },     // RGBA8
+            { GL_DEPTH24_STENCIL8,      GL_DEPTH_STENCIL,           GL_UNSIGNED_INT_24_8 }, // D24S8
+        };
+
+    return texture_formats[format];
+}
+
 void GLRendererAPI::CreateTexture(TextureHandle handle,
                                   const void* data, uint32_t data_size,
-                                  uint32_t width,
-                                  uint32_t height,
-                                  uint32_t channels) {
+                                  uint32_t width, uint32_t height,
+                                  TextureFormat::Enum format, TextureWrap wrap, TextureFilter filter, TextureFlags::Type flags) {
     uint32_t textureId;
-    GLenum format = ToGLenum(channels);
-    CHECK_ERRORS(glGenTextures(1, &textureId));
-    CHECK_ERRORS(glBindTexture(GL_TEXTURE_2D, textureId));
-    CHECK_ERRORS(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-    CHECK_ERRORS(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-    CHECK_ERRORS(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
-    CHECK_ERRORS(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    CHECK_ERRORS(glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data));
-    CHECK_ERRORS(glGenerateMipmap(GL_TEXTURE_2D));
-    CHECK_ERRORS(glBindTexture(GL_TEXTURE_2D, 0));
-    textures_[handle.ID] = Texture(textureId);
+    bool render_buffer = (flags & TextureFlags::RenderTarget) != 0;
+    const TextureFormatInfo& format_info = GetTextureFormat(format);
+
+    if (render_buffer) {
+        CHECK_ERRORS(glGenRenderbuffers(1, &textureId));
+        CHECK_ERRORS(glBindRenderbuffer(GL_RENDERBUFFER, textureId));
+
+        CHECK_ERRORS(glRenderbufferStorage(GL_RENDERBUFFER, format_info.internal_format, width, height));
+
+        CHECK_ERRORS(glBindRenderbuffer(GL_RENDERBUFFER, 0));
+    } else {
+        CHECK_ERRORS(glGenTextures(1, &textureId));
+        CHECK_ERRORS(glBindTexture(GL_TEXTURE_2D, textureId));
+
+        auto [s_wrap, t_wrap, r_wrap] = GetWrap(wrap);
+        CHECK_ERRORS(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, s_wrap));
+        CHECK_ERRORS(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, t_wrap));
+        CHECK_ERRORS(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, r_wrap));
+
+        auto [min_filter, mag_filter] = GetFilters(filter, true);
+        CHECK_ERRORS(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter));
+        CHECK_ERRORS(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter));
+
+        CHECK_ERRORS(glTexImage2D(GL_TEXTURE_2D, 0, format_info.internal_format, width, height, 0, format_info.format, format_info.type, data));
+
+        CHECK_ERRORS(glGenerateMipmap(GL_TEXTURE_2D));
+
+        CHECK_ERRORS(glBindTexture(GL_TEXTURE_2D, 0));
+    }
+
+    textures_[handle.ID].id = textureId;
+    textures_[handle.ID].render_buffer = render_buffer;
+    textures_[handle.ID].format = format;
 }
 
 GLRendererAPI::~GLRendererAPI() {
@@ -187,6 +279,17 @@ void GLRendererAPI::Destroy(VertexBufferHandle handle) {
 
 void GLRendererAPI::Destroy(IndexBufferHandle handle) {
     glDeleteBuffers(1, &index_buffers_[handle.ID].id);
+}
+
+void GLRendererAPI::Destroy(FrameBufferHandle handle) {
+
+    if (frame_buffers_[handle.ID].destroy_tex) {
+        for (int i = 0; i < frame_buffers_[handle.ID].tex_num; i++) {
+            Destroy(frame_buffers_[handle.ID].tex_handles[i]);
+        }
+    }
+
+    glDeleteFramebuffers(1, &frame_buffers_[handle.ID].id);
 }
 
 void GLRendererAPI::Destroy(ShaderHandle handle) {
@@ -261,7 +364,7 @@ template<> void GLRendererAPI::ExecuteCommand(const SetTextureCommand& command) 
     SetUniform(command.texture_handle, command.slot);
 }
 
-static GLenum ToGLenum(Attribute::Type type) {
+static GLenum ToType(Attribute::Type type) {
     switch (type) {
         case Attribute::Type::FLOAT: return GL_FLOAT;
         case Attribute::Type::UINT: return GL_UNSIGNED_INT;
@@ -283,10 +386,18 @@ void GLRendererAPI::Frame(const RendererContext* context, iterator_range<const D
 
     default_context_.MakeCurrent();
 
+    CHECK_ERRORS(glDisable(GL_SCISSOR_TEST));
     for (auto& camera : context->cameras) {
-        CHECK_ERRORS(glDisable(GL_SCISSOR_TEST));
+        if (camera.frame_buffer.IsValid()) {
+            CHECK_ERRORS(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffers_[camera.frame_buffer.ID].id));
+        }
+
         CHECK_ERRORS(glClearColor(camera.clear_color.r, camera.clear_color.g, camera.clear_color.b, camera.clear_color.a));
         CHECK_ERRORS(glClear(ToGLBits(camera.clear_flag)));
+
+        if (camera.frame_buffer.IsValid()) {
+            CHECK_ERRORS(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+        }
     }
 
     for (const DrawUnit& draw : draws) {
@@ -312,14 +423,23 @@ static void SetDepthTest(bool enable) {
     }
 }
 
-static void SetScissor(Rect scissor, Vec2Int size, Vec2 scale) {
+static void SetViewport(Rect rect, Vec2Int resolution) {
+    CHECK_ERRORS(glViewport(
+        rect.x,
+        resolution.y - (rect.y + rect.height),
+        rect.width,
+        rect.height
+    ));
+}
+
+static void SetScissor(Rect scissor, Vec2Int size) {
     if (Valid(scissor)) {
         CHECK_ERRORS(glEnable(GL_SCISSOR_TEST));
         CHECK_ERRORS(glScissor(
-            scissor.x * scale.x,
-            (size.y - (scissor.y + scissor.height)) * scale.y,
-            scissor.width * scale.x,
-            scissor.height * scale.y
+            scissor.x,
+            size.y - (scissor.y + scissor.height),
+            scissor.width,
+            scissor.height
         ));
     }
     else {
@@ -336,12 +456,19 @@ void GLRendererAPI::Draw(const RendererContext* context, const DrawUnit& draw) {
 
     const Camera& camera = context->cameras[draw.camera_id];
 
+    if (camera.frame_buffer != FrameBufferHandle::Invalid) {
+        CHECK_ERRORS(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffers_[camera.frame_buffer.ID].id));
+    }
+
+
+    SetViewport(camera.viewport, context->resolution);
+
     SetUniform(draw.shader_handle, "model", draw.transform);
     SetUniform(draw.shader_handle, "view", camera.view);
     SetUniform(draw.shader_handle, "projection", camera.projection);
 
-    SetScissor(draw.scissor, default_context_.GetSize(), default_context_.GetScale());
-    SetDepthTest(draw.options & DrawConfig::Option::DEPTH_TEST);
+    SetScissor(draw.scissor, context->resolution);
+    SetDepthTest(draw.options & DrawConfig::DEPTH_TEST);
 
     if (draw.vb_handle.IsValid()) {
         VertexBuffer& vb = vertex_buffers_[draw.vb_handle.ID];
@@ -358,7 +485,7 @@ void GLRendererAPI::Draw(const RendererContext* context, const DrawUnit& draw) {
                 CHECK_ERRORS(glVertexAttribPointer(
                     idx,
                     item.attribute.format.size,
-                    ToGLenum(item.attribute.format.type),
+                    ToType(item.attribute.format.type),
                     item.attribute.normalized,
                     vb.layout.get_stride(),
                     (void*)(base_vertex + item.offset)
@@ -388,6 +515,7 @@ void GLRendererAPI::Draw(const RendererContext* context, const DrawUnit& draw) {
         glUseProgram(0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 }
 
@@ -417,6 +545,3 @@ GLContext GLContext::CreateDefault(const Config &config) {
 
 }
 
-}
-
-}

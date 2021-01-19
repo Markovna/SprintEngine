@@ -9,7 +9,9 @@
 namespace sprint {
 
 namespace gui {
+
 using namespace ImGui;
+
 }
 
 class ImGuiRenderer {
@@ -18,6 +20,7 @@ private:
 
         constexpr static const size_t kBufferMaxSize  = 100 * 2048;
 
+        // TODO: buffers won't work properly when renderer become multithreaded
         struct Buffer {
             std::aligned_storage_t<kBufferMaxSize> vertices;
             std::aligned_storage_t<kBufferMaxSize> indexes;

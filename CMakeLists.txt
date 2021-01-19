@@ -27,7 +27,6 @@ add_executable(SprintEngine
         common/color.cpp common/color.h
         editor/imgui_renderer.cpp editor/imgui_renderer.h
         common/IdAllocator.h
-        core/InputSystem.cpp core/InputSystem.h
         common/signals/delegate.h
         common/signals/event.cpp common/signals/event.h
         common/signals/function_ref.cpp common/signals/function_ref.h
@@ -38,7 +37,7 @@ add_executable(SprintEngine
         renderer/vertex_layout.cpp renderer/vertex_layout.h
         renderer/gfx_details.cpp renderer/gfx_details.h
         renderer/renderer_api_gl.cpp renderer/renderer_api_gl.h
-        renderer/shader_utils.cpp renderer/shader_utils.h renderer/gfx_config.cpp renderer/gfx_config.h common/iterator_range.h common/rect.cpp common/rect.h core/engine.cpp core/engine.h core/app_time.h common/ecs/ecs.cpp common/ecs/ecs.h common/sparse_set.cpp common/sparse_set.h)
+        renderer/shader_utils.cpp renderer/shader_utils.h renderer/gfx_config.cpp renderer/gfx_config.h common/iterator_range.h common/rect.cpp common/rect.h core/engine.cpp core/engine.h core/app_time.h common/ecs/ecs.cpp common/ecs/ecs.h common/sparse_set.cpp common/sparse_set.h core/input_events.cpp core/input_events.h)
 
 target_include_directories(SprintEngine PRIVATE core/ renderer/ math/ common/)
 

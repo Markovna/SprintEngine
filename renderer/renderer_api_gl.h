@@ -11,31 +11,28 @@ namespace gfx {
 
 namespace details {
 
+struct TextureFormatInfo {
+    GLint internal_format;
+    GLenum format;
+    GLenum type;
+};
+
 class GLContext {
 public:
     using WindowHandle = GLFWwindow*;
 
     explicit GLContext(void* handle) : handle_((WindowHandle) handle) {
-        int w, h; glfwGetWindowSize(handle_, &w, &h);
-        size_ = Vec2Int{ w, h };
-
-        float x, y; glfwGetWindowContentScale(handle_, &x, &y);
-        scale_ = Vec2{x, y};
-        log::core::Info("New OpenGL context created. size: {}x{}, scale: {}x{}", w, h, x, y);
+        log::core::Info("New OpenGL context created.");
     }
 
     void MakeCurrent();
     void SwapBuffers();
-    inline Vec2Int GetSize() const { return size_; }
-    inline Vec2 GetScale() const { return scale_; }
 
     static void Init(GLContext& context);
     static GLContext CreateDefault(const Config& config);
 
 private:
     WindowHandle handle_;
-    Vec2Int size_;
-    Vec2 scale_;
 };
 
 class GLRendererAPI : public RendererAPI {
@@ -59,6 +56,13 @@ private:
         uint32_t size;
     };
 
+    struct FrameBuffer {
+        uint32_t id{};
+        TextureHandle tex_handles[static_config::kFrameBufferMaxAttachments];
+        uint32_t tex_num;
+        bool destroy_tex;
+    };
+
     class Shader {
     public:
         Shader() noexcept : attributes_mask_(0), id_(0) {}
@@ -76,6 +80,8 @@ private:
         explicit Texture(uint32_t id) : id(id) {}
 
         uint32_t id;
+        bool render_buffer;
+        TextureFormat::Enum format;
     };
 
 public:
@@ -84,14 +90,17 @@ public:
 
     void CreateVertexBuffer(VertexBufferHandle handle, const void* data, uint32_t data_size, uint32_t size, VertexLayout layout) override;
     void CreateIndexBuffer(IndexBufferHandle handle, const void* data, uint32_t data_size, uint32_t size) override;
+    void CreateFrameBuffer(FrameBufferHandle handle, TextureHandle*, uint32_t num, bool destroy_tex = false) override;
     void CreateShader(ShaderHandle handle, const std::string& source, const Attribute::BindingPack& bindings) override;
-    void CreateTexture(TextureHandle handle, const void* data, uint32_t data_size, uint32_t width, uint32_t height, uint32_t channels) override;
+    void CreateTexture(TextureHandle handle, const void* data, uint32_t data_size, uint32_t width, uint32_t height,
+                       TextureFormat::Enum, TextureWrap wrap, TextureFilter filter, TextureFlags::Type flags) override;
 
     void UpdateVertexBuffer(VertexBufferHandle handle, uint32_t offset, const void* data, uint32_t data_size) override;
     void UpdateIndexBuffer(IndexBufferHandle handle, uint32_t offset, const void* data, uint32_t data_sizer) override;
 
     void Destroy(VertexBufferHandle) override;
     void Destroy(IndexBufferHandle) override;
+    void Destroy(FrameBufferHandle) override;
     void Destroy(ShaderHandle) override;
     void Destroy(TextureHandle) override;
     void Frame(const RendererContext* context, iterator_range<const DrawUnit*> draws) override;
@@ -114,6 +123,7 @@ private:
     uint32_t vao_ = 0;
     IndexBuffer index_buffers_[static_config::kIndexBuffersCapacity];
     VertexBuffer vertex_buffers_[static_config::kVertexBuffersCapacity];
+    FrameBuffer frame_buffers_[static_config::kVertexBuffersCapacity];
     Shader shaders_[static_config::kShadersCapacity];
     Texture textures_[static_config::kTexturesCapacity];
 };
