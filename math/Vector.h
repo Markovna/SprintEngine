@@ -284,7 +284,7 @@ Vec Normalized(const Vec& vec) {
 }
 
 struct Vec2Int {
-    int x, y;
+    int x{}, y{};
 };
 
 template<typename OStream>

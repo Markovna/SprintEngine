@@ -10,6 +10,7 @@
 #include "color.h"
 #include "gfx.h"
 #include "Application.h"
+#include "../debug/profiler.h"
 
 namespace sprint {
 
@@ -18,6 +19,7 @@ static void GLFWErrorCallback(int error_code, const char* description) {
 }
 
 Window::Window(size_t width, size_t height) : width_(width), height_(height) {
+    SPRINT_PROFILE_FUNCTION();
     int status = glfwInit();
     assert(status); // TODO: assert macro
     glfwSetErrorCallback(&GLFWErrorCallback);
@@ -116,6 +118,7 @@ Window::~Window() {
 }
 
 void Window::Update() {
+    SPRINT_PROFILE_FUNCTION();
     glfwPollEvents();
 }
 

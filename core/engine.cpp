@@ -6,10 +6,10 @@
 #include "engine.h"
 #include "Log.h"
 #include "Application.h"
-#include "time.h"
 #include "sparse_set.h"
 #include "ecs/ecs.h"
 #include "input_events.h"
+#include "../debug/profiler.h"
 
 namespace sprint {
 
@@ -306,7 +306,7 @@ static void RenderTrianglezzz() {
     RenderTriangle(timeValue, Vec3::Zero);
     RenderTriangle(timeValue, 2 * Vec3::Right);
 
-    for (int i = 1; i < 25; i++) {
+    for (int i = 1; i < 150; i++) {
         RenderTriangle(timeValue + i * 0.1f, (i * 2.0f + 1) * Vec3::Up + (i * 0.7f) * Vec3::Forward);
         RenderTriangle(timeValue - i * 0.1f, (i * 2.0f + 1) * Vec3::Up + (i * 0.7f) * Vec3::Backward);
     }
@@ -340,6 +340,9 @@ static void TestGui(float delta) {
 }
 
 void Engine::Update() {
+
+    SPRINT_PROFILE_FUNCTION();
+
     ImGui::Text("%s", log::Format("fps={0:.5f}", 1.0f / time::delta().AsSeconds()).c_str());
 
     RenderTrianglezzz();

@@ -1,4 +1,5 @@
 #pragma once
+
 #include "WindowEvent.h"
 #include "Window.h"
 #include "signals/event.h"

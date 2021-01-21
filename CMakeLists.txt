@@ -37,7 +37,7 @@ add_executable(SprintEngine
         renderer/vertex_layout.cpp renderer/vertex_layout.h
         renderer/gfx_details.cpp renderer/gfx_details.h
         renderer/renderer_api_gl.cpp renderer/renderer_api_gl.h
-        renderer/shader_utils.cpp renderer/shader_utils.h renderer/gfx_config.cpp renderer/gfx_config.h common/iterator_range.h common/rect.cpp common/rect.h core/engine.cpp core/engine.h core/app_time.h common/ecs/ecs.cpp common/ecs/ecs.h common/sparse_set.cpp common/sparse_set.h core/input_events.cpp core/input_events.h)
+        renderer/shader_utils.cpp renderer/shader_utils.h renderer/gfx_config.cpp renderer/gfx_config.h common/iterator_range.h common/rect.cpp common/rect.h core/engine.cpp core/engine.h core/app_time.h common/ecs/ecs.cpp common/ecs/ecs.h common/sparse_set.cpp common/sparse_set.h core/input_events.cpp core/input_events.h common/semaphore.cpp common/semaphore.h debug/profiler.cpp debug/profiler.h core/macro.h)
 
 target_include_directories(SprintEngine PRIVATE core/ renderer/ math/ common/)
 

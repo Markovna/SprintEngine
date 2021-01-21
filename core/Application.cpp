@@ -4,6 +4,7 @@
 #include "Log.h"
 #include "app_time.h"
 #include "input_events.h"
+#include "../debug/profiler.h"
 
 namespace sprint {
 
@@ -23,6 +24,8 @@ const int SCREEN_WIDTH = 1024;
 const int SCREEN_HEIGHT = 700;
 
 Application::Application() {
+    SPRINT_PROFILE_FUNCTION();
+
     window_ = std::make_unique<Window>(SCREEN_WIDTH, SCREEN_HEIGHT);
     gfx::Init({ window_->get_handle(), window_->get_resolution() });
 

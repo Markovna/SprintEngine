@@ -14,13 +14,13 @@ private:
     static constexpr const float kMillisecToMicrosec = 1000.0f;
 
 public:
-    float AsSeconds() const {
+    [[nodiscard]] float AsSeconds() const {
         return std::chrono::duration_cast<seconds_t>(microseconds_).count();
     }
-    int32_t AsMilliseconds() const {
+    [[nodiscard]] int32_t AsMilliseconds() const {
         return std::chrono::duration_cast<milliseconds_t>(microseconds_).count();
     }
-    int64_t AsMicroseconds() const {
+    [[nodiscard]] int64_t AsMicroseconds() const {
         return microseconds_.count();
     }
     static TimeSpan Seconds(float seconds) {

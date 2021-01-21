@@ -3,8 +3,11 @@
 #include <utility>
 #include "gfx_details.h"
 #include "Log.h"
+#include "../debug/profiler.h"
 
-namespace sprint::gfx {
+namespace sprint {
+
+namespace gfx {
 
 void Init(Config config) {
     log::core::Info("gfx::Init");
@@ -47,14 +50,18 @@ ShaderHandle CreateShader(const std::string &source, std::initializer_list<Attri
 TextureHandle CreateTexture(uint32_t width, uint32_t height, TextureFormat::Enum format, MemoryPtr ptr) {
     log::core::Info("gfx::CreateTexture");
     return CreateTexture(width, height, format,
-                         { TextureWrap::Repeat, TextureWrap::Repeat, TextureWrap::Repeat },
-                         { TextureFilter::Linear, TextureFilter::Linear, TextureFilter::Linear },
+                         {TextureWrap::Repeat, TextureWrap::Repeat, TextureWrap::Repeat},
+                         {TextureFilter::Linear, TextureFilter::Linear, TextureFilter::Linear},
                          TextureFlags::None,
                          std::move(ptr));
 }
 
-TextureHandle CreateTexture(uint32_t width, uint32_t height,
-                            TextureFormat::Enum format, TextureWrap wrap, TextureFilter filter, TextureFlags::Type flags,
+TextureHandle CreateTexture(uint32_t width,
+                            uint32_t height,
+                            TextureFormat::Enum format,
+                            TextureWrap wrap,
+                            TextureFilter filter,
+                            TextureFlags::Type flags,
                             MemoryPtr ptr) {
     log::core::Info("gfx::CreateTexture");
     return details::g_renderer.CreateTexture(std::move(ptr), width, height, format, wrap, filter, flags);
@@ -81,99 +88,100 @@ void Render(CameraId camera_id, ShaderHandle shader_handle) {
 }
 
 void Frame() {
+    SPRINT_PROFILE_FUNCTION();
     details::g_renderer.RenderFrame();
 }
 
-void Destroy(VertexBufferHandle& handle) {
+void Destroy(VertexBufferHandle &handle) {
     log::core::Info("gfx::Destroy VertexBuffer");
     details::g_renderer.Destroy(handle);
 }
 
-void Destroy(IndexBufferHandle& handle) {
+void Destroy(IndexBufferHandle &handle) {
     log::core::Info("gfx::Destroy IndexBuffer");
     details::g_renderer.Destroy(handle);
 }
 
-void Destroy(FrameBufferHandle& handle) {
+void Destroy(FrameBufferHandle &handle) {
     log::core::Info("gfx::Destroy FrameBuffer");
     details::g_renderer.Destroy(handle);
 }
 
-void Destroy(TextureHandle& handle) {
+void Destroy(TextureHandle &handle) {
     log::core::Info("gfx::Destroy Texture");
     details::g_renderer.Destroy(handle);
 }
 
-void Destroy(ShaderHandle& handle) {
+void Destroy(ShaderHandle &handle) {
     log::core::Info("gfx::Destroy Shader");
     details::g_renderer.Destroy(handle);
 }
 
-void SetTransform(const Matrix& matrix) {
+void SetTransform(const Matrix &matrix) {
     details::g_renderer.SetTransform(matrix);
 }
 
-void SetView(CameraId camera_id, const Matrix& matrix) {
+void SetView(CameraId camera_id, const Matrix &matrix) {
     details::g_renderer.SetView(camera_id, matrix);
 }
 
-void SetViewRect(CameraId camera_id, const Rect& rect) {
+void SetViewRect(CameraId camera_id, const Rect &rect) {
     details::g_renderer.SetViewRect(camera_id, rect);
 }
 
-void SetProjection(CameraId camera_id, const Matrix& matrix) {
+void SetProjection(CameraId camera_id, const Matrix &matrix) {
     details::g_renderer.SetProjection(camera_id, matrix);
 }
 
-void SetClear(CameraId camera_id, ClearFlagMask clear_flag) {
+void SetClear(CameraId camera_id, ClearFlag::Type clear_flag) {
     details::g_renderer.SetClear(camera_id, clear_flag);
 }
 
-void SetClearColor(CameraId camera_id, const Color& color) {
+void SetClearColor(CameraId camera_id, const Color &color) {
     details::g_renderer.SetClearColor(camera_id, color);
 }
 
-void SetUniform(ShaderHandle handle, const std::string& name, int value) {
+void SetUniform(ShaderHandle handle, const std::string &name, int value) {
     details::g_renderer.SetUniform(handle, name, value);
 }
 
-void SetUniform(ShaderHandle handle, const std::string& name, bool value) {
+void SetUniform(ShaderHandle handle, const std::string &name, bool value) {
     details::g_renderer.SetUniform(handle, name, value);
 }
 
-void SetUniform(ShaderHandle handle, const std::string& name, float value) {
+void SetUniform(ShaderHandle handle, const std::string &name, float value) {
     details::g_renderer.SetUniform(handle, name, value);
 }
 
-void SetUniform(ShaderHandle handle, const std::string& name, const Vec3& value) {
+void SetUniform(ShaderHandle handle, const std::string &name, const Vec3 &value) {
     details::g_renderer.SetUniform(handle, name, value);
 }
 
-void SetUniform(ShaderHandle handle, const std::string& name, const Vec4& value) {
+void SetUniform(ShaderHandle handle, const std::string &name, const Vec4 &value) {
     details::g_renderer.SetUniform(handle, name, value);
 }
 
-void SetUniform(ShaderHandle handle, const std::string& name, const Color& value) {
+void SetUniform(ShaderHandle handle, const std::string &name, const Color &value) {
     details::g_renderer.SetUniform(handle, name, value);
 }
 
-void SetUniform(ShaderHandle handle, const std::string& name, const Matrix& value) {
+void SetUniform(ShaderHandle handle, const std::string &name, const Matrix &value) {
     details::g_renderer.SetUniform(handle, name, value);
 }
 
-void SetUniform(ShaderHandle handle, const std::string& name, TextureHandle value, TexSlotId slot) {
+void SetUniform(ShaderHandle handle, const std::string &name, TextureHandle value, TexSlotId slot) {
     details::g_renderer.SetUniform(handle, name, value, slot);
 }
 
 MemoryPtr Copy(const void *data, uint32_t size) {
-    std::shared_ptr<void> ptr(operator new(size), [](void* p){ operator delete(p); });
+    std::shared_ptr<void> ptr(operator new(size), [](void *p) { operator delete(p); });
     memcpy(ptr.get(), data, size);
-    return { ptr, size };
+    return {ptr, size};
 }
 
-MemoryPtr MakeRef(void* data, uint32_t size) {
-    std::shared_ptr<void> ptr(data, [](void*){});
-    return MemoryPtr { ptr, size };
+MemoryPtr MakeRef(void *data, uint32_t size) {
+    std::shared_ptr<void> ptr(data, [](void *) {});
+    return MemoryPtr{ptr, size};
 }
 
 void SetBuffer(VertexBufferHandle handle, uint32_t offset, uint32_t num) {
@@ -196,8 +204,10 @@ void SetViewBuffer(CameraId camera_id, FrameBufferHandle handle) {
     details::g_renderer.SetViewBuffer(camera_id, handle);
 }
 
-void SetResolution(const Vec2Int& resolution) {
+void SetResolution(const Vec2Int &resolution) {
     details::g_config.resolution = resolution;
 }
 
-}
+};
+
+};

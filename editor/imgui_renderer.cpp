@@ -2,6 +2,7 @@
 #include <Application.h>
 #include "imgui_renderer.h"
 #include "input_events.h"
+#include "../debug/profiler.h"
 
 namespace sprint {
 
@@ -96,6 +97,8 @@ void OnTextInput(TextEvent& e) {
 }
 
 ImGuiRenderer::~ImGuiRenderer() {
+    SPRINT_PROFILE_FUNCTION();
+
     input_events::OnKeyPress.disconnect(OnKeyPressed);
     input_events::OnKeyRelease.disconnect(OnKeyReleased);
     input_events::OnMouseDown.disconnect(OnMouseDown);
@@ -106,6 +109,7 @@ ImGuiRenderer::~ImGuiRenderer() {
 }
 
 ImGuiRenderer::ImGuiRenderer() : context_(RenderContext::Create()) {
+    SPRINT_PROFILE_FUNCTION();
 
     ImGui::StyleColorsDark();
 
@@ -135,8 +139,9 @@ ImGuiRenderer::ImGuiRenderer() : context_(RenderContext::Create()) {
 }
 
 void ImGuiRenderer::BeginFrame(sprint::Window *window) {
-    ImGuiIO& io = gui::GetIO();
+    SPRINT_PROFILE_FUNCTION();
 
+    ImGuiIO& io = gui::GetIO();
     if (!(io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange)) {
         static ImGuiMouseCursor last_cursor_type = gui::GetMouseCursor();
         auto cursor = GetCursorType(gui::GetMouseCursor());
@@ -159,6 +164,8 @@ void ImGuiRenderer::BeginFrame(sprint::Window *window) {
 }
 
 void ImGuiRenderer::EndFrame() {
+    SPRINT_PROFILE_FUNCTION();
+
     gui::Render();
     Render(gui::GetDrawData());
 }

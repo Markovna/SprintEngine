@@ -68,7 +68,7 @@ private:
         Shader() noexcept : attributes_mask_(0), id_(0) {}
         Shader(uint32_t id, const std::string& source, const Attribute::BindingPack& bindings);
         bool TryGetLocation(Attribute::Binding::Enum type, uint16_t& location) const;
-        uint32_t get_id() const { return id_; }
+        [[nodiscard]] uint32_t get_id() const { return id_; }
     private:
         uint16_t attributes_mask_;
         uint16_t attribute_locations_[Attribute::Binding::Count]{};
@@ -103,7 +103,7 @@ public:
     void Destroy(FrameBufferHandle) override;
     void Destroy(ShaderHandle) override;
     void Destroy(TextureHandle) override;
-    void Frame(const RendererContext* context, iterator_range<const DrawUnit*> draws) override;
+    void RenderFrame(const Frame&) override;
 
 private:
     void SetUniform(ShaderHandle, const std::string&, int);
@@ -114,7 +114,7 @@ private:
     void SetUniform(ShaderHandle, const std::string&, const Color&);
     void SetUniform(ShaderHandle, const std::string&, const Matrix&);
     void SetUniform(TextureHandle, int slot_idx);
-    void Draw(const RendererContext*, const DrawUnit&);
+    void Draw(const Frame& frame, const DrawUnit& draw);
 
     template<class T> void ExecuteCommand(const T&) {}
 

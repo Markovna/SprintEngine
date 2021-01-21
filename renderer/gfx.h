@@ -2,12 +2,10 @@
 
 #include "vertex_layout.h"
 
-#include <cstdint>
-#include <utility>
-#include <Vector.h>
-#include <color.h>
-#include <Matrix.h>
-#include <rect.h>
+#include "Vector.h"
+#include "color.h"
+#include "Matrix.h"
+#include "rect.h"
 #include <array>
 
 namespace sprint::gfx {
@@ -66,14 +64,14 @@ using TextureHandle = Handle<HandleType::Texture>;
 using CameraId = uint16_t;
 using TexSlotId = uint16_t;
 
-using ClearFlagMask = uint8_t;
-
 struct ClearFlag {
     enum Enum {
         Depth = 0x001,
         Color = 0x002,
         Stencil = 0x004
     };
+
+    using Type = uint8_t;
 };
 
 struct TextureFormat {
@@ -200,7 +198,7 @@ private:
 };
 
 struct Config {
-    void* window_handle;
+    void* window_handle{};
     Vec2Int resolution;
 };
 
@@ -253,7 +251,7 @@ void SetView(CameraId, const Matrix&);
 void SetViewRect(CameraId, const Rect& rect);
 void SetViewBuffer(CameraId, FrameBufferHandle);
 void SetProjection(CameraId, const Matrix&);
-void SetClear(CameraId, ClearFlagMask);
+void SetClear(CameraId, ClearFlag::Type);
 void SetClearColor(CameraId, const Color&);
 void SetScissor(Rect rect);
 void SetOptions(DrawConfig::Options);

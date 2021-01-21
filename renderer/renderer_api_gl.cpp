@@ -1,6 +1,7 @@
 #include "renderer_api_gl.h"
 #include "Log.h"
 #include "shader_utils.h"
+#include "../debug/profiler.h"
 
 namespace sprint::gfx::details {
 
@@ -364,17 +365,14 @@ template<> void GLRendererAPI::ExecuteCommand(const SetTextureCommand& command) 
     SetUniform(command.texture_handle, command.slot);
 }
 
-static GLenum ToType(Attribute::Type type) {
-    switch (type) {
-        case Attribute::Type::FLOAT: return GL_FLOAT;
-        case Attribute::Type::UINT: return GL_UNSIGNED_INT;
-        case Attribute::Type::INT: return GL_INT;
-        case Attribute::Type::BYTE: return GL_UNSIGNED_BYTE;
-    }
-    assert("You are not supposed to be here");
+static inline GLenum ToType(Attribute::Type::Enum type) {
+    static GLenum types[] = {
+        GL_FLOAT, GL_INT, GL_UNSIGNED_INT, GL_UNSIGNED_BYTE
+    };
+    return types[type];
 }
 
-static GLbitfield ToGLBits(ClearFlagMask mask) {
+static GLbitfield ToGLBits(ClearFlag::Type mask) {
     GLbitfield bitfield = 0;
     if (mask & ClearFlag::Depth) bitfield |= (uint32_t) GL_DEPTH_BUFFER_BIT;
     if (mask & ClearFlag::Color) bitfield |= (uint32_t) GL_COLOR_BUFFER_BIT;
@@ -382,12 +380,14 @@ static GLbitfield ToGLBits(ClearFlagMask mask) {
     return bitfield;
 }
 
-void GLRendererAPI::Frame(const RendererContext* context, iterator_range<const DrawUnit*> draws) {
+void GLRendererAPI::RenderFrame(const Frame& frame) {
+
+    SPRINT_PROFILE_FUNCTION();
 
     default_context_.MakeCurrent();
 
     CHECK_ERRORS(glDisable(GL_SCISSOR_TEST));
-    for (auto& camera : context->cameras) {
+    for (auto& camera : frame.get_cameras()) {
         if (camera.frame_buffer.IsValid()) {
             CHECK_ERRORS(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffers_[camera.frame_buffer.ID].id));
         }
@@ -400,8 +400,8 @@ void GLRendererAPI::Frame(const RendererContext* context, iterator_range<const D
         }
     }
 
-    for (const DrawUnit& draw : draws) {
-        Draw(context, draw);
+    for (const DrawUnit& draw : frame.get_draws()) {
+        Draw(frame, draw);
     }
 
     default_context_.SwapBuffers();
@@ -447,26 +447,26 @@ static void SetScissor(Rect scissor, Vec2Int size) {
     }
 }
 
-void GLRendererAPI::Draw(const RendererContext* context, const DrawUnit& draw) {
+void GLRendererAPI::Draw(const Frame& frame, const DrawUnit& draw) {
+
     for (const auto& command : draw.command_buffer) {
         mpark::visit([this](const auto& c){
                 ExecuteCommand(c);
             }, command);
     }
 
-    const Camera& camera = context->cameras[draw.camera_id];
+    const Camera& camera = frame.get_camera(draw.camera_id);
 
     if (camera.frame_buffer.IsValid()) {
         CHECK_ERRORS(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffers_[camera.frame_buffer.ID].id));
     }
 
-    SetViewport(camera.viewport, context->resolution);
-
     SetUniform(draw.shader_handle, "model", draw.transform);
     SetUniform(draw.shader_handle, "view", camera.view);
     SetUniform(draw.shader_handle, "projection", camera.projection);
 
-    SetScissor(draw.scissor, context->resolution);
+    SetViewport(camera.viewport, frame.get_resolution());
+    SetScissor(draw.scissor, frame.get_resolution());
     SetDepthTest(draw.options & DrawConfig::DEPTH_TEST);
 
     if (draw.vb_handle.IsValid()) {
@@ -474,11 +474,11 @@ void GLRendererAPI::Draw(const RendererContext* context, const DrawUnit& draw) {
         Shader& shader = shaders_[draw.shader_handle.ID];
 
         CHECK_ERRORS(glBindBuffer(GL_ARRAY_BUFFER, vb.id));
-
         CHECK_ERRORS(glUseProgram(shader.get_id()));
+
         uint16_t enabledAttribMask = 0;
         uint32_t base_vertex = draw.vb_offset * vb.layout.get_stride();
-        for (const auto& item : vb.layout) {
+        for (const auto &item : vb.layout) {
             uint16_t idx;
             if (shader.TryGetLocation(item.attribute.binding, idx)) {
                 CHECK_ERRORS(glVertexAttribPointer(
@@ -487,7 +487,7 @@ void GLRendererAPI::Draw(const RendererContext* context, const DrawUnit& draw) {
                     ToType(item.attribute.format.type),
                     item.attribute.normalized,
                     vb.layout.get_stride(),
-                    (void*)(base_vertex + item.offset)
+                    (void *) (base_vertex + item.offset)
                 ));
                 CHECK_ERRORS(glEnableVertexAttribArray(idx));
                 enabledAttribMask |= (1u << idx);
@@ -501,7 +501,7 @@ void GLRendererAPI::Draw(const RendererContext* context, const DrawUnit& draw) {
                 GL_TRIANGLES,
                 draw.ib_size ? draw.ib_size : index_buffers_[draw.ib_handle.ID].size,
                 GL_UNSIGNED_INT,
-                (void*)(size_t)(draw.ib_offset * sizeof(uint32_t))
+                (void *) (size_t) (draw.ib_offset * sizeof(uint32_t))
             ));
         } else {
             CHECK_ERRORS(glDrawArrays(
