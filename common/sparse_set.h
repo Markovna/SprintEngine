@@ -2,8 +2,6 @@
 
 #include "vector"
 
-namespace sprint {
-
 template<class T, size_t PAGE_SIZE = 1u << 15u>
 class sparse_set {
     static_assert(std::is_unsigned<T>::value, "The managed type must be an unsigned integral");
@@ -88,4 +86,3 @@ private:
     std::vector<T> dense_;
 };
 
-}

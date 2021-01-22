@@ -1,7 +1,6 @@
 #include "Application.h"
-using namespace sprint;
 
 int main() {
-    Application app;
+    sprint::Application app;
     return app.Run();
 }

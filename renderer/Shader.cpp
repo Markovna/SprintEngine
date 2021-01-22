@@ -29,7 +29,7 @@ Shader::Shader(const std::string& source, std::initializer_list<gfx::Attribute::
 }
 
 Shader::~Shader() {
-    if (handle_.IsValid())
+    if (handle_)
         gfx::Destroy(handle_);
 }
 
@@ -50,7 +50,7 @@ void Shader::Swap(Shader& lhs, Shader& rhs) {
 
 Shader::Shader(Shader &&other) noexcept {
     handle_ = other.handle_;
-    other.handle_ = gfx::ShaderHandle::Invalid;
+    other.handle_ = gfx::shader_handle::null;
 }
 
 }

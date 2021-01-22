@@ -88,11 +88,11 @@ public:
         return attributes_[idx];
     }
 
-    inline Iterator begin() const { return std::begin(attributes_); }
-    inline Iterator end() const { return std::begin(attributes_) + size_; }
+    [[nodiscard]] inline Iterator begin() const { return std::begin(attributes_); }
+    [[nodiscard]] inline Iterator end() const { return std::begin(attributes_) + size_; }
 
-    inline uint32_t get_stride() const { return stride_; }
-    inline uint32_t get_size() const { return size_; }
+    [[nodiscard]] inline uint32_t get_stride() const { return stride_; }
+    [[nodiscard]] inline uint32_t get_size() const { return size_; }
 
 private:
     Item attributes_[static_config::kAttributesCapacity];

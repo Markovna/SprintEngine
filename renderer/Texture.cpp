@@ -78,11 +78,11 @@ Texture::Texture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t 
 {}
 
 Texture::~Texture() {
-    if (handle_.IsValid())
+    if (handle_)
         gfx::Destroy(handle_);
 }
 
-gfx::TextureHandle Texture::get_handle() const {
+gfx::texture_handle Texture::get_handle() const {
     return handle_;
 }
 

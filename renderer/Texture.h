@@ -45,10 +45,10 @@ public:
 
     static std::unique_ptr<Texture> Load(const std::string& path);
     ~Texture();
-    gfx::TextureHandle get_handle() const;
+    gfx::texture_handle get_handle() const;
 
 private:
-    gfx::TextureHandle handle_;
+    gfx::texture_handle handle_;
     uint32_t width_, height_;
 };
 

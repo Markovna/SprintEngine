@@ -287,6 +287,14 @@ struct Vec2Int {
     int x{}, y{};
 };
 
+inline bool operator==(const Vec2Int& lhs, const Vec2Int& rhs) {
+    return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+inline bool operator!=(const Vec2Int& lhs, const Vec2Int& rhs) {
+    return !(lhs == rhs);
+}
+
 template<typename OStream>
 OStream &operator<<(OStream &out, const Vec2Int& vec) {
     return out << '[' << vec.x << ", " << vec.y << ']';

@@ -3,7 +3,7 @@
 #include <utility>
 #include "gfx_details.h"
 #include "Log.h"
-#include "../debug/profiler.h"
+//#include "../debug/profiler.h"
 
 namespace sprint {
 
@@ -32,22 +32,22 @@ bool ShaderType::TryParse(std::string_view str, ShaderType::Enum &type) {
     return false;
 }
 
-VertexBufferHandle CreateVertexBuffer(MemoryPtr ptr, uint32_t size, VertexLayout layout) {
+vertexbuf_handle CreateVertexBuffer(MemoryPtr ptr, uint32_t size, VertexLayout layout) {
     log::core::Info("gfx::CreateVertexBuffer");
     return details::g_renderer.CreateVertexBuffer(std::move(ptr), size, layout);
 }
 
-IndexBufferHandle CreateIndexBuffer(MemoryPtr ptr, uint32_t size) {
+indexbuf_handle CreateIndexBuffer(MemoryPtr ptr, uint32_t size) {
     log::core::Info("gfx::CreateIndexBuffer");
     return details::g_renderer.CreateIndexBuffer(std::move(ptr), size);
 }
 
-ShaderHandle CreateShader(const std::string &source, std::initializer_list<Attribute::Binding::Enum> in_types) {
+shader_handle CreateShader(const std::string &source, std::initializer_list<Attribute::Binding::Enum> in_types) {
     log::core::Info("gfx::CreateShader");
     return details::g_renderer.CreateShader(source, in_types);
 }
 
-TextureHandle CreateTexture(uint32_t width, uint32_t height, TextureFormat::Enum format, MemoryPtr ptr) {
+texture_handle CreateTexture(uint32_t width, uint32_t height, TextureFormat::Enum format, MemoryPtr ptr) {
     log::core::Info("gfx::CreateTexture");
     return CreateTexture(width, height, format,
                          {TextureWrap::Repeat, TextureWrap::Repeat, TextureWrap::Repeat},
@@ -56,65 +56,97 @@ TextureHandle CreateTexture(uint32_t width, uint32_t height, TextureFormat::Enum
                          std::move(ptr));
 }
 
-TextureHandle CreateTexture(uint32_t width,
-                            uint32_t height,
-                            TextureFormat::Enum format,
-                            TextureWrap wrap,
-                            TextureFilter filter,
-                            TextureFlags::Type flags,
-                            MemoryPtr ptr) {
+texture_handle CreateTexture(uint32_t width,
+                             uint32_t height,
+                             TextureFormat::Enum format,
+                             TextureWrap wrap,
+                             TextureFilter filter,
+                             TextureFlags::Type flags,
+                             MemoryPtr ptr) {
     log::core::Info("gfx::CreateTexture");
     return details::g_renderer.CreateTexture(std::move(ptr), width, height, format, wrap, filter, flags);
 }
 
-FrameBufferHandle CreateFrameBuffer(uint32_t width, uint32_t height, TextureFormat::Enum format, TextureWrap wrap) {
+framebuf_handle CreateFrameBuffer(uint32_t width, uint32_t height, TextureFormat::Enum format, TextureWrap wrap) {
     return details::g_renderer.CreateFrameBuffer(width, height, format, wrap);
 }
 
-FrameBufferHandle CreateFrameBuffer(std::initializer_list<TextureHandle> textures) {
+framebuf_handle CreateFrameBuffer(std::initializer_list<texture_handle> textures) {
     return details::g_renderer.CreateFrameBuffer(textures, false);
 }
 
-void UpdateVertexBuffer(VertexBufferHandle handle, MemoryPtr ptr, uint32_t offset) {
+uniform_handle CreateUniform(shader_handle shader, const char* c_str) {
+    return details::g_renderer.CreateUniform(shader, c_str);
+}
+
+void UpdateVertexBuffer(vertexbuf_handle handle, MemoryPtr ptr, uint32_t offset) {
     details::g_renderer.UpdateVertexBuffer(handle, std::move(ptr), offset);
 }
 
-void UpdateIndexBuffer(IndexBufferHandle handle, MemoryPtr ptr, uint32_t offset) {
+void UpdateIndexBuffer(indexbuf_handle handle, MemoryPtr ptr, uint32_t offset) {
     details::g_renderer.UpdateIndexBuffer(handle, std::move(ptr), offset);
 }
 
-void Render(CameraId camera_id, ShaderHandle shader_handle) {
+void Render(CameraId camera_id, shader_handle shader_handle) {
     details::g_renderer.Draw(camera_id, shader_handle);
 }
 
 void Frame() {
-    SPRINT_PROFILE_FUNCTION();
     details::g_renderer.RenderFrame();
 }
 
-void Destroy(VertexBufferHandle &handle) {
+void Destroy(vertexbuf_handle &handle) {
     log::core::Info("gfx::Destroy VertexBuffer");
     details::g_renderer.Destroy(handle);
 }
 
-void Destroy(IndexBufferHandle &handle) {
+void Destroy(indexbuf_handle &handle) {
     log::core::Info("gfx::Destroy IndexBuffer");
     details::g_renderer.Destroy(handle);
 }
 
-void Destroy(FrameBufferHandle &handle) {
+void Destroy(framebuf_handle &handle) {
     log::core::Info("gfx::Destroy FrameBuffer");
     details::g_renderer.Destroy(handle);
 }
 
-void Destroy(TextureHandle &handle) {
+void Destroy(texture_handle &handle) {
     log::core::Info("gfx::Destroy Texture");
     details::g_renderer.Destroy(handle);
 }
 
-void Destroy(ShaderHandle &handle) {
+void Destroy(shader_handle &handle) {
     log::core::Info("gfx::Destroy Shader");
     details::g_renderer.Destroy(handle);
+}
+
+void Destroy(uniform_handle& handle) {
+    log::core::Info("gfx::Destroy Uniform");
+    details::g_renderer.Destroy(handle);
+}
+
+bool IsValid(vertexbuf_handle handle) {
+    return details::g_renderer.IsValid(handle);
+}
+
+bool IsValid(indexbuf_handle handle) {
+    return details::g_renderer.IsValid(handle);
+}
+
+bool IsValid(framebuf_handle handle) {
+    return details::g_renderer.IsValid(handle);
+}
+
+bool IsValid(shader_handle handle) {
+    return details::g_renderer.IsValid(handle);
+}
+
+bool IsValid(uniform_handle handle) {
+    return details::g_renderer.IsValid(handle);
+}
+
+bool IsValid(texture_handle handle) {
+    return details::g_renderer.IsValid(handle);
 }
 
 void SetTransform(const Matrix &matrix) {
@@ -141,36 +173,36 @@ void SetClearColor(CameraId camera_id, const Color &color) {
     details::g_renderer.SetClearColor(camera_id, color);
 }
 
-void SetUniform(ShaderHandle handle, const std::string &name, int value) {
-    details::g_renderer.SetUniform(handle, name, value);
+void SetUniform(uniform_handle handle, int value) {
+    details::g_renderer.SetUniform(handle, value);
 }
 
-void SetUniform(ShaderHandle handle, const std::string &name, bool value) {
-    details::g_renderer.SetUniform(handle, name, value);
+void SetUniform(uniform_handle handle, bool value) {
+    details::g_renderer.SetUniform(handle, value);
 }
 
-void SetUniform(ShaderHandle handle, const std::string &name, float value) {
-    details::g_renderer.SetUniform(handle, name, value);
+void SetUniform(uniform_handle handle, float value) {
+    details::g_renderer.SetUniform(handle, value);
 }
 
-void SetUniform(ShaderHandle handle, const std::string &name, const Vec3 &value) {
-    details::g_renderer.SetUniform(handle, name, value);
+void SetUniform(uniform_handle handle, const Vec3 &value) {
+    details::g_renderer.SetUniform(handle, value);
 }
 
-void SetUniform(ShaderHandle handle, const std::string &name, const Vec4 &value) {
-    details::g_renderer.SetUniform(handle, name, value);
+void SetUniform(uniform_handle handle, const Vec4 &value) {
+    details::g_renderer.SetUniform(handle, value);
 }
 
-void SetUniform(ShaderHandle handle, const std::string &name, const Color &value) {
-    details::g_renderer.SetUniform(handle, name, value);
+void SetUniform(uniform_handle handle, const Color &value) {
+    details::g_renderer.SetUniform(handle, value);
 }
 
-void SetUniform(ShaderHandle handle, const std::string &name, const Matrix &value) {
-    details::g_renderer.SetUniform(handle, name, value);
+void SetUniform(uniform_handle handle, const Matrix &value) {
+    details::g_renderer.SetUniform(handle, value);
 }
 
-void SetUniform(ShaderHandle handle, const std::string &name, TextureHandle value, TexSlotId slot) {
-    details::g_renderer.SetUniform(handle, name, value, slot);
+void SetUniform(uniform_handle handle, texture_handle value, TexSlotId slot) {
+    details::g_renderer.SetUniform(handle, value, slot);
 }
 
 MemoryPtr Copy(const void *data, uint32_t size) {
@@ -184,11 +216,11 @@ MemoryPtr MakeRef(void *data, uint32_t size) {
     return MemoryPtr{ptr, size};
 }
 
-void SetBuffer(VertexBufferHandle handle, uint32_t offset, uint32_t num) {
+void SetBuffer(vertexbuf_handle handle, uint32_t offset, uint32_t num) {
     details::g_renderer.SetBuffer(handle, offset, num);
 }
 
-void SetBuffer(IndexBufferHandle handle, uint32_t offset, uint32_t num) {
+void SetBuffer(indexbuf_handle handle, uint32_t offset, uint32_t num) {
     details::g_renderer.SetBuffer(handle, offset, num);
 }
 
@@ -200,7 +232,7 @@ void SetOptions(DrawConfig::Options options) {
     details::g_renderer.SetOptions(options);
 }
 
-void SetViewBuffer(CameraId camera_id, FrameBufferHandle handle) {
+void SetViewBuffer(CameraId camera_id, framebuf_handle handle) {
     details::g_renderer.SetViewBuffer(camera_id, handle);
 }
 

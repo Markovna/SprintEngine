@@ -14,7 +14,7 @@ namespace details {
 struct entity_traits {
     static constexpr uint8_t  gen_offset = 20u;
     static constexpr entity_t index_mask       = 0x000FFFFF;
-    static constexpr entity_t generation_mask  = 0xFFF << gen_offset;
+    static constexpr entity_t generation_mask  = 0xFFFu << gen_offset;
 
     static constexpr entity_t get_index(entity_t entity) { return entity & index_mask; }
     static constexpr entity_t get_generation(entity_t entity) { return (entity & generation_mask) >> gen_offset; }
@@ -299,7 +299,7 @@ public:
             entity_t free = entities_[free_idx_];
 
             entity_traits::set_index(entity, free_idx_);
-            entity_traits::set_generation(entity, entity_traits::get_generation(free) + 1);
+            entity_traits::set_generation(entity, entity_traits::get_generation(free));
             entities_[free_idx_] = entity;
 
             free_idx_ = entity_traits::get_index(free);
@@ -310,7 +310,9 @@ public:
 
     void destroy(entity_t entity) {
         assert(valid(entity));
-        details::entity_traits::set_index(entities_[details::entity_traits::get_index(entity)], free_idx_);
+        auto index = details::entity_traits::get_index(entity);
+        details::entity_traits::set_index(entities_[index], free_idx_);
+        details::entity_traits::set_generation(entities_[index], entity_traits::get_generation(entities_[free_idx_]) + 1);
         free_idx_ = details::entity_traits::get_index(entity);
     }
 

@@ -38,83 +38,87 @@ private:
 class GLRendererAPI : public RendererAPI {
 private:
     struct VertexBuffer {
-        VertexBuffer() noexcept : id(0), size(0), layout{} {};
-        VertexBuffer(uint32_t id, uint32_t size, VertexLayout _layout) :
-            id(id), size(size), layout(_layout)
-        {}
-
-        uint32_t id;
-        uint32_t size;
-        VertexLayout layout;
+        uint32_t id{};
+        uint32_t size{};
+        VertexLayout layout{};
     };
 
     struct IndexBuffer {
-        IndexBuffer() noexcept : id(0), size(0) {};
-        IndexBuffer(uint32_t id, uint32_t size) noexcept : id(id), size(size) {}
-
-        uint32_t id;
-        uint32_t size;
+        uint32_t id{};
+        uint32_t size{};
     };
 
     struct FrameBuffer {
         uint32_t id{};
-        TextureHandle tex_handles[static_config::kFrameBufferMaxAttachments];
-        uint32_t tex_num;
-        bool destroy_tex;
+        texture_handle tex_handles[static_config::kFrameBufferMaxAttachments]{};
+        uint32_t tex_num{};
+        bool destroy_tex{};
     };
 
-    class Shader {
+    struct Shader {
     public:
-        Shader() noexcept : attributes_mask_(0), id_(0) {}
-        Shader(uint32_t id, const std::string& source, const Attribute::BindingPack& bindings);
         bool TryGetLocation(Attribute::Binding::Enum type, uint16_t& location) const;
-        [[nodiscard]] uint32_t get_id() const { return id_; }
-    private:
-        uint16_t attributes_mask_;
-        uint16_t attribute_locations_[Attribute::Binding::Count]{};
-        uint32_t id_;
+
+        uint32_t model_location = 0;
+        uint32_t view_location = 0;
+        uint32_t proj_location = 0;
+        uint16_t enabled_attributes_mask = 0;
+        uint16_t attributes_mask = 0;
+        uint16_t attribute_locations[Attribute::Binding::Count]{};
+        uint32_t id = 0;
     };
 
     struct Texture {
-        Texture() noexcept : id(0) {}
-        explicit Texture(uint32_t id) : id(id) {}
+        uint32_t id{};
+        bool render_buffer{};
+        TextureFormat::Enum format{};
+    };
 
-        uint32_t id;
-        bool render_buffer;
-        TextureFormat::Enum format;
+    struct Uniform {
+        uint32_t location;
+        shader_handle shader;
     };
 
 public:
     explicit GLRendererAPI(const Config& config);
     ~GLRendererAPI() override;
 
-    void CreateVertexBuffer(VertexBufferHandle handle, const void* data, uint32_t data_size, uint32_t size, VertexLayout layout) override;
-    void CreateIndexBuffer(IndexBufferHandle handle, const void* data, uint32_t data_size, uint32_t size) override;
-    void CreateFrameBuffer(FrameBufferHandle handle, TextureHandle*, uint32_t num, bool destroy_tex = false) override;
-    void CreateShader(ShaderHandle handle, const std::string& source, const Attribute::BindingPack& bindings) override;
-    void CreateTexture(TextureHandle handle, const void* data, uint32_t data_size, uint32_t width, uint32_t height,
+    void CreateVertexBuffer(vertexbuf_handle handle, const void* data, uint32_t data_size, uint32_t size, VertexLayout layout) override;
+    void CreateIndexBuffer(indexbuf_handle handle, const void* data, uint32_t data_size, uint32_t size) override;
+    void CreateFrameBuffer(framebuf_handle handle, texture_handle*, uint32_t num, bool destroy_tex = false) override;
+    void CreateShader(shader_handle handle, const std::string& source, const Attribute::BindingPack& bindings) override;
+    void CreateUniform(uniform_handle, shader_handle, char* name, uint16_t size) override;
+    void CreateTexture(texture_handle handle, const void* data, uint32_t data_size, uint32_t width, uint32_t height,
                        TextureFormat::Enum, TextureWrap wrap, TextureFilter filter, TextureFlags::Type flags) override;
 
-    void UpdateVertexBuffer(VertexBufferHandle handle, uint32_t offset, const void* data, uint32_t data_size) override;
-    void UpdateIndexBuffer(IndexBufferHandle handle, uint32_t offset, const void* data, uint32_t data_sizer) override;
+    void UpdateVertexBuffer(vertexbuf_handle handle, uint32_t offset, const void* data, uint32_t data_size) override;
+    void UpdateIndexBuffer(indexbuf_handle handle, uint32_t offset, const void* data, uint32_t data_sizer) override;
 
-    void Destroy(VertexBufferHandle) override;
-    void Destroy(IndexBufferHandle) override;
-    void Destroy(FrameBufferHandle) override;
-    void Destroy(ShaderHandle) override;
-    void Destroy(TextureHandle) override;
+    void Destroy(vertexbuf_handle) override;
+    void Destroy(indexbuf_handle) override;
+    void Destroy(framebuf_handle) override;
+    void Destroy(shader_handle) override;
+    void Destroy(uniform_handle) override;
+    void Destroy(texture_handle) override;
     void RenderFrame(const Frame&) override;
 
 private:
-    void SetUniform(ShaderHandle, const std::string&, int);
-    void SetUniform(ShaderHandle, const std::string&, bool);
-    void SetUniform(ShaderHandle, const std::string&, float);
-    void SetUniform(ShaderHandle, const std::string&, const Vec3&);
-    void SetUniform(ShaderHandle, const std::string&, const Vec4&);
-    void SetUniform(ShaderHandle, const std::string&, const Color&);
-    void SetUniform(ShaderHandle, const std::string&, const Matrix&);
-    void SetUniform(TextureHandle, int slot_idx);
-    void Draw(const Frame& frame, const DrawUnit& draw);
+    void SetUniform(uniform_handle, int);
+    void SetUniform(uniform_handle, bool);
+    void SetUniform(uniform_handle, float);
+    void SetUniform(uniform_handle, const Vec3&);
+    void SetUniform(uniform_handle, const Vec4&);
+    void SetUniform(uniform_handle, const Color&);
+    void SetUniform(uniform_handle, const Matrix&);
+
+//    void SetUniform(shader_handle, const std::string&, int);
+//    void SetUniform(shader_handle, const std::string&, bool);
+//    void SetUniform(shader_handle, const std::string&, float);
+//    void SetUniform(shader_handle, const std::string&, const Vec3&);
+//    void SetUniform(shader_handle, const std::string&, const Vec4&);
+//    void SetUniform(shader_handle, const std::string&, const Color&);
+//    void SetUniform(shader_handle, const std::string&, const Matrix&);
+    void SetUniform(texture_handle, int slot_idx);
 
     template<class T> void ExecuteCommand(const T&) {}
 
@@ -126,6 +130,7 @@ private:
     FrameBuffer frame_buffers_[static_config::kVertexBuffersCapacity];
     Shader shaders_[static_config::kShadersCapacity];
     Texture textures_[static_config::kTexturesCapacity];
+    Uniform uniforms_[static_config::kUniformsCapacity];
 };
 
 }

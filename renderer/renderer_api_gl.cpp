@@ -5,7 +5,16 @@
 
 namespace sprint::gfx::details {
 
+#define RENDERER_API_PROFILE 1
 #define RENDERER_API_DEBUG 1
+
+#if RENDERER_API_PROFILE
+#   define SPRINT_RENDERER_PROFILE_SCOPE(__name) SPRINT_PROFILE_SCOPE(__name)
+#   define SPRINT_RENDERER_PROFILE_FUNCTION() SPRINT_PROFILE_FUNCTION()
+#else
+#   define SPRINT_RENDERER_PROFILE_SCOPE(__name)
+#   define SPRINT_RENDERER_PROFILE_FUNCTION()
+#endif
 
 #if RENDERER_API_DEBUG
 #	define CHECK_ERRORS(__func) _CHECK_GL_ERRORS(__func)
@@ -91,58 +100,58 @@ static std::tuple<GLenum, GLenum> GetFilters(const TextureFilter& type, bool has
     return std::make_tuple( GetMinFilter(type.min, type.mag, has_mipmaps), GetMagFilter(type.mag));
 }
 
-GLRendererAPI::Shader::Shader(uint32_t id, const std::string &source, const Attribute::BindingPack& bindings)
-        : id_(id) {
-    std::string shaders[ShaderType::Count];
-    PreProcess(source, shaders);
-    for (size_t i = 0; i < ShaderType::Count; i++) {
-        auto shader_id = CompileShader((ShaderType::Enum) i, shaders[i]);
-        glAttachShader(id_, shader_id);
-        glDeleteShader(shader_id);
+static void SetShaderId(uint32_t shader_id) {
+    static uint32_t curr_shader_id = 0;
+
+    if (curr_shader_id != shader_id) {
+        curr_shader_id = shader_id;
+        CHECK_ERRORS(glUseProgram(shader_id));
     }
-
-    CHECK_ERRORS(glLinkProgram(id_));
-    CheckLinkStatus(id_);
-
-    attributes_mask_ = bindings.mask;
-    std::memcpy(attribute_locations_, bindings.locations, Attribute::Binding::Count);
 }
 
 bool GLRendererAPI::Shader::TryGetLocation(Attribute::Binding::Enum type, uint16_t& location) const {
-    if (attributes_mask_ & (1u << type)) {
-        location = attribute_locations_[type];
+    if (attributes_mask & (1u << type)) {
+        location = attribute_locations[type];
         return true;
     }
     return false;
 }
 
-void GLRendererAPI::CreateVertexBuffer(VertexBufferHandle handle, const void* data, uint32_t data_size, uint32_t size, VertexLayout layout) {
+void GLRendererAPI::CreateVertexBuffer(vertexbuf_handle handle, const void* data, uint32_t data_size, uint32_t size, VertexLayout layout) {
     uint32_t bufferId;
     glGenBuffers(1, &bufferId);
     glBindBuffer(GL_ARRAY_BUFFER, bufferId);
     CHECK_ERRORS(glBufferData(GL_ARRAY_BUFFER, data_size, data, data ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW));
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    vertex_buffers_[handle.ID] = VertexBuffer(bufferId, size, layout);
+    VertexBuffer& vertex_buffer = vertex_buffers_[handle.index()];
+    vertex_buffer.id = bufferId;
+    vertex_buffer.size = size;
+    vertex_buffer.layout = layout;
 }
 
-void GLRendererAPI::CreateIndexBuffer(IndexBufferHandle handle, const void* data, uint32_t data_size, uint32_t size) {
+void GLRendererAPI::CreateIndexBuffer(indexbuf_handle handle, const void* data, uint32_t data_size, uint32_t size) {
     uint32_t bufferId;
     glGenBuffers(1, &bufferId);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferId);
     CHECK_ERRORS(glBufferData(GL_ELEMENT_ARRAY_BUFFER, data_size, data, data ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW));
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    index_buffers_[handle.ID] = IndexBuffer(bufferId, size);
+    IndexBuffer& index_buffer = index_buffers_[handle.index()];
+    index_buffer.id = bufferId;
+    index_buffer.size = size;
 }
 
-void GLRendererAPI::CreateFrameBuffer(FrameBufferHandle handle, TextureHandle* handles, uint32_t num, bool destroy_tex) {
+void GLRendererAPI::CreateFrameBuffer(framebuf_handle handle, texture_handle* handles, uint32_t num, bool destroy_tex) {
     uint32_t bufferId;
     glGenFramebuffers(1, &bufferId);
     glBindFramebuffer(GL_FRAMEBUFFER, bufferId);
 
+    FrameBuffer& frame_buffer = frame_buffers_[handle.index()];
+
     for (int i = 0; i < num; i++) {
-        TextureHandle tex = handles[i];
-        uint32_t tex_id = textures_[tex.ID].id;
-        TextureFormat::Enum format = textures_[tex.ID].format;
+        texture_handle tex = handles[i];
+        Texture& texture = textures_[tex.index()];
+        uint32_t tex_id = texture.id;
+        TextureFormat::Enum format = texture.format;
         GLenum attachment;
 
         bool is_depth = TextureFormat::IsDepth(format);
@@ -160,39 +169,57 @@ void GLRendererAPI::CreateFrameBuffer(FrameBufferHandle handle, TextureHandle* h
             attachment = GL_COLOR_ATTACHMENT0;
         }
 
-        if (textures_[tex.ID].render_buffer) {
+        if (texture.render_buffer) {
             CHECK_ERRORS(glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, tex_id));
         } else {
             CHECK_ERRORS(glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex_id, 0));
         }
 
-        frame_buffers_[handle.ID].tex_handles[i] = tex;
+        frame_buffer.tex_handles[i] = tex;
     }
 
     assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    frame_buffers_[handle.ID].id = bufferId;
-    frame_buffers_[handle.ID].tex_num = num;
-    frame_buffers_[handle.ID].destroy_tex = destroy_tex;
+    frame_buffer.id = bufferId;
+    frame_buffer.tex_num = num;
+    frame_buffer.destroy_tex = destroy_tex;
 }
 
-void GLRendererAPI::UpdateVertexBuffer(VertexBufferHandle handle, uint32_t offset, const void* data, uint32_t data_size) {
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers_[handle.ID].id);
+void GLRendererAPI::UpdateVertexBuffer(vertexbuf_handle handle, uint32_t offset, const void* data, uint32_t data_size) {
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers_[handle.index()].id);
     CHECK_ERRORS(glBufferSubData(GL_ARRAY_BUFFER, offset, data_size, data));
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void GLRendererAPI::UpdateIndexBuffer(IndexBufferHandle handle, uint32_t offset, const void* data, uint32_t data_size) {
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers_[handle.ID].id);
+void GLRendererAPI::UpdateIndexBuffer(indexbuf_handle handle, uint32_t offset, const void* data, uint32_t data_size) {
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers_[handle.index()].id);
     CHECK_ERRORS(glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, data_size, data));
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void GLRendererAPI::CreateShader(ShaderHandle handle,
+void GLRendererAPI::CreateShader(shader_handle handle,
                                  const std::string &source,
                                  const Attribute::BindingPack& bindings) {
-    shaders_[handle.ID] = Shader(glCreateProgram(), source, bindings);
+    std::string shaders[ShaderType::Count];
+    PreProcess(source, shaders);
+    uint32_t id = glCreateProgram();
+    for (size_t i = 0; i < ShaderType::Count; i++) {
+        auto shader_id = CompileShader((ShaderType::Enum) i, shaders[i]);
+        glAttachShader(id, shader_id);
+        glDeleteShader(shader_id);
+    }
+
+    CHECK_ERRORS(glLinkProgram(id));
+    CheckLinkStatus(id);
+
+    Shader& shader = shaders_[handle.index()];
+    shader.id = id;
+    shader.attributes_mask = bindings.mask;
+    std::memcpy(shader.attribute_locations, bindings.locations, Attribute::Binding::Count);
+    shader.model_location = glGetUniformLocation(id, "model");
+    shader.view_location = glGetUniformLocation(id, "view");
+    shader.proj_location = glGetUniformLocation(id, "projection");
 }
 
 static const TextureFormatInfo& GetTextureFormat(TextureFormat::Enum format) {
@@ -207,7 +234,15 @@ static const TextureFormatInfo& GetTextureFormat(TextureFormat::Enum format) {
     return texture_formats[format];
 }
 
-void GLRendererAPI::CreateTexture(TextureHandle handle,
+void GLRendererAPI::CreateUniform(uniform_handle handle, shader_handle shader_handle, char* name, uint16_t size) {
+    Shader& shader = shaders_[shader_handle.index()];
+    uint32_t location = glGetUniformLocation(shader.id, name);
+    Uniform& uniform = uniforms_[handle.index()];
+    uniform.location = location;
+    uniform.shader = shader_handle;
+}
+
+void GLRendererAPI::CreateTexture(texture_handle handle,
                                   const void* data, uint32_t data_size,
                                   uint32_t width, uint32_t height,
                                   TextureFormat::Enum format, TextureWrap wrap, TextureFilter filter, TextureFlags::Type flags) {
@@ -242,14 +277,27 @@ void GLRendererAPI::CreateTexture(TextureHandle handle,
         CHECK_ERRORS(glBindTexture(GL_TEXTURE_2D, 0));
     }
 
-    textures_[handle.ID].id = textureId;
-    textures_[handle.ID].render_buffer = render_buffer;
-    textures_[handle.ID].format = format;
+    Texture& texture = textures_[handle.index()];
+    texture.id = textureId;
+    texture.render_buffer = render_buffer;
+    texture.format = format;
 }
 
 GLRendererAPI::~GLRendererAPI() {
     glBindVertexArray(0);
     glDeleteVertexArrays(1, &vao_);
+}
+
+static void SetDepthTest(bool enable) {
+    static bool enabled = false;
+    if (enabled == enable) return;
+
+    enabled = enable;
+    if (enable) {
+        CHECK_ERRORS(glEnable(GL_DEPTH_TEST));
+    } else {
+        CHECK_ERRORS(glDisable(GL_DEPTH_TEST));
+    }
 }
 
 GLRendererAPI::GLRendererAPI(const Config &config)
@@ -260,7 +308,7 @@ GLRendererAPI::GLRendererAPI(const Config &config)
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
 
-    glEnable(GL_DEPTH_TEST);
+    SetDepthTest(true);
 
     /**/
 
@@ -274,94 +322,96 @@ GLRendererAPI::GLRendererAPI(const Config &config)
      /**/
 }
 
-void GLRendererAPI::Destroy(VertexBufferHandle handle) {
-    glDeleteBuffers(1, &vertex_buffers_[handle.ID].id);
+void GLRendererAPI::Destroy(vertexbuf_handle handle) {
+    glDeleteBuffers(1, &vertex_buffers_[handle.index()].id);
 }
 
-void GLRendererAPI::Destroy(IndexBufferHandle handle) {
-    glDeleteBuffers(1, &index_buffers_[handle.ID].id);
+void GLRendererAPI::Destroy(indexbuf_handle handle) {
+    glDeleteBuffers(1, &index_buffers_[handle.index()].id);
 }
 
-void GLRendererAPI::Destroy(FrameBufferHandle handle) {
-
-    if (frame_buffers_[handle.ID].destroy_tex) {
-        for (int i = 0; i < frame_buffers_[handle.ID].tex_num; i++) {
-            Destroy(frame_buffers_[handle.ID].tex_handles[i]);
+void GLRendererAPI::Destroy(framebuf_handle handle) {
+    FrameBuffer& frame_buffer = frame_buffers_[handle.index()];
+    if (frame_buffer.destroy_tex) {
+        for (int i = 0; i < frame_buffer.tex_num; i++) {
+            Destroy(frame_buffer.tex_handles[i]);
         }
     }
 
-    glDeleteFramebuffers(1, &frame_buffers_[handle.ID].id);
+    glDeleteFramebuffers(1, &frame_buffer.id);
 }
 
-void GLRendererAPI::Destroy(ShaderHandle handle) {
-    glDeleteProgram(shaders_[handle.ID].get_id());
+void GLRendererAPI::Destroy(shader_handle handle) {
+    glDeleteProgram(shaders_[handle.index()].id);
 }
 
-void GLRendererAPI::Destroy(TextureHandle handle) {
-    glDeleteTextures(1, &textures_[handle.ID].id);
+void GLRendererAPI::Destroy(texture_handle handle) {
+    glDeleteTextures(1, &textures_[handle.index()].id);
 }
 
-void GLRendererAPI::SetUniform(ShaderHandle handle, const std::string& name, int value) {
-    CHECK_ERRORS(glUseProgram(shaders_[handle.ID].get_id()));
-    uint32_t location = glGetUniformLocation(shaders_[handle.ID].get_id(), name.c_str());
-    CHECK_ERRORS(glUniform1i(location, value));
-    glUseProgram(0);
+void GLRendererAPI::SetUniform(uniform_handle handle, int value) {
+    Uniform& uniform = uniforms_[handle.index()];
+    assert(gfx::IsValid(uniform.shader));
+    SetShaderId(shaders_[uniform.shader.index()].id);
+    CHECK_ERRORS(glUniform1i(uniform.location, value));
 }
 
-void GLRendererAPI::SetUniform(ShaderHandle handle, const std::string& name, bool value) {
-    CHECK_ERRORS(glUseProgram(shaders_[handle.ID].get_id()));
-    uint32_t location = glGetUniformLocation(shaders_[handle.ID].get_id(), name.c_str());
-    CHECK_ERRORS(glUniform1i(location, value));
-    glUseProgram(0);
+void GLRendererAPI::SetUniform(uniform_handle handle, bool value) {
+    Uniform& uniform = uniforms_[handle.index()];
+    assert(gfx::IsValid(uniform.shader));
+    SetShaderId(shaders_[uniform.shader.index()].id);
+    CHECK_ERRORS(glUniform1i(uniform.location, value));
 }
 
-void GLRendererAPI::SetUniform(ShaderHandle handle, const std::string& name, float value) {
-    CHECK_ERRORS(glUseProgram(shaders_[handle.ID].get_id()));
-    uint32_t location = glGetUniformLocation(shaders_[handle.ID].get_id(), name.c_str());
-    CHECK_ERRORS(glUniform1f(location, value));
-    glUseProgram(0);
+void GLRendererAPI::SetUniform(uniform_handle handle, float value) {
+    Uniform& uniform = uniforms_[handle.index()];
+    assert(gfx::IsValid(uniform.shader));
+    SetShaderId(shaders_[uniform.shader.index()].id);
+    CHECK_ERRORS(glUniform1f(uniform.location, value));
 }
 
-void GLRendererAPI::SetUniform(ShaderHandle handle, const std::string& name, const Vec3& value) {
-    CHECK_ERRORS(glUseProgram(shaders_[handle.ID].get_id()));
-    uint32_t location = glGetUniformLocation(shaders_[handle.ID].get_id(), name.c_str());
-    CHECK_ERRORS(glUniform3f(location, value.x, value.y, value.z));
-    glUseProgram(0);
+void GLRendererAPI::SetUniform(uniform_handle handle, const Vec3& value) {
+    Uniform& uniform = uniforms_[handle.index()];
+    assert(gfx::IsValid(uniform.shader));
+    SetShaderId(shaders_[uniform.shader.index()].id);
+    CHECK_ERRORS(glUniform3f(uniform.location, value.x, value.y, value.z));
 }
 
-void GLRendererAPI::SetUniform(ShaderHandle handle, const std::string& name, const Vec4& value) {
-    CHECK_ERRORS(glUseProgram(shaders_[handle.ID].get_id()));
-    uint32_t location = glGetUniformLocation(shaders_[handle.ID].get_id(), name.c_str());
-    CHECK_ERRORS(glUniform4f(location, value.x, value.y, value.z, value.w));
-    glUseProgram(0);
+void GLRendererAPI::SetUniform(uniform_handle handle, const Vec4& value) {
+    Uniform& uniform = uniforms_[handle.index()];
+    assert(gfx::IsValid(uniform.shader));
+    SetShaderId(shaders_[uniform.shader.index()].id);
+    CHECK_ERRORS(glUniform4f(uniform.location, value.x, value.y, value.z, value.w));
 }
 
-void GLRendererAPI::SetUniform(ShaderHandle handle, const std::string& name, const Color& value) {
-    CHECK_ERRORS(glUseProgram(shaders_[handle.ID].get_id()));
-    uint32_t location = glGetUniformLocation(shaders_[handle.ID].get_id(), name.c_str());
-    CHECK_ERRORS(glUniform4f(location, value.r, value.g, value.b, value.a));
-    glUseProgram(0);
+void GLRendererAPI::SetUniform(uniform_handle handle, const Color& value) {
+    Uniform& uniform = uniforms_[handle.index()];
+    assert(gfx::IsValid(uniform.shader));
+    SetShaderId(shaders_[uniform.shader.index()].id);
+    CHECK_ERRORS(glUniform4f(uniform.location, value.r, value.g, value.b, value.a));
 }
 
-void GLRendererAPI::SetUniform(ShaderHandle handle, const std::string& name, const Matrix& value) {
-    CHECK_ERRORS(glUseProgram(shaders_[handle.ID].get_id()));
-    uint32_t location = glGetUniformLocation(shaders_[handle.ID].get_id(), name.c_str());
-    CHECK_ERRORS(glUniformMatrix4fv(location, 1, GL_FALSE, (float*) &value));
-    glUseProgram(0);
+void GLRendererAPI::SetUniform(uniform_handle handle, const Matrix& value) {
+    Uniform& uniform = uniforms_[handle.index()];
+    assert(gfx::IsValid(uniform.shader));
+    SetShaderId(shaders_[uniform.shader.index()].id);
+    CHECK_ERRORS(glUniformMatrix4fv(uniform.location, 1, GL_FALSE, (float*) &value));
 }
 
-void GLRendererAPI::SetUniform(TextureHandle handle, int slot_idx) {
+void GLRendererAPI::SetUniform(texture_handle handle, int slot_idx) {
     glActiveTexture(GL_TEXTURE0 + slot_idx);
-    CHECK_ERRORS(glBindTexture(GL_TEXTURE_2D, textures_[handle.ID].id));
+    CHECK_ERRORS(glBindTexture(GL_TEXTURE_2D, textures_[handle.index()].id));
 }
 
 template<> void GLRendererAPI::ExecuteCommand(const SetUniformCommand& command) {
+    SPRINT_RENDERER_PROFILE_FUNCTION();
     mpark::visit([this, &command](const auto& val){
-        SetUniform(command.shader_handle, command.name, val);
+        SetUniform(command.uniform_handle, val);
     }, command.value);
 }
 
 template<> void GLRendererAPI::ExecuteCommand(const SetTextureCommand& command) {
+    SPRINT_RENDERER_PROFILE_FUNCTION();
     SetUniform(command.texture_handle, command.slot);
 }
 
@@ -380,46 +430,11 @@ static GLbitfield ToGLBits(ClearFlag::Type mask) {
     return bitfield;
 }
 
-void GLRendererAPI::RenderFrame(const Frame& frame) {
-
-    SPRINT_PROFILE_FUNCTION();
-
-    default_context_.MakeCurrent();
-
-    CHECK_ERRORS(glDisable(GL_SCISSOR_TEST));
-    for (auto& camera : frame.get_cameras()) {
-        if (camera.frame_buffer.IsValid()) {
-            CHECK_ERRORS(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffers_[camera.frame_buffer.ID].id));
-        }
-
-        CHECK_ERRORS(glClearColor(camera.clear_color.r, camera.clear_color.g, camera.clear_color.b, camera.clear_color.a));
-        CHECK_ERRORS(glClear(ToGLBits(camera.clear_flag)));
-
-        if (camera.frame_buffer.IsValid()) {
-            CHECK_ERRORS(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-        }
-    }
-
-    for (const DrawUnit& draw : frame.get_draws()) {
-        Draw(frame, draw);
-    }
-
-    default_context_.SwapBuffers();
-}
-
 static void DisableAttributes(uint16_t mask) {
     while (mask) {
         uint16_t index = __builtin_ctzl(mask);
         CHECK_ERRORS(glDisableVertexAttribArray(index));
         mask ^= 1u << index;
-    }
-}
-
-static void SetDepthTest(bool enable) {
-    if (enable) {
-        CHECK_ERRORS(glEnable(GL_DEPTH_TEST));
-    } else {
-        CHECK_ERRORS(glDisable(GL_DEPTH_TEST));
     }
 }
 
@@ -447,75 +462,158 @@ static void SetScissor(Rect scissor, Vec2Int size) {
     }
 }
 
-void GLRendererAPI::Draw(const Frame& frame, const DrawUnit& draw) {
+void GLRendererAPI::RenderFrame(const Frame& frame) {
 
-    for (const auto& command : draw.command_buffer) {
-        mpark::visit([this](const auto& c){
-                ExecuteCommand(c);
-            }, command);
+    SPRINT_PROFILE_FUNCTION();
+
+    default_context_.MakeCurrent();
+
+    CHECK_ERRORS(glDisable(GL_SCISSOR_TEST));
+    for (auto& camera : frame.get_cameras()) {
+        if (camera.frame_buffer) {
+            CHECK_ERRORS(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffers_[camera.frame_buffer.index()].id));
+        }
+
+        CHECK_ERRORS(glClearColor(camera.clear_color.r, camera.clear_color.g, camera.clear_color.b, camera.clear_color.a));
+        CHECK_ERRORS(glClear(ToGLBits(camera.clear_flag)));
+
+        if (camera.frame_buffer) {
+            CHECK_ERRORS(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+        }
     }
 
-    const Camera& camera = frame.get_camera(draw.camera_id);
+    CameraId camera_id = UINT16_MAX;
+    Vec2Int resolution;
+    Rect scissor;
+    uint32_t vb_id = 0;
+    uint32_t fb_id = 0;
+    uint32_t vb_offset = 0;
 
-    if (camera.frame_buffer.IsValid()) {
-        CHECK_ERRORS(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffers_[camera.frame_buffer.ID].id));
-    }
+    bool resolution_changed = resolution != frame.get_resolution();
+    resolution = frame.get_resolution();
 
-    SetUniform(draw.shader_handle, "model", draw.transform);
-    SetUniform(draw.shader_handle, "view", camera.view);
-    SetUniform(draw.shader_handle, "projection", camera.projection);
+    for (const DrawUnit& draw : frame.get_draws()) {
+        SPRINT_RENDERER_PROFILE_SCOPE("GLRendererAPI::RenderFrame [render a draw call]");
 
-    SetViewport(camera.viewport, frame.get_resolution());
-    SetScissor(draw.scissor, frame.get_resolution());
-    SetDepthTest(draw.options & DrawConfig::DEPTH_TEST);
-
-    if (draw.vb_handle.IsValid()) {
-        VertexBuffer& vb = vertex_buffers_[draw.vb_handle.ID];
-        Shader& shader = shaders_[draw.shader_handle.ID];
-
-        CHECK_ERRORS(glBindBuffer(GL_ARRAY_BUFFER, vb.id));
-        CHECK_ERRORS(glUseProgram(shader.get_id()));
-
-        uint16_t enabledAttribMask = 0;
-        uint32_t base_vertex = draw.vb_offset * vb.layout.get_stride();
-        for (const auto &item : vb.layout) {
-            uint16_t idx;
-            if (shader.TryGetLocation(item.attribute.binding, idx)) {
-                CHECK_ERRORS(glVertexAttribPointer(
-                    idx,
-                    item.attribute.format.size,
-                    ToType(item.attribute.format.type),
-                    item.attribute.normalized,
-                    vb.layout.get_stride(),
-                    (void *) (base_vertex + item.offset)
-                ));
-                CHECK_ERRORS(glEnableVertexAttribArray(idx));
-                enabledAttribMask |= (1u << idx);
+        {
+            SPRINT_RENDERER_PROFILE_SCOPE("GLRendererAPI::RenderFrame [execute commands]");
+            for (const auto &command : draw.command_buffer) {
+                mpark::visit([this](const auto &c) { ExecuteCommand(c); }, command);
             }
         }
-        DisableAttributes(~enabledAttribMask);
+        const Camera& camera = frame.get_camera(draw.camera_id);
+        Shader* shader = draw.shader_handle ? &shaders_[draw.shader_handle.index()] : nullptr;
 
-        if (draw.ib_handle.IsValid()) {
-            CHECK_ERRORS(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers_[draw.ib_handle.ID].id));
-            CHECK_ERRORS(glDrawElements(
-                GL_TRIANGLES,
-                draw.ib_size ? draw.ib_size : index_buffers_[draw.ib_handle.ID].size,
-                GL_UNSIGNED_INT,
-                (void *) (size_t) (draw.ib_offset * sizeof(uint32_t))
-            ));
-        } else {
-            CHECK_ERRORS(glDrawArrays(
-                GL_TRIANGLES,
-                0,
-                draw.vb_size ? draw.vb_size : vb.size
-            ));
+        uint32_t curr_vb_id = draw.vb_handle ? vertex_buffers_[draw.vb_handle.index()].id : 0;
+        uint32_t curr_fb_id = camera.frame_buffer ? frame_buffers_[camera.frame_buffer.index()].id : 0;
+
+        bool camera_changed = camera_id != draw.camera_id;
+        bool scissor_changed = scissor != draw.scissor;
+        bool vb_changed = curr_vb_id != vb_id;
+        bool fb_changed = curr_fb_id != fb_id;
+        bool vb_offset_changed = vb_offset != draw.vb_offset;
+
+        camera_id = draw.camera_id;
+        scissor = draw.scissor;
+        fb_id = curr_fb_id;
+        vb_id = curr_vb_id;
+        vb_offset = draw.vb_offset;
+
+        if (fb_changed) {
+            CHECK_ERRORS(glBindFramebuffer(GL_FRAMEBUFFER, fb_id));
         }
 
-        glUseProgram(0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        SetShaderId(shader->id);
+
+        {
+            SPRINT_RENDERER_PROFILE_SCOPE("GLRendererAPI::RenderFrame [set matrix uniforms]");
+
+            CHECK_ERRORS(glUniformMatrix4fv(shader->model_location, 1, GL_FALSE, (float *) &draw.transform));
+            CHECK_ERRORS(glUniformMatrix4fv(shader->view_location, 1, GL_FALSE, (float *) &camera.view));
+            CHECK_ERRORS(glUniformMatrix4fv(shader->proj_location, 1, GL_FALSE, (float *) &camera.projection));
+        }
+
+        if (camera_changed || resolution_changed) {
+            SetViewport(camera.viewport, frame.get_resolution());
+        }
+
+        if (scissor_changed || resolution_changed) {
+            SetScissor(draw.scissor, frame.get_resolution());
+        }
+
+        SetDepthTest(draw.options & DrawConfig::DEPTH_TEST);
+
+        if (vb_changed) {
+            CHECK_ERRORS(glBindBuffer(GL_ARRAY_BUFFER, vb_id));
+        }
+
+        if (draw.vb_handle) {
+            SPRINT_RENDERER_PROFILE_SCOPE("GLRendererAPI::RenderFrame [set vertex attributes array]");
+
+            VertexLayout& layout = vertex_buffers_[draw.vb_handle.index()].layout;
+
+            uint16_t enabledAttribMask = 0;
+            uint32_t base_vertex = draw.vb_offset * layout.get_stride();
+            {
+                SPRINT_RENDERER_PROFILE_SCOPE("GLRendererAPI::RenderFrame [enable attributes]");
+
+                for (const auto &item : layout) {
+                    uint16_t idx;
+                    if (shader->TryGetLocation(item.attribute.binding, idx)) {
+                        CHECK_ERRORS(glVertexAttribPointer(
+                            idx,
+                            item.attribute.format.size,
+                            ToType(item.attribute.format.type),
+                            item.attribute.normalized,
+                            layout.get_stride(),
+                            (void*) (base_vertex + item.offset)
+                        ));
+                        uint16_t mask = 1u << idx;
+                        enabledAttribMask |= mask;
+                        if (!(shader->enabled_attributes_mask & mask)) {
+                            CHECK_ERRORS(glEnableVertexAttribArray(idx));
+                        }
+                    }
+                }
+            }
+            {
+                SPRINT_RENDERER_PROFILE_SCOPE("GLRendererAPI::RenderFrame [disable attributes]");
+                uint16_t disable = uint16_t(enabledAttribMask ^ shader->enabled_attributes_mask) & shader->enabled_attributes_mask;
+                shader->enabled_attributes_mask = enabledAttribMask;
+                DisableAttributes(disable);
+            }
+        }
+
+        if (draw.vb_handle) {
+            SPRINT_RENDERER_PROFILE_SCOPE("GLRendererAPI::RenderFrame [draw vertex array]");
+
+            if (draw.ib_handle) {
+                IndexBuffer& index_buffer = index_buffers_[draw.ib_handle.index()];
+                CHECK_ERRORS(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer.id));
+                CHECK_ERRORS(glDrawElements(
+                    GL_TRIANGLES,
+                    draw.ib_size ? draw.ib_size : index_buffer.size,
+                    GL_UNSIGNED_INT,
+                    (void *) (size_t) (draw.ib_offset * sizeof(uint32_t))
+                ));
+            } else {
+                CHECK_ERRORS(glDrawArrays(
+                    GL_TRIANGLES,
+                    0,
+                    draw.vb_size ? draw.vb_size : vertex_buffers_[draw.vb_handle.index()].size
+                ));
+            }
+        }
     }
+
+    SetShaderId(0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    default_context_.SwapBuffers();
+}
+
+void GLRendererAPI::Destroy(uniform_handle) {
 }
 
 void GLContext::MakeCurrent() {
@@ -535,6 +633,7 @@ void GLContext::Init(GLContext &context) {
 }
 
 void GLContext::SwapBuffers() {
+    SPRINT_RENDERER_PROFILE_FUNCTION();
     glfwSwapBuffers(handle_);
 }
 

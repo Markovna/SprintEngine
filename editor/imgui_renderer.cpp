@@ -210,7 +210,7 @@ void ImGuiRenderer::Render(ImDrawData *draw_data) {
                 auto texture = static_cast<Texture*>(cmd->TextureId);
                 gfx::SetScissor({ x, y, width, height });
                 gfx::SetOptions(gfx::DrawConfig::Option::NONE);
-                gfx::SetUniform(context_.shader.get_handle(), "Texture", texture->get_handle(), 0);
+                gfx::SetUniform(context_.texture_uniform_handle, texture->get_handle(), 0);
                 gfx::SetBuffer(context_.vb_handle, vertices_offset, num_vertices);
                 gfx::SetBuffer(context_.ib_handle, indices_offset + offset, cmd->ElemCount);
                 gfx::Render(1, context_.shader.get_handle());

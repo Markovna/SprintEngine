@@ -23,11 +23,11 @@ public:
 
     ~Shader();
 
-    gfx::ShaderHandle get_handle() const { return handle_; };
+    gfx::shader_handle get_handle() const { return handle_; };
 
     static Shader Load(const std::string& path, std::initializer_list<gfx::Attribute::Binding::Enum> bindings);
 private:
-    gfx::ShaderHandle handle_;
+    gfx::shader_handle handle_;
 
 private:
     static void Swap(Shader& lhs, Shader& rhs);

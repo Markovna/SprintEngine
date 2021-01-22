@@ -10,6 +10,96 @@
 
 namespace sprint::gfx {
 
+enum HandleType {
+    VertexBuffer = 0,
+    IndexBuffer,
+    FrameBuffer,
+    Shader,
+    Uniform,
+    Texture
+};
+
+template<class T>
+struct handle_traits;
+
+template<>
+struct handle_traits<uint32_t> {
+    static constexpr uint32_t index_mask       = 0x000FFFFFu;
+    static constexpr uint8_t  generation_offs  = 20u;
+    static constexpr uint32_t generation_mask  = 0xFFFu << generation_offs;
+};
+
+
+template<size_t>
+struct handle {
+public:
+    using type = uint32_t;
+    type id = null_t;
+private:
+    using traits = handle_traits<type>;
+    constexpr static const type null_t = traits::index_mask;
+
+public:
+    static const handle null;
+
+    explicit constexpr operator bool() const noexcept {
+        return id != null_t;
+    }
+
+    bool operator==(handle other) const noexcept {
+        return id == other.id;
+    }
+
+    bool operator!=(handle other) const noexcept {
+        return !(*this == other);
+    }
+
+    [[nodiscard]] inline type index() const { return id & traits::index_mask; }
+};
+
+template <size_t Id>
+const handle<Id> handle<Id>::null = { null_t };
+
+template<class T, size_t Capacity>
+class handle_pool {
+private:
+    using type = typename T::type;
+    using traits = handle_traits<type>;
+
+    constexpr static const type null = traits::index_mask;
+public:
+    T get() {
+        type idx{};
+        if (free_ == null) {
+            idx = size_;
+            store_[size_++] = idx;
+        } else {
+            auto free = store_[free_];
+            store_[free_] = idx = free_ | (free & traits::generation_mask);
+            free_ = free & traits::index_mask;
+        }
+
+        return T{idx};
+    }
+
+    void erase(T value) {
+        auto index = value.index();
+        auto generation = ((value.id >> traits::generation_offs) + 1) << traits::generation_offs;
+        store_[index] = free_ | generation;
+        free_ = index;
+    }
+
+    bool valid(T value) const {
+        auto index = value.index();
+        return index < Capacity && index < size_ && store_[index] == value.id;
+    }
+
+private:
+    type store_[Capacity];
+    type size_ = 0;
+    type free_ = null;
+};
+
 struct ShaderType {
 
     enum Enum {
@@ -22,44 +112,12 @@ struct ShaderType {
     static bool TryParse(std::string_view str, Enum& type);
 };
 
-enum class HandleType {
-    VertexBuffer,
-    IndexBuffer,
-    FrameBuffer,
-    Shader,
-    Texture,
-    Camera
-};
-
-template<HandleType Type>
-struct Handle {
-    constexpr static uint16_t INVALID_ID = UINT16_MAX;
-    static const Handle Invalid;
-
-    Handle() = default;
-    Handle(uint16_t id) : ID(id) {}
-
-    uint16_t ID = INVALID_ID;
-
-    [[nodiscard]] inline bool IsValid() const { return ID != INVALID_ID; }
-
-    bool operator==(Handle other) const {
-        return ID == other.ID;
-    }
-
-    bool operator!=(Handle other) const {
-        return !(*this == other);
-    }
-};
-
-template<HandleType Type>
-const Handle<Type> Handle<Type>::Invalid(INVALID_ID);
-
-using VertexBufferHandle = Handle<HandleType::VertexBuffer>;
-using IndexBufferHandle = Handle<HandleType::IndexBuffer>;
-using FrameBufferHandle = Handle<HandleType::FrameBuffer>;
-using ShaderHandle = Handle<HandleType::Shader>;
-using TextureHandle = Handle<HandleType::Texture>;
+using vertexbuf_handle = handle<HandleType::VertexBuffer>;
+using indexbuf_handle = handle<HandleType::IndexBuffer>;
+using framebuf_handle = handle<HandleType::FrameBuffer>;
+using shader_handle = handle<HandleType::Shader>;
+using uniform_handle = handle<HandleType::Uniform>;
+using texture_handle = handle<HandleType::Texture>;
 
 using CameraId = uint16_t;
 using TexSlotId = uint16_t;
@@ -125,10 +183,6 @@ struct TextureWrap {
         ClampToBorder
     };
 
-    static TextureWrap All_Repeat() {
-        return { Repeat, Repeat, Repeat };
-    }
-
     Enum u = Repeat;
     Enum v = Repeat;
     Enum w = Repeat;
@@ -139,10 +193,6 @@ struct TextureFilter {
         Linear = 0,
         Nearest
     };
-
-    static TextureFilter Default() {
-        return { Linear, Linear, Linear };
-    }
 
     Enum min = Linear;
     Enum mag = Linear;
@@ -216,40 +266,49 @@ void Shutdown();
 
 void SetResolution(const Vec2Int&);
 
-VertexBufferHandle CreateVertexBuffer(MemoryPtr ptr, uint32_t size, VertexLayout layout);
-IndexBufferHandle CreateIndexBuffer(MemoryPtr ptr, uint32_t size);
-FrameBufferHandle CreateFrameBuffer(std::initializer_list<TextureHandle>);
-FrameBufferHandle CreateFrameBuffer(uint32_t width, uint32_t height, TextureFormat::Enum, TextureWrap);
-ShaderHandle CreateShader(const std::string& source, std::initializer_list<gfx::Attribute::Binding::Enum> in_types);
-TextureHandle CreateTexture(uint32_t width, uint32_t height, TextureFormat::Enum, MemoryPtr ref = {});
-TextureHandle CreateTexture(uint32_t width, uint32_t height, TextureFormat::Enum, TextureWrap wrap, TextureFilter filter, TextureFlags::Type, MemoryPtr ptr);
+vertexbuf_handle CreateVertexBuffer(MemoryPtr ptr, uint32_t size, VertexLayout layout);
+indexbuf_handle CreateIndexBuffer(MemoryPtr ptr, uint32_t size);
+framebuf_handle CreateFrameBuffer(std::initializer_list<texture_handle>);
+framebuf_handle CreateFrameBuffer(uint32_t width, uint32_t height, TextureFormat::Enum, TextureWrap);
+uniform_handle CreateUniform(shader_handle, const char* c_str);
+shader_handle CreateShader(const std::string& source, std::initializer_list<gfx::Attribute::Binding::Enum> in_types);
+texture_handle CreateTexture(uint32_t width, uint32_t height, TextureFormat::Enum, MemoryPtr ref = {});
+texture_handle CreateTexture(uint32_t width, uint32_t height, TextureFormat::Enum, TextureWrap wrap, TextureFilter filter, TextureFlags::Type, MemoryPtr ptr);
 
-void UpdateVertexBuffer(VertexBufferHandle handle, MemoryPtr ptr, uint32_t offset = 0);
-void UpdateIndexBuffer(IndexBufferHandle handle, MemoryPtr ptr, uint32_t offset = 0);
+void UpdateVertexBuffer(vertexbuf_handle handle, MemoryPtr ptr, uint32_t offset = 0);
+void UpdateIndexBuffer(indexbuf_handle handle, MemoryPtr ptr, uint32_t offset = 0);
 
-void Destroy(VertexBufferHandle&);
-void Destroy(IndexBufferHandle&);
-void Destroy(FrameBufferHandle&);
-void Destroy(ShaderHandle&);
-void Destroy(TextureHandle&);
+void Destroy(vertexbuf_handle&);
+void Destroy(indexbuf_handle&);
+void Destroy(framebuf_handle&);
+void Destroy(shader_handle&);
+void Destroy(uniform_handle&);
+void Destroy(texture_handle&);
 
-void SetUniform(ShaderHandle, const std::string&, int);
-void SetUniform(ShaderHandle, const std::string&, bool);
-void SetUniform(ShaderHandle, const std::string&, float);
-void SetUniform(ShaderHandle, const std::string&, const Vec3&);
-void SetUniform(ShaderHandle, const std::string&, const Vec4&);
-void SetUniform(ShaderHandle, const std::string&, const Color&);
-void SetUniform(ShaderHandle, const std::string&, const Matrix&);
-void SetUniform(ShaderHandle, const std::string&, TextureHandle, TexSlotId);
+bool IsValid(vertexbuf_handle);
+bool IsValid(indexbuf_handle);
+bool IsValid(framebuf_handle);
+bool IsValid(shader_handle);
+bool IsValid(uniform_handle);
+bool IsValid(texture_handle);
 
-void SetBuffer(VertexBufferHandle, uint32_t offset = 0, uint32_t num = 0);
-void SetBuffer(IndexBufferHandle, uint32_t offset = 0, uint32_t num = 0);
+void SetUniform(uniform_handle, int);
+void SetUniform(uniform_handle, bool);
+void SetUniform(uniform_handle, float);
+void SetUniform(uniform_handle, const Vec3&);
+void SetUniform(uniform_handle, const Vec4&);
+void SetUniform(uniform_handle, const Color&);
+void SetUniform(uniform_handle, const Matrix&);
+void SetUniform(uniform_handle, texture_handle, TexSlotId);
+
+void SetBuffer(vertexbuf_handle, uint32_t offset = 0, uint32_t num = 0);
+void SetBuffer(indexbuf_handle, uint32_t offset = 0, uint32_t num = 0);
 
 void SetTransform(const Matrix&);
 
 void SetView(CameraId, const Matrix&);
 void SetViewRect(CameraId, const Rect& rect);
-void SetViewBuffer(CameraId, FrameBufferHandle);
+void SetViewBuffer(CameraId, framebuf_handle);
 void SetProjection(CameraId, const Matrix&);
 void SetClear(CameraId, ClearFlag::Type);
 void SetClearColor(CameraId, const Color&);
@@ -259,7 +318,7 @@ void SetOptions(DrawConfig::Options);
 MemoryPtr Copy(const void*, uint32_t);
 MemoryPtr MakeRef(void*, uint32_t);
 
-void Render(CameraId, ShaderHandle);
+void Render(CameraId, shader_handle);
 void Frame();
 
 }

@@ -29,14 +29,15 @@ private:
         Buffer buffer;
         Shader shader;
         Texture texture;
-        gfx::VertexBufferHandle vb_handle;
-        gfx::IndexBufferHandle ib_handle;
+        gfx::uniform_handle texture_uniform_handle;
+        gfx::vertexbuf_handle vb_handle;
+        gfx::indexbuf_handle ib_handle;
         ImGuiContext* imgui_context;
 
-        RenderContext(Shader shader, Texture texture, ImGuiContext* context) noexcept :
-            shader(std::move(shader)),
-            texture(std::move(texture)),
-            imgui_context(context) {
+        RenderContext(Shader shader_, Texture texture_, ImGuiContext* context_) noexcept :
+            shader(std::move(shader_)),
+            texture(std::move(texture_)),
+            imgui_context(context_) {
 
             vb_handle = gfx::CreateVertexBuffer(gfx::MakeRef(nullptr, sizeof(buffer.vertices)), 0, {
                 { gfx::Attribute::Binding::POSITION, gfx::Attribute::Format::Vec2 },
@@ -45,6 +46,7 @@ private:
             });
 
             ib_handle = gfx::CreateIndexBuffer(gfx::MakeRef(nullptr, sizeof(buffer.indexes)), 0);
+            texture_uniform_handle = gfx::CreateUniform(shader.get_handle(), "Texture");
         }
 
         RenderContext(RenderContext&& other) noexcept :
@@ -52,9 +54,11 @@ private:
             texture(std::move(other.texture)),
             imgui_context(other.imgui_context),
             vb_handle(other.vb_handle),
-            ib_handle(other.ib_handle) {
-            other.ib_handle = gfx::IndexBufferHandle::Invalid;
-            other.vb_handle = gfx::VertexBufferHandle::Invalid;
+            ib_handle(other.ib_handle),
+            texture_uniform_handle(other.texture_uniform_handle) {
+            other.ib_handle = gfx::indexbuf_handle::null;
+            other.vb_handle = gfx::vertexbuf_handle::null;
+            other.texture_uniform_handle = gfx::uniform_handle::null;
             other.imgui_context = nullptr;
         }
 
@@ -65,11 +69,14 @@ private:
 
                 gui::DestroyContext(imgui_context);
 
-                if (vb_handle.IsValid())
+                if (vb_handle)
                     gfx::Destroy(vb_handle);
 
-                if (ib_handle.IsValid())
+                if (ib_handle)
                     gfx::Destroy(ib_handle);
+
+                if (texture_uniform_handle)
+                    gfx::Destroy(texture_uniform_handle);
             }
         }
 
