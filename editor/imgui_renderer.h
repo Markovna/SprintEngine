@@ -46,7 +46,7 @@ private:
             });
 
             ib_handle = gfx::CreateIndexBuffer(gfx::MakeRef(nullptr, sizeof(buffer.indexes)), 0);
-            texture_uniform_handle = gfx::CreateUniform(shader.get_handle(), "Texture");
+            texture_uniform_handle = gfx::CreateUniform("Texture");
         }
 
         RenderContext(RenderContext&& other) noexcept :

@@ -257,9 +257,9 @@ static void PrepareRenderTriangles(int width, int height) {
         }
     });
 
-    texture_uniform_handle = gfx::CreateUniform(m_Shader->get_handle(), "Texture1");
-    texture2_uniform_handle = gfx::CreateUniform(m_Shader->get_handle(), "Texture2");
-    color_uniform_handle = gfx::CreateUniform(m_Shader->get_handle(), "mainColor");
+    texture_uniform_handle = gfx::CreateUniform("Texture1");
+    texture2_uniform_handle = gfx::CreateUniform("Texture2");
+    color_uniform_handle = gfx::CreateUniform("mainColor");
 
     gfx::SetUniform(texture_uniform_handle, m_Texture1->get_handle(), 0);
     gfx::SetUniform(texture2_uniform_handle, m_Texture2->get_handle(), 1);
@@ -312,7 +312,7 @@ static void RenderTrianglezzz() {
     RenderTriangle(timeValue, Vec3::Zero);
     RenderTriangle(timeValue, 2 * Vec3::Right);
 
-    for (int i = 1; i < 100; i++) {
+    for (int i = 1; i < 200; i++) {
         RenderTriangle(timeValue + i * 0.1f, (i * 2.0f + 1) * Vec3::Up + (i * 0.7f) * Vec3::Forward);
         RenderTriangle(timeValue - i * 0.1f, (i * 2.0f + 1) * Vec3::Up + (i * 0.7f) * Vec3::Backward);
     }

@@ -75,8 +75,8 @@ framebuf_handle CreateFrameBuffer(std::initializer_list<texture_handle> textures
     return details::g_renderer.CreateFrameBuffer(textures, false);
 }
 
-uniform_handle CreateUniform(shader_handle shader, const char* c_str) {
-    return details::g_renderer.CreateUniform(shader, c_str);
+uniform_handle CreateUniform(const char* c_str) {
+    return details::g_renderer.CreateUniform(c_str);
 }
 
 void UpdateVertexBuffer(vertexbuf_handle handle, MemoryPtr ptr, uint32_t offset) {

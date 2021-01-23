@@ -74,9 +74,8 @@ private:
         TextureFormat::Enum format{};
     };
 
-    struct Uniform {
-        uint32_t location;
-        shader_handle shader;
+    struct UniformInfo {
+        char name[64];
     };
 
 public:
@@ -85,9 +84,9 @@ public:
 
     void CreateVertexBuffer(vertexbuf_handle handle, const void* data, uint32_t data_size, uint32_t size, VertexLayout layout) override;
     void CreateIndexBuffer(indexbuf_handle handle, const void* data, uint32_t data_size, uint32_t size) override;
-    void CreateFrameBuffer(framebuf_handle handle, texture_handle*, uint32_t num, bool destroy_tex = false) override;
+    void CreateFrameBuffer(framebuf_handle handle, texture_handle*, uint32_t num, bool destroy_tex) override;
     void CreateShader(shader_handle handle, const std::string& source, const Attribute::BindingPack& bindings) override;
-    void CreateUniform(uniform_handle, shader_handle, char* name, uint16_t size) override;
+    void CreateUniform(uniform_handle, char* name) override;
     void CreateTexture(texture_handle handle, const void* data, uint32_t data_size, uint32_t width, uint32_t height,
                        TextureFormat::Enum, TextureWrap wrap, TextureFilter filter, TextureFlags::Type flags) override;
 
@@ -103,26 +102,6 @@ public:
     void RenderFrame(const Frame&) override;
 
 private:
-    void SetUniform(uniform_handle, int);
-    void SetUniform(uniform_handle, bool);
-    void SetUniform(uniform_handle, float);
-    void SetUniform(uniform_handle, const Vec3&);
-    void SetUniform(uniform_handle, const Vec4&);
-    void SetUniform(uniform_handle, const Color&);
-    void SetUniform(uniform_handle, const Matrix&);
-
-//    void SetUniform(shader_handle, const std::string&, int);
-//    void SetUniform(shader_handle, const std::string&, bool);
-//    void SetUniform(shader_handle, const std::string&, float);
-//    void SetUniform(shader_handle, const std::string&, const Vec3&);
-//    void SetUniform(shader_handle, const std::string&, const Vec4&);
-//    void SetUniform(shader_handle, const std::string&, const Color&);
-//    void SetUniform(shader_handle, const std::string&, const Matrix&);
-    void SetUniform(texture_handle, int slot_idx);
-
-    template<class T> void ExecuteCommand(const T&) {}
-
-private:
     GLContext default_context_;
     uint32_t vao_ = 0;
     IndexBuffer index_buffers_[static_config::kIndexBuffersCapacity];
@@ -130,7 +109,7 @@ private:
     FrameBuffer frame_buffers_[static_config::kVertexBuffersCapacity];
     Shader shaders_[static_config::kShadersCapacity];
     Texture textures_[static_config::kTexturesCapacity];
-    Uniform uniforms_[static_config::kUniformsCapacity];
+    UniformInfo uniforms_[static_config::kUniformsCapacity];
 };
 
 }

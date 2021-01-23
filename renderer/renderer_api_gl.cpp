@@ -100,15 +100,6 @@ static std::tuple<GLenum, GLenum> GetFilters(const TextureFilter& type, bool has
     return std::make_tuple( GetMinFilter(type.min, type.mag, has_mipmaps), GetMagFilter(type.mag));
 }
 
-static void SetShaderId(uint32_t shader_id) {
-    static uint32_t curr_shader_id = 0;
-
-    if (curr_shader_id != shader_id) {
-        curr_shader_id = shader_id;
-        CHECK_ERRORS(glUseProgram(shader_id));
-    }
-}
-
 bool GLRendererAPI::Shader::TryGetLocation(Attribute::Binding::Enum type, uint16_t& location) const {
     if (attributes_mask & (1u << type)) {
         location = attribute_locations[type];
@@ -234,12 +225,9 @@ static const TextureFormatInfo& GetTextureFormat(TextureFormat::Enum format) {
     return texture_formats[format];
 }
 
-void GLRendererAPI::CreateUniform(uniform_handle handle, shader_handle shader_handle, char* name, uint16_t size) {
-    Shader& shader = shaders_[shader_handle.index()];
-    uint32_t location = glGetUniformLocation(shader.id, name);
-    Uniform& uniform = uniforms_[handle.index()];
-    uniform.location = location;
-    uniform.shader = shader_handle;
+void GLRendererAPI::CreateUniform(uniform_handle handle, char* name) {
+    UniformInfo& uniform = uniforms_[handle.index()];
+    std::strcpy(uniform.name, name);
 }
 
 void GLRendererAPI::CreateTexture(texture_handle handle,
@@ -349,72 +337,6 @@ void GLRendererAPI::Destroy(texture_handle handle) {
     glDeleteTextures(1, &textures_[handle.index()].id);
 }
 
-void GLRendererAPI::SetUniform(uniform_handle handle, int value) {
-    Uniform& uniform = uniforms_[handle.index()];
-    assert(gfx::IsValid(uniform.shader));
-    SetShaderId(shaders_[uniform.shader.index()].id);
-    CHECK_ERRORS(glUniform1i(uniform.location, value));
-}
-
-void GLRendererAPI::SetUniform(uniform_handle handle, bool value) {
-    Uniform& uniform = uniforms_[handle.index()];
-    assert(gfx::IsValid(uniform.shader));
-    SetShaderId(shaders_[uniform.shader.index()].id);
-    CHECK_ERRORS(glUniform1i(uniform.location, value));
-}
-
-void GLRendererAPI::SetUniform(uniform_handle handle, float value) {
-    Uniform& uniform = uniforms_[handle.index()];
-    assert(gfx::IsValid(uniform.shader));
-    SetShaderId(shaders_[uniform.shader.index()].id);
-    CHECK_ERRORS(glUniform1f(uniform.location, value));
-}
-
-void GLRendererAPI::SetUniform(uniform_handle handle, const Vec3& value) {
-    Uniform& uniform = uniforms_[handle.index()];
-    assert(gfx::IsValid(uniform.shader));
-    SetShaderId(shaders_[uniform.shader.index()].id);
-    CHECK_ERRORS(glUniform3f(uniform.location, value.x, value.y, value.z));
-}
-
-void GLRendererAPI::SetUniform(uniform_handle handle, const Vec4& value) {
-    Uniform& uniform = uniforms_[handle.index()];
-    assert(gfx::IsValid(uniform.shader));
-    SetShaderId(shaders_[uniform.shader.index()].id);
-    CHECK_ERRORS(glUniform4f(uniform.location, value.x, value.y, value.z, value.w));
-}
-
-void GLRendererAPI::SetUniform(uniform_handle handle, const Color& value) {
-    Uniform& uniform = uniforms_[handle.index()];
-    assert(gfx::IsValid(uniform.shader));
-    SetShaderId(shaders_[uniform.shader.index()].id);
-    CHECK_ERRORS(glUniform4f(uniform.location, value.r, value.g, value.b, value.a));
-}
-
-void GLRendererAPI::SetUniform(uniform_handle handle, const Matrix& value) {
-    Uniform& uniform = uniforms_[handle.index()];
-    assert(gfx::IsValid(uniform.shader));
-    SetShaderId(shaders_[uniform.shader.index()].id);
-    CHECK_ERRORS(glUniformMatrix4fv(uniform.location, 1, GL_FALSE, (float*) &value));
-}
-
-void GLRendererAPI::SetUniform(texture_handle handle, int slot_idx) {
-    glActiveTexture(GL_TEXTURE0 + slot_idx);
-    CHECK_ERRORS(glBindTexture(GL_TEXTURE_2D, textures_[handle.index()].id));
-}
-
-template<> void GLRendererAPI::ExecuteCommand(const SetUniformCommand& command) {
-    SPRINT_RENDERER_PROFILE_FUNCTION();
-    mpark::visit([this, &command](const auto& val){
-        SetUniform(command.uniform_handle, val);
-    }, command.value);
-}
-
-template<> void GLRendererAPI::ExecuteCommand(const SetTextureCommand& command) {
-    SPRINT_RENDERER_PROFILE_FUNCTION();
-    SetUniform(command.texture_handle, command.slot);
-}
-
 static inline GLenum ToType(Attribute::Type::Enum type) {
     static GLenum types[] = {
         GL_FLOAT, GL_INT, GL_UNSIGNED_INT, GL_UNSIGNED_BYTE
@@ -462,6 +384,34 @@ static void SetScissor(Rect scissor, Vec2Int size) {
     }
 }
 
+static void SetUniformValue(int loc, const Uniform& value) {
+    switch (value.type) {
+        case Uniform::INT: { CHECK_ERRORS(glUniform1i(loc, (int)value)); break; }
+        case Uniform::BOOL: { CHECK_ERRORS(glUniform1i(loc, (bool)value)); break; }
+        case Uniform::FLOAT: { CHECK_ERRORS(glUniform1f(loc, (float)value)); break; }
+        case Uniform::VEC3: {
+            auto& vec = std::get<Vec3>(value);
+            CHECK_ERRORS(glUniform3f(loc, vec.x, vec.y, vec.z));
+            break;
+        }
+        case Uniform::VEC4: {
+            auto& vec = std::get<Vec4>(value);
+            CHECK_ERRORS(glUniform4f(loc, vec.x, vec.y, vec.z, vec.w));
+            break;
+        }
+        case Uniform::COLOR: {
+            auto& vec = std::get<Color>(value);
+            CHECK_ERRORS(glUniform4f(loc, vec.r, vec.g, vec.b, vec.a));
+            break;
+        }
+        case Uniform::MATRIX: {
+            auto& vec = std::get<Matrix>(value);
+            CHECK_ERRORS(glUniformMatrix4fv(loc, 1, GL_FALSE, (float*) &vec));
+            break;
+        }
+    }
+}
+
 void GLRendererAPI::RenderFrame(const Frame& frame) {
 
     SPRINT_PROFILE_FUNCTION();
@@ -482,6 +432,7 @@ void GLRendererAPI::RenderFrame(const Frame& frame) {
         }
     }
 
+    Shader* shader = nullptr;
     CameraId camera_id = UINT16_MAX;
     Vec2Int resolution;
     Rect scissor;
@@ -495,24 +446,20 @@ void GLRendererAPI::RenderFrame(const Frame& frame) {
     for (const DrawUnit& draw : frame.get_draws()) {
         SPRINT_RENDERER_PROFILE_SCOPE("GLRendererAPI::RenderFrame [render a draw call]");
 
-        {
-            SPRINT_RENDERER_PROFILE_SCOPE("GLRendererAPI::RenderFrame [execute commands]");
-            for (const auto &command : draw.command_buffer) {
-                mpark::visit([this](const auto &c) { ExecuteCommand(c); }, command);
-            }
-        }
         const Camera& camera = frame.get_camera(draw.camera_id);
-        Shader* shader = draw.shader_handle ? &shaders_[draw.shader_handle.index()] : nullptr;
 
+        uint32_t curr_shader_id = shaders_[draw.shader_handle.index()].id;
         uint32_t curr_vb_id = draw.vb_handle ? vertex_buffers_[draw.vb_handle.index()].id : 0;
         uint32_t curr_fb_id = camera.frame_buffer ? frame_buffers_[camera.frame_buffer.index()].id : 0;
 
+        bool shader_changed = shader == nullptr || shader->id != curr_shader_id;
         bool camera_changed = camera_id != draw.camera_id;
         bool scissor_changed = scissor != draw.scissor;
         bool vb_changed = curr_vb_id != vb_id;
         bool fb_changed = curr_fb_id != fb_id;
         bool vb_offset_changed = vb_offset != draw.vb_offset;
 
+        shader = draw.shader_handle ? &shaders_[draw.shader_handle.index()] : nullptr;
         camera_id = draw.camera_id;
         scissor = draw.scissor;
         fb_id = curr_fb_id;
@@ -523,7 +470,9 @@ void GLRendererAPI::RenderFrame(const Frame& frame) {
             CHECK_ERRORS(glBindFramebuffer(GL_FRAMEBUFFER, fb_id));
         }
 
-        SetShaderId(shader->id);
+        if (shader_changed) {
+            CHECK_ERRORS(glUseProgram(shader->id));
+        }
 
         {
             SPRINT_RENDERER_PROFILE_SCOPE("GLRendererAPI::RenderFrame [set matrix uniforms]");
@@ -531,6 +480,24 @@ void GLRendererAPI::RenderFrame(const Frame& frame) {
             CHECK_ERRORS(glUniformMatrix4fv(shader->model_location, 1, GL_FALSE, (float *) &draw.transform));
             CHECK_ERRORS(glUniformMatrix4fv(shader->view_location, 1, GL_FALSE, (float *) &camera.view));
             CHECK_ERRORS(glUniformMatrix4fv(shader->proj_location, 1, GL_FALSE, (float *) &camera.projection));
+        }
+
+        {
+            SPRINT_RENDERER_PROFILE_SCOPE("GLRendererAPI::RenderFrame [set shader uniforms]");
+
+            for (int i = 0; i < draw.uniforms_size; i++) {
+                const UniformPair& pair = draw.uniforms[i];
+                UniformInfo& uniform = uniforms_[pair.handle.index()];
+                int loc = glGetUniformLocation(shader->id, uniform.name);
+                SetUniformValue(loc, pair.value);
+            }
+
+            for (int i = 0; i < draw.texture_slots_size; i++) {
+                uint32_t slot_idx = draw.texture_slots[i];
+                texture_handle tex_handle = draw.textures[slot_idx];
+                glActiveTexture(GL_TEXTURE0 + slot_idx);
+                CHECK_ERRORS(glBindTexture(GL_TEXTURE_2D, textures_[tex_handle.index()].id));
+            }
         }
 
         if (camera_changed || resolution_changed) {
@@ -606,7 +573,7 @@ void GLRendererAPI::RenderFrame(const Frame& frame) {
         }
     }
 
-    SetShaderId(0);
+    glUseProgram(0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 

@@ -5,7 +5,8 @@
 #include "iterator_range.h"
 #include "semaphore.h"
 
-#include <variant.hpp>
+#include <utility>
+#include <variant>
 #include <thread>
 
 namespace sprint {
@@ -35,7 +36,7 @@ public:
     virtual void CreateIndexBuffer(indexbuf_handle, const void *data, uint32_t data_size, uint32_t size) = 0;
     virtual void CreateFrameBuffer(framebuf_handle, texture_handle *, uint32_t num, bool destroy_tex = false) = 0;
     virtual void CreateShader(shader_handle, const std::string &source, const Attribute::BindingPack &bindings) = 0;
-    virtual void CreateUniform(uniform_handle, shader_handle, char* name, uint16_t size) = 0;
+    virtual void CreateUniform(uniform_handle, char* name) = 0;
     virtual void CreateTexture(texture_handle,
                                const void *data,
                                uint32_t data_size,
@@ -66,7 +67,47 @@ std::unique_ptr<RendererAPI> CreateRendererApi(const Config &);
 
 static Config g_config;
 
-using Uniform = mpark::variant<int, bool, float, Vec3, Vec4, Color, Matrix>;
+template <class ...Types>
+struct types_list {
+    using variant = std::variant<Types...>;
+    template<class T>
+    constexpr static bool is_one_of_v = (std::is_same_v<T, Types> || ...);
+};
+
+using uniform_types = types_list<int, bool, float, Vec3, Vec4, Color, Matrix>;
+using uniform_variant = uniform_types::variant;
+struct Uniform : public uniform_variant {
+    enum Enum {
+        INT  = 0,
+        BOOL,
+        FLOAT,
+        VEC3,
+        VEC4,
+        COLOR,
+        MATRIX
+    };
+
+    static_assert(std::is_same_v<int, std::variant_alternative_t<INT, uniform_variant>>);
+    static_assert(std::is_same_v<bool, std::variant_alternative_t<BOOL, uniform_variant>>);
+    static_assert(std::is_same_v<float, std::variant_alternative_t<FLOAT, uniform_variant>>);
+    static_assert(std::is_same_v<Vec3, std::variant_alternative_t<VEC3, uniform_variant>>);
+    static_assert(std::is_same_v<Vec4, std::variant_alternative_t<VEC4, uniform_variant>>);
+    static_assert(std::is_same_v<Color, std::variant_alternative_t<COLOR, uniform_variant>>);
+    static_assert(std::is_same_v<Matrix, std::variant_alternative_t<MATRIX, uniform_variant>>);
+
+    template <class T>
+    explicit operator T() const {
+        static_assert(uniform_types::is_one_of_v<T>, "Invalid conversion");
+        return std::get<T>(*this); 
+    }
+    
+    template <class T>
+    Uniform(T value) : uniform_variant(value), type((Enum)uniform_variant::index()) {}
+
+    Uniform() = default;
+
+    Enum type;
+};
 
 template<class TCommand, size_t Capacity>
 class static_command_queue {
@@ -78,6 +119,13 @@ public:
     void push(TCommand command) {
         assert(size_ < Capacity);
         commands_[size_++] = std::move(command);
+    }
+
+    template <class T>
+    T& emplace() {
+        assert(size_ < Capacity);
+        commands_[size_++] = T{};
+        return std::get<T>(commands_[size_-1]);
     }
 
     void clear() { size_ = 0; }
@@ -93,18 +141,23 @@ private:
     size_t size_ = 0;
 };
 
-struct SetUniformCommand {
-    uniform_handle uniform_handle;
+//struct SetUniformCommand {
+//    uniform_handle uniform_handle;
+//    Uniform value;
+//};
+
+struct UniformPair {
+    uniform_handle handle;
     Uniform value;
 };
 
-struct SetTextureCommand {
-    texture_handle texture_handle;
-    TexSlotId slot;
-};
+//struct SetTextureCommand {
+//    texture_handle texture_handle;
+//    TexSlotId slot;
+//};
 
-using DrawUnitCommand = mpark::variant<SetUniformCommand, SetTextureCommand>;
-using DrawUnitCommandQueue = static_command_queue<DrawUnitCommand, static_config::kMaxCommandCountPerDrawCall>;
+//using DrawUnitCommand = std::variant<SetUniformCommand, SetTextureCommand>;
+//using DrawUnitCommandQueue = static_command_queue<DrawUnitCommand, static_config::kMaxCommandCountPerDrawCall>;
 
 static const DrawConfig::Options DefaultOptions = DrawConfig::DEPTH_TEST;
 
@@ -120,7 +173,12 @@ struct DrawUnit {
     uint32_t ib_size = 0;
     Rect scissor{};
     DrawConfig::Options options = DefaultOptions;
-    DrawUnitCommandQueue command_buffer{};
+    UniformPair uniforms[static_config::kMaxUniformsPerDrawCall];
+    size_t uniforms_size;
+    texture_handle textures[static_config::kTextureSlotsCapacity];
+    uint32_t texture_slots[static_config::kTextureSlotsCapacity];
+    size_t texture_slots_size;
+//    DrawUnitCommandQueue command_buffer{};
 };
 
 static void Clear(DrawUnit &draw) {
@@ -135,7 +193,9 @@ static void Clear(DrawUnit &draw) {
     draw.ib_size = 0;
     draw.scissor = {};
     draw.options = DefaultOptions;
-    draw.command_buffer.clear();
+    draw.uniforms_size = 0;
+    draw.texture_slots_size = 0;
+//    draw.command_buffer.clear();
 }
 
 struct Camera {
@@ -183,12 +243,10 @@ struct CreateFrameBufferCommand {
 
 struct CreateUniformCommand {
     uniform_handle handle;
-    shader_handle shader_handle;
     char name[64];
-    uint16_t name_size;
 
     void Execute(RendererAPI *api) {
-        api->CreateUniform(handle, shader_handle, name, name_size);
+        api->CreateUniform(handle, name);
     }
 };
 
@@ -288,7 +346,7 @@ struct DestroyShaderCommand {
 };
 
 using FrameContextCommand =
-mpark::variant<
+std::variant<
     CreateIndexBufferCommand,
     CreateVertexBufferCommand,
     CreateFrameBufferCommand,
@@ -324,6 +382,11 @@ public:
     }
     void PushCommand(FrameContextCommand command) {
         command_buffer_.push(std::move(command));
+    }
+
+    template <class T>
+    T& EmplaceCommand() {
+        return command_buffer_.emplace<T>();
     }
 
     void SetCameras(const Camera *src) {
@@ -377,7 +440,7 @@ public:
 
     void RenderFrame() {
         for (auto &command : frame_.get_commands()) {
-            mpark::visit([this](auto &c) { c.Execute(api_.get()); }, command);
+            std::visit([this](auto &c) { c.Execute(api_.get()); }, command);
         }
 
         frame_.set_resolution(g_config.resolution);
@@ -397,13 +460,20 @@ public:
 
     vertexbuf_handle CreateVertexBuffer(MemoryPtr ptr, uint32_t size, VertexLayout layout) {
         vertexbuf_handle handle(vertex_buffer_handles_.get());
-        frame_.PushCommand(CreateVertexBufferCommand{handle, std::move(ptr), size, layout});
+        auto& command = frame_.EmplaceCommand<CreateVertexBufferCommand>();
+        command.handle = handle;
+        command.ptr = std::move(ptr);
+        command.size = size;
+        command.layout = layout;
         return handle;
     }
 
     indexbuf_handle CreateIndexBuffer(MemoryPtr ptr, uint32_t size) {
         indexbuf_handle handle(index_buffer_handles_.get());
-        frame_.PushCommand(CreateIndexBufferCommand{handle, std::move(ptr), size});
+        auto& command = frame_.EmplaceCommand<CreateIndexBufferCommand>();
+        command.handle = handle;
+        command.ptr = std::move(ptr);
+        command.size = size;
         return handle;
     }
 
@@ -416,36 +486,29 @@ public:
     framebuf_handle CreateFrameBuffer(std::initializer_list<texture_handle> textures, bool destroy_tex) {
         assert(textures.size() < static_config::kFrameBufferMaxAttachments);
         framebuf_handle handle(frame_buffer_handles_.get());
-        CreateFrameBufferCommand command;
+        auto& command = frame_.EmplaceCommand<CreateFrameBufferCommand>();
         command.handle = handle;
         command.destroy_tex = destroy_tex;
         for (auto tex : textures) command.handles[command.size++] = tex;
-        frame_.PushCommand(command);
+
         return handle;
     }
 
-    uniform_handle CreateUniform(shader_handle shader, const char* c_str) {
-        if (!shader) {
-            log::core::Error("gfx::CreateUniform failed: invalid shader handle");
-            return uniform_handle::null;
-        }
-
+    uniform_handle CreateUniform(const char* str) {
         uniform_handle handle(uniform_handles_.get());
-        CreateUniformCommand command;
+        auto& command = frame_.EmplaceCommand<CreateUniformCommand>();
         command.handle = handle;
-        command.shader_handle = shader;
-        memcpy(command.name, c_str, strlen(c_str));
-        memcpy(command.name + strlen(c_str), "\0", sizeof(char));
-//        command.name_size = name.size();
-
-        frame_.PushCommand(command);
+        std::strcpy(command.name, str);
 
         return handle;
     }
 
     shader_handle CreateShader(const std::string &source, std::initializer_list<Attribute::Binding::Enum> bindings) {
         shader_handle handle(shader_handles_.get());
-        frame_.PushCommand(CreateShaderCommand{handle, source, Attribute::BindingPack(bindings)});
+        auto& command = frame_.EmplaceCommand<CreateShaderCommand>();
+        command.handle = handle;
+        command.source = source;
+        command.bindings = Attribute::BindingPack(bindings);
         return handle;
     }
 
@@ -455,22 +518,37 @@ public:
                                                         TextureFilter::Linear},
                                  TextureFlags::Type flags = TextureFlags::None) {
         texture_handle handle(texture_handles_.get());
-        frame_.PushCommand(CreateTextureCommand{handle, std::move(ptr), width, height, format, wrap, filter, flags});
+        auto& command = frame_.EmplaceCommand<CreateTextureCommand>();
+        command.handle = handle;
+        command.ptr = std::move(ptr);
+        command.width = width;
+        command.height = height;
+        command.format = format;
+        command.wrap = wrap;
+        command.filter = filter;
+        command.flags = flags;
         return handle;
     }
 
     void UpdateVertexBuffer(vertexbuf_handle handle, MemoryPtr ptr, uint32_t offset) {
-        frame_.PushCommand(UpdateVertexBufferCommand{handle, std::move(ptr), offset});
+        auto& command = frame_.EmplaceCommand<UpdateVertexBufferCommand>();
+        command.handle = handle;
+        command.ptr = std::move(ptr);
+        command.offset = offset;
     }
 
     void UpdateIndexBuffer(indexbuf_handle handle, MemoryPtr ptr, uint32_t offset) {
-        frame_.PushCommand(UpdateIndexBufferCommand{handle, std::move(ptr), offset});
+        auto& command = frame_.EmplaceCommand<UpdateIndexBufferCommand>();
+        command.handle = handle;
+        command.ptr = std::move(ptr);
+        command.offset = offset;
     }
 
     void Destroy(vertexbuf_handle &handle) {
         assert(handle && "Renderer::Destroy failed: Invalid vertex buffer handle");
 
-        frame_.PushCommand(DestroyVertexBufferCommand{handle});
+        auto& command = frame_.EmplaceCommand<DestroyVertexBufferCommand>();
+        command.handle = handle;
         vertex_buffer_handles_.erase(handle);
         handle = {};
     }
@@ -478,7 +556,8 @@ public:
     void Destroy(indexbuf_handle &handle) {
         assert(handle && "Renderer::Destroy failed: Invalid index buffer handle");
 
-        frame_.PushCommand(DestroyIndexBufferCommand{handle});
+        auto& command = frame_.EmplaceCommand<DestroyIndexBufferCommand>();
+        command.handle = handle;
         index_buffer_handles_.erase(handle);
         handle = {};
     }
@@ -486,13 +565,17 @@ public:
     void Destroy(framebuf_handle &handle) {
         assert(handle && "Renderer::Destroy failed: Invalid frame buffer handle");
 
-        frame_.PushCommand(DestroyFrameBufferCommand{handle});
+        auto& command = frame_.EmplaceCommand<DestroyFrameBufferCommand>();
+        command.handle = handle;
+        frame_buffer_handles_.erase(handle);
+        handle = {};
     }
 
     void Destroy(texture_handle &handle) {
         assert(handle && "Renderer::Destroy failed: Invalid texture handle");
 
-        frame_.PushCommand(DestroyTextureCommand{handle});
+        auto& command = frame_.EmplaceCommand<DestroyTextureCommand>();
+        command.handle = handle;
         texture_handles_.erase(handle);
         handle = {};
     }
@@ -500,7 +583,8 @@ public:
     void Destroy(shader_handle &handle) {
         assert(handle && "Renderer::Destroy failed: Invalid shader handle");
 
-        frame_.PushCommand(DestroyShaderCommand{handle});
+        auto& command = frame_.EmplaceCommand<DestroyShaderCommand>();
+        command.handle = handle;
         shader_handles_.erase(handle);
         handle = {};
     }
@@ -508,7 +592,8 @@ public:
     void Destroy(uniform_handle& handle) {
         assert(handle && "Renderer::Destroy failed: Invalid uniform handle");
 
-        frame_.PushCommand(DestroyUniformCommand{handle});
+        auto& command = frame_.EmplaceCommand<DestroyUniformCommand>();
+        command.handle = handle;
         uniform_handles_.erase(handle);
         handle = {};
     }
@@ -540,13 +625,16 @@ public:
     template<class T>
     void SetUniform(uniform_handle handle, T value) {
         DrawUnit &draw = frame_.GetDraw();
-        draw.command_buffer.push(SetUniformCommand{handle, value});
+        auto& uniform = draw.uniforms[draw.uniforms_size++];
+        uniform.handle = handle;
+        uniform.value = value;
     }
 
-    void SetUniform(uniform_handle handle, texture_handle value, TexSlotId slot_id) {
+    void SetUniform(uniform_handle handle, texture_handle tex_handle, TexSlotId slot) {
         DrawUnit &draw = frame_.GetDraw();
-        draw.command_buffer.push(SetTextureCommand{value, slot_id});
-        SetUniform(handle, slot_id);
+        draw.textures[slot] = tex_handle;
+        draw.texture_slots[draw.texture_slots_size++] = slot;
+        SetUniform(handle, (int)slot);
     }
 
     void SetBuffer(indexbuf_handle handle) {
