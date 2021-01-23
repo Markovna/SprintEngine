@@ -312,7 +312,7 @@ public:
         assert(valid(entity));
         auto index = details::entity_traits::get_index(entity);
         details::entity_traits::set_index(entities_[index], free_idx_);
-        details::entity_traits::set_generation(entities_[index], entity_traits::get_generation(entities_[free_idx_]) + 1);
+        details::entity_traits::set_generation(entities_[index], entity_traits::get_generation(entities_[index]) + 1);
         free_idx_ = details::entity_traits::get_index(entity);
     }
 
