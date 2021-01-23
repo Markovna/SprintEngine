@@ -2,7 +2,6 @@
 
 #include <string>
 #include <variant>
-#include <variant.hpp>
 
 #include "KeyCode.h"
 #include "MouseCodes.h"
@@ -74,7 +73,7 @@ struct ResizeEvent {
     static EventType Type() { return EventType::RESIZE; }
 };
 
-using WindowEventVariant = mpark::variant<
+using WindowEventVariant = std::variant<
     MouseMoveEvent,
     MouseUpEvent,
     MouseDownEvent,
@@ -93,14 +92,14 @@ public:
     WindowEvent(T&& event) : WindowEventVariant(std::forward<T>(event)) {}
 
     inline EventType get_type() const {
-        return mpark::visit([](const auto& e) { return get_type(e); }, *this);
+        return std::visit([](const auto& e) { return get_type(e); }, *this);
     }
 
     template<class T>
-    T& Get() { return mpark::get<T>(*this); }
+    T& Get() { return std::get<T>(*this); }
 
     template<class T>
-    const T& Get() const { return mpark::get<T>(*this); }
+    const T& Get() const { return std::get<T>(*this); }
 
 private:
     template<class T>

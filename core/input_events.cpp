@@ -27,7 +27,7 @@ template<> void OnEvent(CloseEvent& e) { OnClose(e); }
 template<> void OnEvent(ResizeEvent& e) { OnResize(e); }
 
 void OnEvent(WindowEvent& event) {
-    mpark::visit([](auto& e) { OnEvent(e); }, event);
+    std::visit([](auto& e) { OnEvent(e); }, event);
 }
 
 }
