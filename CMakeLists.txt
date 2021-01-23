@@ -9,7 +9,7 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/glfw)
 add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/glad)
 add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/stb_image)
 add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/imgui)
-add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/assimp)
+#add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/assimp)
 
 add_executable(SprintEngine
         core/main.cpp
@@ -45,6 +45,6 @@ target_link_libraries(SprintEngine PRIVATE spdlog)
 target_link_libraries(SprintEngine PRIVATE glad)
 target_link_libraries(SprintEngine PRIVATE stb_image)
 target_link_libraries(SprintEngine PRIVATE imgui)
-target_link_libraries(SprintEngine PRIVATE assimp)
+#target_link_libraries(SprintEngine PRIVATE assimp)
 
 target_compile_definitions(SprintEngine PRIVATE GLFW_INCLUDE_NONE)
