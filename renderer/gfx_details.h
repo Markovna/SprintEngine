@@ -141,23 +141,10 @@ private:
     size_t size_ = 0;
 };
 
-//struct SetUniformCommand {
-//    uniform_handle uniform_handle;
-//    Uniform value;
-//};
-
 struct UniformPair {
     uniform_handle handle;
     Uniform value;
 };
-
-//struct SetTextureCommand {
-//    texture_handle texture_handle;
-//    TexSlotId slot;
-//};
-
-//using DrawUnitCommand = std::variant<SetUniformCommand, SetTextureCommand>;
-//using DrawUnitCommandQueue = static_command_queue<DrawUnitCommand, static_config::kMaxCommandCountPerDrawCall>;
 
 static const DrawConfig::Options DefaultOptions = DrawConfig::DEPTH_TEST;
 
@@ -178,7 +165,6 @@ struct DrawUnit {
     texture_handle textures[static_config::kTextureSlotsCapacity];
     uint32_t texture_slots[static_config::kTextureSlotsCapacity];
     size_t texture_slots_size;
-//    DrawUnitCommandQueue command_buffer{};
 };
 
 static void Clear(DrawUnit &draw) {
@@ -195,7 +181,6 @@ static void Clear(DrawUnit &draw) {
     draw.options = DefaultOptions;
     draw.uniforms_size = 0;
     draw.texture_slots_size = 0;
-//    draw.command_buffer.clear();
 }
 
 struct Camera {
@@ -380,9 +365,6 @@ public:
         Clear(draws_[draws_count_]);
         command_buffer_.clear();
     }
-    void PushCommand(FrameContextCommand command) {
-        command_buffer_.push(std::move(command));
-    }
 
     template <class T>
     T& EmplaceCommand() {
@@ -477,19 +459,14 @@ public:
         return handle;
     }
 
-    framebuf_handle CreateFrameBuffer(uint32_t width, uint32_t height, TextureFormat::Enum format, TextureWrap wrap) {
-        auto color_tex_handle = CreateTexture({}, width, height, format, wrap);
-        auto depth_tex_handle = CreateTexture({}, width, height, TextureFormat::D24S8, {}, {}, TextureFlags::RenderTarget);
-        return CreateFrameBuffer({color_tex_handle, depth_tex_handle}, true);
-    }
-
     framebuf_handle CreateFrameBuffer(std::initializer_list<texture_handle> textures, bool destroy_tex) {
         assert(textures.size() < static_config::kFrameBufferMaxAttachments);
         framebuf_handle handle(frame_buffer_handles_.get());
         auto& command = frame_.EmplaceCommand<CreateFrameBufferCommand>();
         command.handle = handle;
         command.destroy_tex = destroy_tex;
-        for (auto tex : textures) command.handles[command.size++] = tex;
+        for (auto tex : textures)
+            command.handles[command.size++] = tex;
 
         return handle;
     }
@@ -760,7 +737,6 @@ private:
 };
 
 static Renderer g_renderer;
-
 
 };
 

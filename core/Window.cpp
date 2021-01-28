@@ -1,21 +1,17 @@
 #include "Log.h"
 
-#include <cmath>
-
-#include "Shader.h"
 #include "Window.h"
 #include "Vector.h"
-#include "Matrix.h"
-#include "Texture.h"
-#include "color.h"
-#include "gfx.h"
-#include "Application.h"
 #include "../debug/profiler.h"
 
 namespace sprint {
 
 static void GLFWErrorCallback(int error_code, const char* description) {
     log::core::Error("GLFW error ({1}): {0}", description, error_code);
+}
+
+std::unique_ptr<Window> Window::Create(Vec2Int size) {
+    return std::make_unique<Window>(size.x, size.y);
 }
 
 Window::Window(size_t width, size_t height) : width_(width), height_(height) {

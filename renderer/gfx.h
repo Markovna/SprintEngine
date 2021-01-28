@@ -144,34 +144,17 @@ struct TextureFormat {
         Count
     };
 
-    static bool IsDepth(TextureFormat::Enum format) {
-        static std::bitset<Count> is_depth = [](){
-            std::bitset<Count> is_depth_local;
-            is_depth_local[D24S8] = true;
-            return is_depth_local;
-        }();
+    struct Info {
+        uint8_t channel_bytes;
+        uint8_t channels;
+        uint8_t depth_bits;
+        uint8_t stencil_bits;
+    };
 
-        return is_depth[format];
-    }
+    static Info formats[];
 
-    static uint8_t GetStencilBits(TextureFormat::Enum format) {
-        static std::array<uint8_t, Count> stencil_bits = [](){
-            std::array<uint8_t, Count> stencil_bits_local{};
-            stencil_bits_local.fill(0);
-            stencil_bits_local[D24S8] = 8;
-            return stencil_bits_local;
-        }();
-        return stencil_bits[format];
-    }
-
-    static uint8_t GetDepthBits(TextureFormat::Enum format) {
-        static std::array<uint8_t, Count> depth_bits = [](){
-            std::array<uint8_t, Count> depth_bits_local{};
-            depth_bits_local.fill(0);
-            depth_bits_local[D24S8] = 8;
-            return depth_bits_local;
-        }();
-        return depth_bits[format];
+    static const Info& GetInfo(Enum format) {
+        return formats[format];
     }
 };
 
@@ -269,7 +252,6 @@ void SetResolution(const Vec2Int&);
 vertexbuf_handle CreateVertexBuffer(MemoryPtr ptr, uint32_t size, VertexLayout layout);
 indexbuf_handle CreateIndexBuffer(MemoryPtr ptr, uint32_t size);
 framebuf_handle CreateFrameBuffer(std::initializer_list<texture_handle>);
-framebuf_handle CreateFrameBuffer(uint32_t width, uint32_t height, TextureFormat::Enum, TextureWrap);
 uniform_handle CreateUniform(const char* c_str);
 shader_handle CreateShader(const std::string& source, std::initializer_list<gfx::Attribute::Binding::Enum> in_types);
 texture_handle CreateTexture(uint32_t width, uint32_t height, TextureFormat::Enum, MemoryPtr ref = {});

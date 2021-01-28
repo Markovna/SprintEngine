@@ -4,8 +4,18 @@
 #include <iomanip>
 #include "spdlog/fmt/ostr.h"
 
-
 namespace sprint {
+
+template <size_t N> struct Vector;
+
+
+using vec2 = Vector<2>;
+using vec3 = Vector<3>;
+using vec4 = Vector<4>;
+
+using Vec2 = Vector<2>;
+using Vec3 = Vector<3>;
+using Vec4 = Vector<4>;
 
 template <size_t N>
 struct Vector {
@@ -23,10 +33,6 @@ struct Vector {
 private:
     float data_[N];
 };
-
-typedef Vector<2> Vec2;
-typedef Vector<3> Vec3;
-typedef Vector<4> Vec4;
 
 template<>
 struct Vector<2> {
@@ -73,10 +79,9 @@ struct Vector<3> {
     static const Vector Right;
     static const Vector Left;
 
-    explicit Vector(const Vec2& vec, float z = 0.0f) : x(vec.x), y(vec.y), z(z) {}
-    Vector() : x(0), y(0), z(0) {}
-    Vector(float x, float y, float z) : x(x), y(y), z(z) {
-    }
+    explicit Vector(const Vec2& vec, float z = 0.0f) noexcept : x(vec.x), y(vec.y), z(z) {}
+    Vector() noexcept : x(0), y(0), z(0) {}
+    Vector(float x, float y, float z) noexcept : x(x), y(y), z(z) {}
 
     explicit operator Vec2() const { return Vec2(x, y); }
 
@@ -110,6 +115,10 @@ struct Vector<3> {
 
     float operator|(const Vector<3>& rhs) const {
         return x * rhs.x + y * rhs.y + z * rhs.z;
+    }
+
+    [[nodiscard]] float Length() const {
+        return std::sqrt(*this | *this);
     }
 };
 
@@ -218,6 +227,15 @@ Vector<N> operator/(const Vector<N>& lhs, float rhs) {
     const float scale = 1.0f / rhs;
     for (int i = 0; i < N; ++i) {
         res[i] = lhs[i] * scale;
+    }
+    return res;
+}
+
+template<size_t N>
+Vector<N> operator/(float rhs, const Vector<N>& lhs) {
+    Vector<N> res;
+    for (int i = 0; i < N; ++i) {
+        res[i] = rhs / lhs[i];
     }
     return res;
 }

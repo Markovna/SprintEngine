@@ -1,10 +1,9 @@
 #include <gfx.h>
-#include <Application.h>
 #include "imgui_renderer.h"
 #include "input_events.h"
 #include "../debug/profiler.h"
 
-namespace sprint {
+namespace sprint::editor {
 
 static Window::Cursor::Type GetCursorType(ImGuiMouseCursor cursor) {
     using CursorsMap = std::array<Window::Cursor::Type, Window::Cursor::Count>;
@@ -96,6 +95,10 @@ void OnTextInput(TextEvent& e) {
     }
 }
 
+std::unique_ptr<ImGuiRenderer> ImGuiRenderer::Create() {
+    return std::make_unique<ImGuiRenderer>();
+}
+
 ImGuiRenderer::~ImGuiRenderer() {
     SPRINT_PROFILE_FUNCTION();
 
@@ -115,7 +118,7 @@ ImGuiRenderer::ImGuiRenderer() : context_(RenderContext::Create()) {
 
     ImGuiIO &io = ImGui::GetIO();
 
-    io.Fonts->TexID = (ImTextureID) &context_.texture;
+    io.Fonts->TexID = (ImTextureID)(intptr_t)context_.texture.get_handle().id;
 
     io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
     io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
@@ -155,7 +158,7 @@ void ImGuiRenderer::BeginFrame(sprint::Window *window) {
     Vec2Int resolution = window->get_resolution();
     io.DisplaySize = ImVec2(window->get_width(), window->get_height());
     io.DisplayFramebufferScale = { (float) resolution.x / io.DisplaySize.x, (float) resolution.y / io.DisplaySize.y };
-    io.DeltaTime = time::delta().AsSeconds();
+    io.DeltaTime = context_.timer.Restart().AsSeconds();
 
     gfx::SetProjection(1, Matrix::Ortho(0, io.DisplaySize.x, 0, io.DisplaySize.y,0,1));
     gfx::SetViewRect(1, {0, 0, (uint32_t) resolution.x, (uint32_t) resolution.y });
@@ -207,10 +210,10 @@ void ImGuiRenderer::Render(ImDrawData *draw_data) {
                 const std::uint16_t width  = (cmd->ClipRect.z - clip_off.x) * clip_scale.x - x;
                 const std::uint16_t height = (cmd->ClipRect.w - clip_off.y) * clip_scale.x - y;
 
-                auto texture = static_cast<Texture*>(cmd->TextureId);
+                auto texture = gfx::texture_handle{(uint32_t)(intptr_t)cmd->TextureId};
                 gfx::SetScissor({ x, y, width, height });
                 gfx::SetOptions(gfx::DrawConfig::Option::NONE);
-                gfx::SetUniform(context_.texture_uniform_handle, texture->get_handle(), 0);
+                gfx::SetUniform(context_.texture_uniform_handle, texture, 0);
                 gfx::SetBuffer(context_.vb_handle, vertices_offset, num_vertices);
                 gfx::SetBuffer(context_.ib_handle, indices_offset + offset, cmd->ElemCount);
                 gfx::Render(1, context_.shader.get_handle());

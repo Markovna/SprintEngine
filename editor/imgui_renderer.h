@@ -1,12 +1,14 @@
 #pragma once
 
 #include <imgui.h>
+#include <time_span.h>
 #include "Log.h"
 #include "Shader.h"
 #include "Texture.h"
 #include "KeyCode.h"
+#include "Window.h"
 
-namespace sprint {
+namespace sprint::editor {
 
 namespace gui {
 
@@ -33,11 +35,13 @@ private:
         gfx::vertexbuf_handle vb_handle;
         gfx::indexbuf_handle ib_handle;
         ImGuiContext* imgui_context;
+        Timer timer;
 
         RenderContext(Shader shader_, Texture texture_, ImGuiContext* context_) noexcept :
             shader(std::move(shader_)),
             texture(std::move(texture_)),
-            imgui_context(context_) {
+            imgui_context(context_),
+            timer() {
 
             vb_handle = gfx::CreateVertexBuffer(gfx::MakeRef(nullptr, sizeof(buffer.vertices)), 0, {
                 { gfx::Attribute::Binding::POSITION, gfx::Attribute::Format::Vec2 },
@@ -55,11 +59,13 @@ private:
             imgui_context(other.imgui_context),
             vb_handle(other.vb_handle),
             ib_handle(other.ib_handle),
-            texture_uniform_handle(other.texture_uniform_handle) {
+            texture_uniform_handle(other.texture_uniform_handle),
+            timer(other.timer) {
             other.ib_handle = gfx::indexbuf_handle::null;
             other.vb_handle = gfx::vertexbuf_handle::null;
             other.texture_uniform_handle = gfx::uniform_handle::null;
             other.imgui_context = nullptr;
+            other.timer = {};
         }
 
         ~RenderContext() {
@@ -86,14 +92,14 @@ private:
             ImGuiIO &io = ImGui::GetIO();
 
             // Build texture atlas
-            unsigned char* pixels;
+            uint8_t* pixels;
             int width, height;
             // Load as RGBA 32-bit (75% of the memory is wasted, but default font is so small)
             // because it is more likely to be compatible with user's existing shaders. If
             // your ImTextureId represent a higher-level concept than just a GL texture id,
             // consider calling GetTexDataAsAlpha8() instead to save on GPU memory.
             io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-            Texture texture(pixels, width, height, 4);
+            Texture texture(gfx::Copy(pixels, sizeof(uint8_t)*width*height*4), width, height, gfx::TextureFormat::RGBA8);
 
             Shader shader = Shader::Load(
                 "assets/shaders/GUIShader.shader",
@@ -106,6 +112,8 @@ private:
     };
 
 public:
+    static std::unique_ptr<ImGuiRenderer> Create();
+
     ImGuiRenderer();
     ~ImGuiRenderer();
 

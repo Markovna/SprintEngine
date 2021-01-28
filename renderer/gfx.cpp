@@ -32,6 +32,13 @@ bool ShaderType::TryParse(std::string_view str, ShaderType::Enum &type) {
     return false;
 }
 
+TextureFormat::Info TextureFormat::formats[] = {
+    {8,    1,   0,   0 }, // R8
+    {8,    3,   0,   0 }, // RGB8
+    {8,    4,   0,   0 }, // RGBA8
+    {0,    0,   24,  8 }, // D24S8
+};
+
 vertexbuf_handle CreateVertexBuffer(MemoryPtr ptr, uint32_t size, VertexLayout layout) {
     log::core::Info("gfx::CreateVertexBuffer");
     return details::g_renderer.CreateVertexBuffer(std::move(ptr), size, layout);
@@ -65,10 +72,6 @@ texture_handle CreateTexture(uint32_t width,
                              MemoryPtr ptr) {
     log::core::Info("gfx::CreateTexture");
     return details::g_renderer.CreateTexture(std::move(ptr), width, height, format, wrap, filter, flags);
-}
-
-framebuf_handle CreateFrameBuffer(uint32_t width, uint32_t height, TextureFormat::Enum format, TextureWrap wrap) {
-    return details::g_renderer.CreateFrameBuffer(width, height, format, wrap);
 }
 
 framebuf_handle CreateFrameBuffer(std::initializer_list<texture_handle> textures) {

@@ -41,11 +41,11 @@ public:
     TimeSpan() noexcept : microseconds_(0) {}
 };
 
-class Clock {
+class Timer {
 private:
     using time_point_t = std::chrono::steady_clock::time_point;
 public:
-    Clock() noexcept : time_point_(std::chrono::steady_clock::now()) {}
+    Timer() noexcept : time_point_(std::chrono::steady_clock::now()) {}
 
     TimeSpan Restart() {
         TimeSpan time = GetTime();
@@ -53,7 +53,7 @@ public:
         return time;
     }
 
-    TimeSpan GetTime() const {
+    [[nodiscard]] TimeSpan GetTime() const {
         using namespace std::chrono;
         return TimeSpan(duration_cast<microseconds>(steady_clock::now() - time_point_));
     }

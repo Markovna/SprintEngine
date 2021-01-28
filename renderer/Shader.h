@@ -1,11 +1,6 @@
 #pragma once
 
-#include "Vector.h"
-#include "Matrix.h"
-#include "color.h"
 #include "gfx.h"
-
-#include <string>
 
 namespace sprint {
 
@@ -23,7 +18,7 @@ public:
 
     ~Shader();
 
-    gfx::shader_handle get_handle() const { return handle_; };
+    [[nodiscard]] gfx::shader_handle get_handle() const { return handle_; };
 
     static Shader Load(const std::string& path, std::initializer_list<gfx::Attribute::Binding::Enum> bindings);
 private:

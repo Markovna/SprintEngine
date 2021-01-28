@@ -88,6 +88,8 @@ component_id next_id();
 
 }
 
+static constexpr entity_t null = details::entity_traits::index_mask | details::entity_traits::generation_mask;
+
 template<class Component>
 struct component_info {
 public:
@@ -251,9 +253,9 @@ private:
 
 
 
-struct entity_set {
+struct registry {
 private:
-    static constexpr size_t invalid_idx = details::entity_traits::index_mask;
+    static constexpr size_t invalid_idx = details::entity_traits::get_index(null);
 
     template<class Component>
     using pool_t = details::component_pool<Component>;
@@ -310,14 +312,16 @@ public:
 
     void destroy(entity_t entity) {
         assert(valid(entity));
+        remove_all(entity);
         auto index = details::entity_traits::get_index(entity);
         details::entity_traits::set_index(entities_[index], free_idx_);
         details::entity_traits::set_generation(entities_[index], entity_traits::get_generation(entities_[index]) + 1);
         free_idx_ = details::entity_traits::get_index(entity);
     }
 
-    bool valid(entity_t entity) const {
-        return entities_[entity_traits::get_index(entity)] == entity;
+    [[nodiscard]] bool valid(entity_t entity) const {
+        auto index = entity_traits::get_index(entity);
+        return index < entities_.size() && entities_[index] == entity;
     }
 
     template<class Component, class ...Args>
@@ -330,6 +334,15 @@ public:
     void remove(entity_t entity) {
         assert(has<Component>(entity));
         get_pool<Component>()->erase(entity);
+    }
+
+    void remove_all(entity_t entity) {
+        assert(valid(entity));
+        for (auto& pool : pools_) {
+            if (pool && pool->contains(entity)) {
+                pool->erase(entity);
+            }
+        }
     }
 
     template<class Component>

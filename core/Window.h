@@ -30,6 +30,7 @@ public:
 private:
     using Event = WindowEvent;
 public:
+    static std::unique_ptr<Window> Create(Vec2Int size);
 
     Window(size_t width, size_t height);
     ~Window();
@@ -40,9 +41,7 @@ public:
 
     [[nodiscard]] size_t get_width() const { return width_; }
     [[nodiscard]] size_t get_height() const { return height_; }
-
     [[nodiscard]] Vec2Int get_resolution() const { return resolution_;  }
-
     [[nodiscard]] GLFWwindow* get_handle() const { return window_; }
 
 private:

@@ -2,24 +2,30 @@
 
 #include "Vector.h"
 
-
 namespace sprint {
 
+struct Matrix;
+
 struct Quat {
-    float x, y, z, w;
+    float x = 0, y = 0, z = 0, w = 1;
 
-    Quat();
-    Quat(float x, float y, float z, float w);
+    Quat() noexcept {}
+    Quat(float x, float y, float z, float w) noexcept : x(x), y(y), z(z), w(w) {}
     Quat(const Vec3& axis, float angle_rad);
+    Quat(const Matrix&);
 
-    inline Vec3 operator*(const Vec3& vec) const {
-        const Vec3 q(x, y, z);
-        const Vec3 t = 2.f * (q ^ vec);
-        return vec + (w * t) + (q ^ t);
-    }
+    Vec3 operator*(const Vec3& rhs) const;
 
+    Quat operator*(const Quat& rhs) const;
+    Quat& operator*=(const Quat& rhs);
+
+    Quat& Normalize();
+
+    static Quat Inverse(const Quat& q);
     static const Quat Identity;
 };
+
+using quat = Quat;
 
 
 }

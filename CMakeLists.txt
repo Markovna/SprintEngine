@@ -11,8 +11,7 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/stb_image)
 add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/imgui)
 #add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/assimp)
 
-add_executable(SprintEngine
-        core/main.cpp
+set(SPRINT_SRCS
         core/Log.cpp core/Log.h
         core/WindowEvent.h
         core/Application.cpp core/Application.h
@@ -25,7 +24,6 @@ add_executable(SprintEngine
         core/KeyCode.h
         core/MouseCodes.h
         common/color.cpp common/color.h
-        editor/imgui_renderer.cpp editor/imgui_renderer.h
         common/signals/delegate.h
         common/signals/event.cpp common/signals/event.h
         common/signals/function_ref.cpp common/signals/function_ref.h
@@ -36,9 +34,31 @@ add_executable(SprintEngine
         renderer/vertex_layout.cpp renderer/vertex_layout.h
         renderer/gfx_details.cpp renderer/gfx_details.h
         renderer/renderer_api_gl.cpp renderer/renderer_api_gl.h
-        renderer/shader_utils.cpp renderer/shader_utils.h renderer/gfx_config.cpp renderer/gfx_config.h common/iterator_range.h common/rect.cpp common/rect.h core/engine.cpp core/engine.h core/app_time.h common/ecs/ecs.cpp common/ecs/ecs.h common/sparse_set.h core/input_events.cpp core/input_events.h common/semaphore.cpp common/semaphore.h debug/profiler.cpp debug/profiler.h core/macro.h common/sparse_map.h)
+        renderer/shader_utils.cpp renderer/shader_utils.h
+        renderer/gfx_config.cpp renderer/gfx_config.h
+        common/iterator_range.h
+        common/rect.cpp common/rect.h
+        core/engine.cpp core/engine.h
+        common/ecs/ecs.cpp common/ecs/ecs.h
+        common/sparse_set.h
+        core/input_events.cpp core/input_events.h
+        common/semaphore.cpp common/semaphore.h
+        debug/profiler.cpp debug/profiler.h
+        core/macro.h
+        common/sparse_map.h
+        core/config.h
+        core/scene.cpp core/scene.h
+        math/transform.cpp math/transform.h
+        math/math_utils.h
+        core/components/transform_component.cpp core/components/transform_component.h)
+
+set(EDITOR_SRCS ${SPRINT_SRCS} editor/editor_app.cpp editor/editor_app.h editor/imgui_renderer.cpp editor/imgui_renderer.h editor/editor_gui.h editor/editor_gui.cpp)
+
+add_executable(SprintEngine ${SPRINT_SRCS} core/main.cpp)
+add_executable(SprintEngine_Editor ${EDITOR_SRCS} editor/main.cpp)
 
 target_include_directories(SprintEngine PRIVATE core/ renderer/ math/ common/)
+target_include_directories(SprintEngine_Editor PRIVATE core/ renderer/ math/ common/)
 
 target_link_libraries(SprintEngine PRIVATE glfw)
 target_link_libraries(SprintEngine PRIVATE spdlog)
@@ -47,4 +67,12 @@ target_link_libraries(SprintEngine PRIVATE stb_image)
 target_link_libraries(SprintEngine PRIVATE imgui)
 #target_link_libraries(SprintEngine PRIVATE assimp)
 
+target_link_libraries(SprintEngine_Editor PRIVATE glfw)
+target_link_libraries(SprintEngine_Editor PRIVATE spdlog)
+target_link_libraries(SprintEngine_Editor PRIVATE glad)
+target_link_libraries(SprintEngine_Editor PRIVATE stb_image)
+target_link_libraries(SprintEngine_Editor PRIVATE imgui)
+#target_link_libraries(SprintEngine PRIVATE assimp)
+
 target_compile_definitions(SprintEngine PRIVATE GLFW_INCLUDE_NONE)
+target_compile_definitions(SprintEngine_Editor PRIVATE GLFW_INCLUDE_NONE)

@@ -38,7 +38,7 @@ static void CheckCompileStatus(uint32_t shaderID) {
     glGetShaderiv(shaderID, GL_COMPILE_STATUS, &success);
     if (!success) {
         char infoLog[512];
-        glGetShaderInfoLog(shaderID, 512, NULL, infoLog);
+        glGetShaderInfoLog(shaderID, 512, nullptr, infoLog);
         log::core::Error("GL::Shader compilation failed with errors:\n{}", infoLog);
     }
 }
@@ -48,7 +48,7 @@ static void CheckLinkStatus(uint32_t shaderID) {
     glGetProgramiv(shaderID, GL_LINK_STATUS, &success);
     if (!success) {
         char infoLog[512];
-        glGetProgramInfoLog(shaderID, 512, NULL, infoLog);
+        glGetProgramInfoLog(shaderID, 512, nullptr, infoLog);
         log::core::Error("GL::Shader linking failed with errors:\n{}", infoLog);
     }
 }
@@ -63,7 +63,7 @@ static GLenum GetShaderType(ShaderType::Enum type) {
 static uint32_t CompileShader(ShaderType::Enum type, const std::string& source) {
     uint32_t shaderID = glCreateShader(GetShaderType(type));
     const GLchar* sourceCStr = source.c_str();
-    CHECK_ERRORS(glShaderSource(shaderID, 1, &sourceCStr, NULL));
+    CHECK_ERRORS(glShaderSource(shaderID, 1, &sourceCStr, nullptr));
     CHECK_ERRORS(glCompileShader(shaderID));
     CheckCompileStatus(shaderID);
     return shaderID;
@@ -145,13 +145,12 @@ void GLRendererAPI::CreateFrameBuffer(framebuf_handle handle, texture_handle* ha
         TextureFormat::Enum format = texture.format;
         GLenum attachment;
 
-        bool is_depth = TextureFormat::IsDepth(format);
+        auto& format_info = TextureFormat::GetInfo(format);
+        bool is_depth = format_info.depth_bits || format_info.stencil_bits;
         if (is_depth) {
-            uint8_t stencil_bits = TextureFormat::GetStencilBits(format);
-            uint8_t depth_bits = TextureFormat::GetDepthBits(format);
-            if (stencil_bits && depth_bits) {
+            if (format_info.stencil_bits && format_info.depth_bits) {
                 attachment = GL_DEPTH_STENCIL_ATTACHMENT;
-            } else if (depth_bits) {
+            } else if (format_info.depth_bits) {
                 attachment = GL_DEPTH_ATTACHMENT;
             } else {
                 attachment = GL_STENCIL_ATTACHMENT;
@@ -369,12 +368,12 @@ static void SetViewport(Rect rect, Vec2Int resolution) {
     ));
 }
 
-static void SetScissor(Rect scissor, Vec2Int size) {
+static void SetScissor(Rect scissor, Vec2Int resolution) {
     if (Valid(scissor)) {
         CHECK_ERRORS(glEnable(GL_SCISSOR_TEST));
         CHECK_ERRORS(glScissor(
             scissor.x,
-            size.y - (scissor.y + scissor.height),
+            resolution.y - (scissor.y + scissor.height),
             scissor.width,
             scissor.height
         ));
@@ -432,9 +431,9 @@ void GLRendererAPI::RenderFrame(const Frame& frame) {
         }
     }
 
+    static Vec2Int resolution;
     Shader* shader = nullptr;
     CameraId camera_id = UINT16_MAX;
-    Vec2Int resolution;
     Rect scissor;
     uint32_t vb_id = 0;
     uint32_t fb_id = 0;
@@ -543,12 +542,10 @@ void GLRendererAPI::RenderFrame(const Frame& frame) {
                     }
                 }
             }
-            {
-                SPRINT_RENDERER_PROFILE_SCOPE("GLRendererAPI::RenderFrame [disable attributes]");
-                uint16_t disable = uint16_t(enabledAttribMask ^ shader->enabled_attributes_mask) & shader->enabled_attributes_mask;
-                shader->enabled_attributes_mask = enabledAttribMask;
-                DisableAttributes(disable);
-            }
+
+            uint16_t disable = uint16_t(enabledAttribMask ^ shader->enabled_attributes_mask) & shader->enabled_attributes_mask;
+            shader->enabled_attributes_mask = enabledAttribMask;
+            DisableAttributes(disable);
         }
 
         if (draw.vb_handle) {

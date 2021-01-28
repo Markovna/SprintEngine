@@ -1,11 +1,9 @@
-#include <imgui.h>
 #include <gfx.h>
 #include <Matrix.h>
 #include <Texture.h>
 #include <Shader.h>
 #include "engine.h"
 #include "Log.h"
-#include "Application.h"
 #include "sparse_set.h"
 #include "ecs/ecs.h"
 #include "input_events.h"
@@ -72,7 +70,6 @@ static float* GetVertices() {
 
     return vertices;
 }
-
 static uint32_t* GetIndices(size_t& count) {
     static uint32_t indices[] = {
         0,  1,  2,
@@ -91,7 +88,6 @@ static uint32_t* GetIndices(size_t& count) {
     count = 36;
     return indices;
 }
-
 void TestSparseSet() {
     sparse_set<uint32_t> test_set;
     test_set.insert(0);
@@ -112,10 +108,9 @@ void TestSparseSet() {
     assert(test_set.contains(23));
     assert(test_set.contains(15));
 }
-
 static void TestEcs() {
     TestSparseSet();
-    ecs::entity_set set;
+    ecs::registry set;
     auto entity1 = set.create();
     auto entity2 = set.create();
     auto entity3 = set.create();
@@ -199,21 +194,7 @@ static void TestEcs() {
 
 }
 
-static std::unique_ptr<Texture> render_tex;
-static gfx::texture_handle depth_tex;
-static gfx::framebuf_handle frame_buffer;
-
-static void PrepareRenderTriangles(int width, int height) {
-    static bool inited = false;
-    if (inited) return;
-
-    inited = true;
-
-//    render_tex = std::make_unique<Texture>(Texture{
-//        {}, 1024, 700, gfx::TextureFormat::RGBA8, gfx::TextureWrap{}, gfx::TextureFilter{}, gfx::TextureFlags::None});
-//
-//    depth_tex = gfx::CreateTexture(1024, 700, gfx::TextureFormat::D24S8, {}, {}, gfx::TextureFlags::RenderTarget, {});
-//    frame_buffer = gfx::CreateFrameBuffer({render_tex->get_handle(), depth_tex});
+static void PrepareRenderTriangles(uint32_t width, uint32_t height) {
 
     TestEcs();
 
@@ -227,14 +208,12 @@ static void PrepareRenderTriangles(int width, int height) {
         })
     );
 
-
     view_mat = Matrix::Translation(Vec3(0.0f, 0.0f, -3.0f));
     proj_mat = Matrix::Perspective(60.0f * M_PI / 180.0f, (float)width, (float)height, 0.01f, 100.0f);
 //    proj_mat = Matrix::Ortho((float)width*0.05f, (float)height*0.05f, 0.1f, 100.0f);
 
     gfx::SetView(0, Matrix::GetInverse(view_mat));
-//    gfx::SetViewBuffer(0, frame_buffer);
-    gfx::SetViewRect(0, {0, 0, (uint32_t) width, (uint32_t) height});
+    gfx::SetViewRect(0, {0, 0, width, height});
     gfx::SetProjection(0, proj_mat);
     gfx::SetClear(0, gfx::ClearFlag::Color | gfx::ClearFlag::Depth);
     gfx::SetClearColor(0, Color(0.1, 0.1, 0.1, 1.0));
@@ -296,7 +275,6 @@ static void RenderTriangle(float timeValue, Vec3 position) {
     gfx::SetTransform(model);
     gfx::SetBuffer(vb_handle);
     gfx::SetBuffer(ib_handle);
-//    gfx::SetScissor({ 0, 0, 300, 300 });
 
     gfx::Render(0, m_Shader->get_handle());
 }
@@ -327,43 +305,36 @@ static void ClearResources() {
     gfx::Destroy(ib_handle);
 }
 
-static void TestGui(float delta) {
-    if (false) {
-        ImGui::Begin("Console");
-
-        static char buf[1024];
-        buf[0] = '>';
-        buf[1] = ' ';
-        ImGui::InputTextMultiline("", buf, 1024);
-        if (ImGui::Button("test2")) {}
-        ImGui::Text("%s", log::Format("fps={0:.0f}", 1.0f / delta).c_str());
-
-        ImGui::End();
-    }
-
-    static bool show = true;
-    ImGui::ShowDemoWindow(&show);
-}
+// -----------------------------------------------------------
 
 void Engine::Update() {
-
     SPRINT_PROFILE_FUNCTION();
 
-    ImGui::Text("%s", log::Format("fps={0:.5f}", 1.0f / time::delta().AsSeconds()).c_str());
+    delta_time_ = timer_.Restart();
 
     RenderTrianglezzz();
-    TestGui(time::delta().AsSeconds());
+}
 
-//    ImGui::Image(render_tex.get(), {(float)render_tex->get_width(), (float)render_tex->get_height()});
+std::unique_ptr<Engine> Engine::Create(const Window& window) {
+    return std::make_unique<Engine>(window);
 }
 
 Engine::Engine(const Window& window) {
+    scene_ = Scene::Create();
+
     PrepareRenderTriangles(window.get_resolution().x, window.get_resolution().y);
 }
 
 Engine::~Engine() {
-
     ClearResources();
+}
+
+void Engine::SetOutput(gfx::framebuf_handle handle) {
+    gfx::SetViewBuffer(0, handle);
+}
+
+TimeSpan Engine::get_delta() const {
+    return delta_time_;
 }
 
 }

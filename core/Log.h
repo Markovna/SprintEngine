@@ -38,7 +38,7 @@ struct CoreLog : LogBase<CoreLog> {
     }
 };
 
-struct ClientLog : details::LogBase<ClientLog> {
+struct ClientLog : LogBase<ClientLog> {
     static spdlog::logger *Get() {
         static auto logger = std::make_unique<spdlog::logger>(CreateLogger("APP"));
         return logger.get();

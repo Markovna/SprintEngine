@@ -1,18 +1,19 @@
 #pragma once
 
-#include <cstdio>
-
 #include "Vector.h"
 #include "Quat.h"
 
-
 namespace sprint {
+
+struct Matrix;
+
+using mat4 = Matrix;
 
 struct Matrix {
 
-    Matrix(const Vec3& x, const Vec3& y, const Vec3& z, const Vec3& w);
-    Matrix(const Vec4& x, const Vec4& y, const Vec4& z, const Vec4& w);
-    Matrix();
+    Matrix(const Vec3& x, const Vec3& y, const Vec3& z, const Vec3& w) noexcept;
+    Matrix(const Vec4& x, const Vec4& y, const Vec4& z, const Vec4& w) noexcept;
+    Matrix() noexcept;
 
     inline float* operator[](const size_t index) {
         return data_[index];
@@ -22,13 +23,16 @@ struct Matrix {
         return data_[index];
     }
 
-    inline Vec3 GetOrigin() const;
+    [[nodiscard]] inline Vec3 GetOrigin() const;
     inline void SetOrigin(const Vec3& vec);
 
-    inline Vec3 GetColumn(size_t index) const;
+    [[nodiscard]] inline Vec3 GetColumn(size_t index) const;
     inline void SetColumn(size_t index, const Vec3& vec);
 
-    inline Vec3 GetRow(size_t index) const;
+    [[nodiscard]] inline Vec3 GetRow(size_t index) const;
+    inline void SetRow(size_t index, const Vec3& vec);
+
+    Vec3 NormalizeScale();
 
     inline Matrix operator*(const Matrix& other) const;
     inline void operator*=(const Matrix& other);
@@ -42,19 +46,20 @@ struct Matrix {
     inline bool operator==(const Matrix& other) const;
     inline bool operator!=(const Matrix& other) const;
 
-    inline bool Equals(const Matrix& other, float tolerance) const;
+    [[nodiscard]] inline bool Equals(const Matrix& other, float tolerance) const;
 
-    inline float Determinant() const;
+    [[nodiscard]] inline float Determinant() const;
     Matrix& Inverse();
 
-    inline Vec3 Transform(const Vec3& vec) const;
-    inline Vec4 Transform(const Vec4& vec) const;
+    [[nodiscard]] inline Vec3 Transform(const Vec3& vec) const;
+    [[nodiscard]] inline Vec4 Transform(const Vec4& vec) const;
 
     static Matrix GetInverse(const Matrix&);
     static Matrix Translation(const Vec3& trans);
     static Matrix Scale(float scale);
     static Matrix Scale(const Vec3& scale);
     static Matrix Rotation(const Quat& rot);
+    static Matrix TRS(const vec3&, const quat&, const vec3&);
     static Matrix Ortho(float x, float width, float y, float height, float minZ, float maxZ);
     static Matrix Ortho(float width, float height, float minZ, float maxZ);
     static Matrix Perspective(float fov, float width, float height, float minZ, float maxZ);
@@ -72,14 +77,17 @@ inline Vec3 Matrix::GetOrigin() const {
 }
 
 inline void Matrix::SetOrigin(const Vec3& vec) {
-    data_[3][0] = vec.x;
-    data_[3][1] = vec.y;
-    data_[3][2] = vec.z;
+    data_[3][0] = vec.x; data_[3][1] = vec.y; data_[3][2] = vec.z;
 }
 
 inline Vec3 Matrix::GetRow(size_t index) const {
     assert(index >= 0 && index < 4);
     return Vec3(data_[index][0], data_[index][1], data_[index][2]);
+}
+
+void Matrix::SetRow(size_t index, const Vec3& vec) {
+    assert(index >= 0 && index < 4);
+    data_[index][0] = vec[0], data_[index][1] = vec[1], data_[index][2] = vec[2];
 }
 
 inline Vec3 Matrix::GetColumn(size_t index) const {
@@ -89,9 +97,7 @@ inline Vec3 Matrix::GetColumn(size_t index) const {
 
 inline void Matrix::SetColumn(size_t index, const Vec3& vec) {
     assert(index >= 0 && index < 4);
-    data_[0][index] = vec.x;
-    data_[1][index] = vec.y;
-    data_[2][index] = vec.z;
+    data_[0][index] = vec.x, data_[1][index] = vec.y, data_[2][index] = vec.z;
 }
 
 inline Matrix Matrix::operator*(const Matrix& other) const {
@@ -161,7 +167,7 @@ inline bool Matrix::operator!=(const Matrix& other) const {
 inline bool Matrix::Equals(const Matrix& other, float tolerance) const {
     for (size_t r = 0; r < 4; ++r) {
         for (size_t c = 0; c < 4; ++c) {
-            if (std::abs((*this)[r][c] - other[r][c]) > tolerance) {
+            if (std::fabs((*this)[r][c] - other[r][c]) > tolerance) {
                 return false;
             }
         }
@@ -214,17 +220,6 @@ inline Vec4 Matrix::Transform(const Vec4& vec) const {
         res[r] = sum;
     }
     return res;
-}
-
-template<class T>
-typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
-inline Approximately(T x, T y, int ulp = 1)
-{
-    // the machine epsilon has to be scaled to the magnitude of the values used
-    // and multiplied by the desired precision in ULPs (units in the last place)
-    return std::fabs(x-y) <= std::numeric_limits<T>::epsilon() * std::fabs(x+y) * ulp
-        // unless the result is subnormal
-        || std::fabs(x-y) < std::numeric_limits<T>::min();
 }
 
 }

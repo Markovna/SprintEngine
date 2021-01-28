@@ -47,20 +47,6 @@ Texture::Loader& Texture::Loader::operator=(Loader&& loader) noexcept {
     return *this;
 }
 
-std::unique_ptr<Texture> Texture::Load(const std::string& path) {
-    Loader loader(path);
-    if (loader) {
-        return std::make_unique<Texture>(
-                loader.get_data(),
-                loader.get_width(),
-                loader.get_height(),
-                loader.get_channels_num());
-    }
-
-    log::core::Error("Failed to load texture {0}", path);
-    return nullptr;
-}
-
 // TODO
 static gfx::TextureFormat::Enum ToFormat(uint32_t channels) {
     if (channels == 1) return gfx::TextureFormat::R8;
@@ -68,14 +54,25 @@ static gfx::TextureFormat::Enum ToFormat(uint32_t channels) {
     return gfx::TextureFormat::RGBA8;
 }
 
-Texture::Texture(const uint8_t *data, uint32_t width, uint32_t height, uint32_t channels) :
-    handle_(gfx::CreateTexture(
-        width,
-        height,
-        ToFormat(channels),
-        gfx::Copy(data, sizeof(uint8_t) * width * height * channels))),
-        width_(width), height_(height)
-{}
+std::unique_ptr<Texture> Texture::Load(const std::string& path) {
+    Loader loader(path);
+    if (loader) {
+        const uint8_t* data = loader.get_data();
+        uint32_t width = loader.get_width();
+        uint32_t height = loader.get_height();
+        auto format = ToFormat(loader.get_channels_num());
+        return std::make_unique<Texture>(
+            gfx::Copy(data, sizeof(uint8_t) * width * height * gfx::TextureFormat::GetInfo(format).channels),
+                width, height,
+                format,
+                gfx::TextureWrap(), gfx::TextureFilter(),
+                gfx::TextureFlags::None
+            );
+    }
+
+    log::core::Error("Failed to load texture {0}", path);
+    return nullptr;
+}
 
 Texture::~Texture() {
     if (handle_)
@@ -104,8 +101,15 @@ Texture::Texture(gfx::MemoryPtr ptr,
                  gfx::TextureFilter filter,
                  gfx::TextureFlags::Type flags)
      : handle_(gfx::CreateTexture(width, height, format, wrap, filter, flags, std::move(ptr))),
-       width_(width), height_(height) {
+       width_(width), height_(height) {}
 
-}
+//Texture::Texture(const uint8_t *data, uint32_t width, uint32_t height,
+//                 gfx::TextureFormat::Enum format,
+//                 gfx::TextureWrap wrap,
+//                 gfx::TextureFilter filter,
+//                 gfx::TextureFlags::Type flags)
+//     : handle_(gfx::CreateTexture(width, height, format, wrap, filter, flags,
+//        gfx::Copy(data, sizeof(uint8_t) * width * height * gfx::TextureFormat::GetInfo(format).channels))),
+//       width_(width), height_(height){}
 
 }
