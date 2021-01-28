@@ -6,19 +6,19 @@
 
 namespace sprint {
 
-template <size_t N> struct Vector;
+template <size_t N> struct vector;
 
 
-using vec2 = Vector<2>;
-using vec3 = Vector<3>;
-using vec4 = Vector<4>;
+using vec2 = vector<2>;
+using vec3 = vector<3>;
+using vec4 = vector<4>;
 
-using Vec2 = Vector<2>;
-using Vec3 = Vector<3>;
-using Vec4 = Vector<4>;
+using Vec2 = vector<2>;
+using Vec3 = vector<3>;
+using Vec4 = vector<4>;
 
 template <size_t N>
-struct Vector {
+struct vector {
 
     const float& operator[] (size_t index) const {
         assert(index >= 0 && index < N);
@@ -35,15 +35,15 @@ private:
 };
 
 template<>
-struct Vector<2> {
+struct vector<2> {
     float x, y;
     static constexpr const size_t N = 2;
 
-    static const Vector Zero;
-    static const Vector One;
+    static const vector Zero;
+    static const vector One;
 
-    Vector() : x(0), y(0) {}
-    explicit Vector(float x, float y) : x(x), y(y) {
+    vector() : x(0), y(0) {}
+    explicit vector(float x, float y) : x(x), y(y) {
     }
 
     const float& operator[] (size_t index) const {
@@ -66,22 +66,22 @@ struct Vector<2> {
 };
 
 template<>
-struct Vector<3> {
+struct vector<3> {
     float x, y, z;
     static constexpr const size_t N = 3;
 
-    static const Vector Zero;
-    static const Vector One;
-    static const Vector Up;
-    static const Vector Down;
-    static const Vector Forward;
-    static const Vector Backward;
-    static const Vector Right;
-    static const Vector Left;
+    static const vector Zero;
+    static const vector One;
+    static const vector Up;
+    static const vector Down;
+    static const vector Forward;
+    static const vector Backward;
+    static const vector Right;
+    static const vector Left;
 
-    explicit Vector(const Vec2& vec, float z = 0.0f) noexcept : x(vec.x), y(vec.y), z(z) {}
-    Vector() noexcept : x(0), y(0), z(0) {}
-    Vector(float x, float y, float z) noexcept : x(x), y(y), z(z) {}
+    explicit vector(const Vec2& vec, float z = 0.0f) noexcept : x(vec.x), y(vec.y), z(z) {}
+    vector() noexcept : x(0), y(0), z(0) {}
+    vector(float x, float y, float z) noexcept : x(x), y(y), z(z) {}
 
     explicit operator Vec2() const { return Vec2(x, y); }
 
@@ -105,15 +105,15 @@ struct Vector<3> {
         }
     }
 
-    Vector operator^(const Vector& rhs) const {
-        return Vector(
+    vector operator^(const vector& rhs) const {
+        return vector(
                 y * rhs.z - z * rhs.y,
                 z * rhs.x - x * rhs.z,
                 x * rhs.y - y * rhs.x
             );
     }
 
-    float operator|(const Vector<3>& rhs) const {
+    float operator|(const vector<3>& rhs) const {
         return x * rhs.x + y * rhs.y + z * rhs.z;
     }
 
@@ -123,13 +123,13 @@ struct Vector<3> {
 };
 
 template<>
-struct Vector<4> {
+struct vector<4> {
     float x, y, z, w;
     static constexpr const size_t N = 4;
 
-    explicit Vector(const Vec3& vec, float w = 0.0f) : x(vec.x), y(vec.y), z(vec.z), w(w) {}
-    Vector() : x(0), y(0), z(0), w(0) {}
-    Vector(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {
+    explicit vector(const Vec3& vec, float w = 0.0f) : x(vec.x), y(vec.y), z(vec.z), w(w) {}
+    vector() : x(0), y(0), z(0), w(0) {}
+    vector(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {
     }
 
     explicit operator Vec2() const { return Vec2(x, y); }
@@ -159,7 +159,7 @@ struct Vector<4> {
 };
 
 template<typename OStream, size_t N>
-OStream &operator<<(OStream &out, const Vector<N>& vec) {
+OStream &operator<<(OStream &out, const vector<N>& vec) {
     out << '[';
     for (size_t i = 0; i < N - 1; i++) {
         out << std::setprecision(5) << vec[i] << ", ";
@@ -168,8 +168,8 @@ OStream &operator<<(OStream &out, const Vector<N>& vec) {
 }
 
 template<size_t N>
-Vector<N> operator+(const Vector<N>& lhs, const Vector<N>& rhs) {
-    Vector<N> res;
+vector<N> operator+(const vector<N>& lhs, const vector<N>& rhs) {
+    vector<N> res;
     for (int i = 0; i < N; ++i) {
         res[i] = lhs[i] + rhs[i];
     }
@@ -177,8 +177,8 @@ Vector<N> operator+(const Vector<N>& lhs, const Vector<N>& rhs) {
 }
 
 template<size_t N>
-Vector<N> operator-(const Vector<N>& lhs, const Vector<N>& rhs) {
-    Vector<N> res;
+vector<N> operator-(const vector<N>& lhs, const vector<N>& rhs) {
+    vector<N> res;
     for (int i = 0; i < N; ++i) {
         res[i] = lhs[i] - rhs[i];
     }
@@ -186,8 +186,8 @@ Vector<N> operator-(const Vector<N>& lhs, const Vector<N>& rhs) {
 }
 
 template<size_t N>
-Vector<N> operator-(const Vector<N>& rhs) {
-    Vector<N> res;
+vector<N> operator-(const vector<N>& rhs) {
+    vector<N> res;
     for (int i = 0; i < N; ++i) {
         res[i] = -rhs[i];
     }
@@ -195,8 +195,8 @@ Vector<N> operator-(const Vector<N>& rhs) {
 }
 
 template<size_t N>
-Vector<N> operator*(const Vector<N>& lhs, const Vector<N>& rhs) {
-    Vector<N> res;
+vector<N> operator*(const vector<N>& lhs, const vector<N>& rhs) {
+    vector<N> res;
     for (int i = 0; i < N; ++i) {
         res[i] = lhs[i] * rhs[i];
     }
@@ -204,8 +204,8 @@ Vector<N> operator*(const Vector<N>& lhs, const Vector<N>& rhs) {
 }
 
 template<size_t N>
-Vector<N> operator*(float lhs, const Vector<N>& rhs) {
-    Vector<N> res;
+vector<N> operator*(float lhs, const vector<N>& rhs) {
+    vector<N> res;
     for (int i = 0; i < N; ++i) {
         res[i] = lhs * rhs[i];
     }
@@ -213,8 +213,8 @@ Vector<N> operator*(float lhs, const Vector<N>& rhs) {
 }
 
 template<size_t N>
-Vector<N> operator*(const Vector<N>& lhs, float rhs) {
-    Vector<N> res;
+vector<N> operator*(const vector<N>& lhs, float rhs) {
+    vector<N> res;
     for (int i = 0; i < N; ++i) {
         res[i] = lhs[i] * rhs;
     }
@@ -222,8 +222,8 @@ Vector<N> operator*(const Vector<N>& lhs, float rhs) {
 }
 
 template<size_t N>
-Vector<N> operator/(const Vector<N>& lhs, float rhs) {
-    Vector<N> res;
+vector<N> operator/(const vector<N>& lhs, float rhs) {
+    vector<N> res;
     const float scale = 1.0f / rhs;
     for (int i = 0; i < N; ++i) {
         res[i] = lhs[i] * scale;
@@ -232,8 +232,8 @@ Vector<N> operator/(const Vector<N>& lhs, float rhs) {
 }
 
 template<size_t N>
-Vector<N> operator/(float rhs, const Vector<N>& lhs) {
-    Vector<N> res;
+vector<N> operator/(float rhs, const vector<N>& lhs) {
+    vector<N> res;
     for (int i = 0; i < N; ++i) {
         res[i] = rhs / lhs[i];
     }
@@ -241,7 +241,7 @@ Vector<N> operator/(float rhs, const Vector<N>& lhs) {
 }
 
 template<size_t N>
-float operator|(const Vector<N>& lhs, const Vector<N>& rhs) {
+float operator|(const vector<N>& lhs, const vector<N>& rhs) {
     float res = 0;
     for (int i = 0; i < N; ++i) {
         res += lhs[i] * rhs[i];
@@ -250,7 +250,7 @@ float operator|(const Vector<N>& lhs, const Vector<N>& rhs) {
 }
 
 template<size_t N>
-Vector<N>& operator+=(Vector<N>& lhs, const Vector<N>& rhs) {
+vector<N>& operator+=(vector<N>& lhs, const vector<N>& rhs) {
     for (int i = 0; i < N; ++i) {
         lhs[i] += rhs[i];
     }
@@ -258,7 +258,7 @@ Vector<N>& operator+=(Vector<N>& lhs, const Vector<N>& rhs) {
 }
 
 template<size_t N>
-Vector<N>& operator-=(Vector<N>& lhs, const Vector<N>& rhs) {
+vector<N>& operator-=(vector<N>& lhs, const vector<N>& rhs) {
     for (int i = 0; i < N; ++i) {
         lhs[i] -= rhs[i];
     }
@@ -266,7 +266,7 @@ Vector<N>& operator-=(Vector<N>& lhs, const Vector<N>& rhs) {
 }
 
 template<size_t N>
-Vector<N>& operator*=(Vector<N>& lhs, const Vector<N>& rhs) {
+vector<N>& operator*=(vector<N>& lhs, const vector<N>& rhs) {
     for (int i = 0; i < N; ++i) {
         lhs[i] *= rhs[i];
     }
@@ -274,7 +274,7 @@ Vector<N>& operator*=(Vector<N>& lhs, const Vector<N>& rhs) {
 }
 
 template<size_t N>
-Vector<N>& operator/=(Vector<N>& lhs, float rhs) {
+vector<N>& operator/=(vector<N>& lhs, float rhs) {
     const float scale = 1.0f / rhs;
     for (int i = 0; i < N; ++i) {
         lhs[i] *= scale;
@@ -283,7 +283,7 @@ Vector<N>& operator/=(Vector<N>& lhs, float rhs) {
 }
 
 template<size_t N>
-bool operator==(const Vector<N>& lhs, const Vector<N>& rhs) {
+bool operator==(const vector<N>& lhs, const vector<N>& rhs) {
     bool eq = true;
     for (int i = 0; i < N; ++i) {
         eq &= lhs[i] == rhs[i];
@@ -292,7 +292,7 @@ bool operator==(const Vector<N>& lhs, const Vector<N>& rhs) {
 }
 
 template<size_t N>
-bool operator!=(const Vector<N>& lhs, const Vector<N>& rhs) {
+bool operator!=(const vector<N>& lhs, const vector<N>& rhs) {
     return !(lhs == rhs);
 }
 

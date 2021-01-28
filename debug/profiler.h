@@ -8,7 +8,7 @@
 #include <fstream>
 #include <iomanip>
 #include <sparse_map.h>
-#include "Log.h"
+#include "log.h"
 #include "macro.h"
 
 namespace sprint {

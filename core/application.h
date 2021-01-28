@@ -1,7 +1,7 @@
 #pragma once
 
-#include "WindowEvent.h"
-#include "Window.h"
+#include "window_event.h"
+#include "window.h"
 #include "signals/event.h"
 
 #include "../editor/imgui_renderer.h"

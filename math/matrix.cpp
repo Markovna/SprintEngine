@@ -1,5 +1,5 @@
 
-#include "Matrix.h"
+#include "matrix.h"
 #include "math_utils.h"
 
 namespace sprint {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "WindowEvent.h"
+#include "window_event.h"
 
 #include <queue>
 #include <functional>

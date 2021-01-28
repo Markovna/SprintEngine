@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Window.h"
+#include "window.h"
 #include "engine.h"
 #include "imgui_renderer.h"
 #include "editor_gui.h"

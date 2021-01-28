@@ -3,9 +3,9 @@
 #include <string>
 #include <variant>
 
-#include "KeyCode.h"
-#include "MouseCodes.h"
-#include "Vector.h"
+#include "key_codes.h"
+#include "mouse_codes.h"
+#include "vector.h"
 
 namespace sprint {
 

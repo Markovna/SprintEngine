@@ -1,9 +1,9 @@
 #include <gfx.h>
-#include <Matrix.h>
-#include <Texture.h>
-#include <Shader.h>
+#include <matrix.h>
+#include <texture.h>
+#include <shader.h>
 #include "engine.h"
-#include "Log.h"
+#include "log.h"
 #include "sparse_set.h"
 #include "ecs/ecs.h"
 #include "input_events.h"

@@ -1,6 +1,6 @@
 #include "input_events.h"
-#include "Window.h"
-#include "Log.h"
+#include "window.h"
+#include "log.h"
 
 namespace sprint::input_events {
 

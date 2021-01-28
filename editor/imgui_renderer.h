@@ -2,11 +2,11 @@
 
 #include <imgui.h>
 #include <time_span.h>
-#include "Log.h"
-#include "Shader.h"
-#include "Texture.h"
-#include "KeyCode.h"
-#include "Window.h"
+#include "log.h"
+#include "shader.h"
+#include "texture.h"
+#include "key_codes.h"
+#include "window.h"
 
 namespace sprint::editor {
 

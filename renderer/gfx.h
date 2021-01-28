@@ -2,9 +2,9 @@
 
 #include "vertex_layout.h"
 
-#include "Vector.h"
+#include "vector.h"
 #include "color.h"
-#include "Matrix.h"
+#include "matrix.h"
 #include "rect.h"
 #include <array>
 

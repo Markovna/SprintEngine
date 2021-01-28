@@ -1,5 +1,5 @@
-#include "Quat.h"
-#include "Matrix.h"
+#include "quat.h"
+#include "matrix.h"
 
 namespace sprint {
 

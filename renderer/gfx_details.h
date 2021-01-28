@@ -1,7 +1,7 @@
 #pragma once
 
 #include "gfx.h"
-#include "Log.h"
+#include "log.h"
 #include "iterator_range.h"
 #include "semaphore.h"
 

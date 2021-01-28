@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Vector.h"
-#include "Quat.h"
-#include "Matrix.h"
+#include "vector.h"
+#include "quat.h"
+#include "matrix.h"
 
 namespace sprint {
 

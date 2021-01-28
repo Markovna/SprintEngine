@@ -1,10 +1,10 @@
-#include "Texture.h"
+#include "texture.h"
 
 #include <memory>
 #include <utility>
 
 #include "stb_image.h"
-#include "Log.h"
+#include "log.h"
 
 namespace sprint {
 

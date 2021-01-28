@@ -1,7 +1,7 @@
-#include "Log.h"
+#include "log.h"
 
-#include "Window.h"
-#include "Vector.h"
+#include "window.h"
+#include "vector.h"
 #include "../debug/profiler.h"
 
 namespace sprint {

@@ -12,17 +12,17 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/imgui)
 #add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/assimp)
 
 set(SPRINT_SRCS
-        core/Log.cpp core/Log.h
-        core/WindowEvent.h
-        core/Application.cpp core/Application.h
-        core/Window.cpp core/Window.h
-        renderer/Shader.cpp renderer/Shader.h
-        math/Vector.cpp math/Vector.h
-        renderer/Texture.cpp renderer/Texture.h
-        math/Matrix.cpp math/Matrix.h
-        math/Quat.cpp math/Quat.h
-        core/KeyCode.h
-        core/MouseCodes.h
+        core/log.cpp core/log.h
+        core/window_event.h
+        core/application.cpp core/application.h
+        core/window.cpp core/window.h
+        renderer/shader.cpp renderer/shader.h
+        math/vector.cpp math/vector.h
+        renderer/texture.cpp renderer/texture.h
+        math/matrix.cpp math/matrix.h
+        math/quat.cpp math/quat.h
+        core/key_codes.h
+        core/mouse_codes.h
         common/color.cpp common/color.h
         common/signals/delegate.h
         common/signals/event.cpp common/signals/event.h

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Vector.h"
-#include "Quat.h"
+#include "vector.h"
+#include "quat.h"
 
 namespace sprint {
 
