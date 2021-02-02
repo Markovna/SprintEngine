@@ -15,13 +15,8 @@ struct Matrix {
     Matrix(const Vec4& x, const Vec4& y, const Vec4& z, const Vec4& w) noexcept;
     Matrix() noexcept;
 
-    inline float* operator[](const size_t index) {
-        return data_[index];
-    }
-
-    inline const float* operator[](const size_t index) const {
-        return data_[index];
-    }
+    inline float* operator[](size_t index);
+    inline const float* operator[](size_t index) const;
 
     [[nodiscard]] inline Vec3 GetOrigin() const;
     inline void SetOrigin(const Vec3& vec);
@@ -143,6 +138,14 @@ inline Matrix Matrix::operator*(float other) const {
     }
 
     return mat;
+}
+
+inline float* Matrix::operator[](const size_t index) {
+    return data_[index];
+}
+
+inline const float* Matrix::operator[](const size_t index) const {
+    return data_[index];
 }
 
 inline void Matrix::operator*=(float other) {

@@ -52,7 +52,7 @@ set(SPRINT_SRCS
         math/math_utils.h
         core/components/transform_component.cpp core/components/transform_component.h)
 
-set(EDITOR_SRCS ${SPRINT_SRCS} editor/editor_app.cpp editor/editor_app.h editor/imgui_renderer.cpp editor/imgui_renderer.h editor/editor_gui.h editor/editor_gui.cpp)
+set(EDITOR_SRCS ${SPRINT_SRCS} editor/editor_app.cpp editor/editor_app.h editor/imgui_renderer.cpp editor/imgui_renderer.h editor/editor_gui.h editor/editor_gui.cpp editor/scene_graph_gui.cpp editor/scene_graph_gui.h editor/gui.h editor/gui.cpp)
 
 add_executable(SprintEngine ${SPRINT_SRCS} core/main.cpp)
 add_executable(SprintEngine_Editor ${EDITOR_SRCS} editor/main.cpp)

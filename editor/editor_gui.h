@@ -1,17 +1,24 @@
 #pragma once
 
 #include <memory>
+#include "window.h"
+#include "engine.h"
+#include "scene_graph_gui.h"
 
 namespace sprint::editor {
 
-class EditorGUI {
+class EditorGui {
 public:
-    static std::unique_ptr<EditorGUI> Create();
+    static std::unique_ptr<EditorGui> Create(Window&, Engine&);
 
-    EditorGUI();
-    ~EditorGUI();
+    EditorGui(Window&, Engine&);
+    ~EditorGui();
 
     void OnGui();
+private:
+    Window& window_;
+    Engine& engine_;
+    std::unique_ptr<SceneGraphEditorGui> scene_graph_gui_;
 };
 
 }

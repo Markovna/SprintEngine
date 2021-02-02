@@ -40,6 +40,10 @@ public:
         return delegates_.emplace(functor);
     }
 
+    void disconnect_all() {
+        delegates_.clear();
+    }
+
     void disconnect(const key_t& key) {
         delegates_.erase(key);
     }

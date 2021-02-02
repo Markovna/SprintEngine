@@ -290,7 +290,7 @@ static void RenderTrianglezzz() {
     RenderTriangle(timeValue, Vec3::Zero);
     RenderTriangle(timeValue, 2 * Vec3::Right);
 
-    for (int i = 1; i < 200; i++) {
+    for (int i = 1; i < 10; i++) {
         RenderTriangle(timeValue + i * 0.1f, (i * 2.0f + 1) * Vec3::Up + (i * 0.7f) * Vec3::Forward);
         RenderTriangle(timeValue - i * 0.1f, (i * 2.0f + 1) * Vec3::Up + (i * 0.7f) * Vec3::Backward);
     }
@@ -322,6 +322,44 @@ std::unique_ptr<Engine> Engine::Create(const Window& window) {
 Engine::Engine(const Window& window) {
     scene_ = Scene::Create();
 
+    {
+        auto ent0 = scene_->CreateEntity();
+        auto& ent0_tr = scene_->get<TransformComponent>(ent0);
+
+        auto ent1 = scene_->CreateEntity({}, &scene_->get<TransformComponent>(ent0));
+        auto ent2 = scene_->CreateEntity({}, &scene_->get<TransformComponent>(ent0));
+        auto ent3 = scene_->CreateEntity({}, &scene_->get<TransformComponent>(ent0));
+
+        scene_->get<TransformComponent>(ent1).SetParent(&scene_->get<TransformComponent>(ent0), &scene_->get<TransformComponent>(ent3));
+        scene_->get<TransformComponent>(ent2).SetParent(&scene_->get<TransformComponent>(ent0), &scene_->get<TransformComponent>(ent3));
+
+    }
+
+    if (false)
+    {
+        auto ent0 = scene_->CreateEntity();
+        auto ent1 = scene_->CreateEntity();
+        auto ent2 = scene_->CreateEntity();
+
+        assert(scene_->get<TransformComponent>(ent0).GetChildrenSize() == 0);
+        assert(scene_->get<TransformComponent>(ent1).GetChildrenSize() == 0);
+        assert(scene_->get<TransformComponent>(ent2).GetChildrenSize() == 0);
+
+//    auto& ent2_tr = scene_->get<TransformComponent>(ent2);
+        auto ent3 = scene_->CreateEntity({}, &scene_->get<TransformComponent>(ent0));
+        auto ent4 = scene_->CreateEntity({}, &scene_->get<TransformComponent>(ent1));
+
+        assert(scene_->get<TransformComponent>(ent0).GetChildrenSize() == 1);
+        assert(scene_->get<TransformComponent>(ent1).GetChildrenSize() == 1);
+
+        auto ent5 = scene_->CreateEntity({}, &scene_->get<TransformComponent>(ent4));
+        auto &tr_ent4 = scene_->get<TransformComponent>(ent4);
+        tr_ent4.SetParent(&scene_->get<TransformComponent>(ent2));
+
+        auto &tr_ent3 = scene_->get<TransformComponent>(ent3);
+        tr_ent3.SetParent(nullptr);
+    }
+
     PrepareRenderTriangles(window.get_resolution().x, window.get_resolution().y);
 }
 
@@ -335,6 +373,10 @@ void Engine::SetOutput(gfx::framebuf_handle handle) {
 
 TimeSpan Engine::get_delta() const {
     return delta_time_;
+}
+
+Scene* Engine::get_scene() {
+    return scene_.get();
 }
 
 }

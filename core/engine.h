@@ -18,6 +18,7 @@ public:
 
     void SetOutput(gfx::framebuf_handle);
     [[nodiscard]] TimeSpan get_delta() const;
+    [[nodiscard]] Scene* get_scene();
 
 private:
     Timer timer_;

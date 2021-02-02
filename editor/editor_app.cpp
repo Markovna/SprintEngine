@@ -4,16 +4,6 @@
 
 namespace sprint::editor {
 
-//TODO
-static std::unique_ptr<Texture> render_tex;
-static gfx::texture_handle depth_tex;
-static gfx::framebuf_handle frame_buffer;
-static void TestGui(float delta) {
-    ImGui::Text("%s", log::Format("fps={0:.5f}", 1.0f / delta).c_str());
-    static bool show = true;
-    ImGui::ShowDemoWindow(&show);
-}
-
 Application::Application() {
     SPRINT_PROFILE_FUNCTION();
 
@@ -21,27 +11,10 @@ Application::Application() {
     gfx::Init(gfx::Config {window_->get_handle(), window_->get_resolution()});
     imgui_renderer_ = ImGuiRenderer::Create();
     engine_ = Engine::Create(*window_);
-    editor_ = EditorGUI::Create();
+    editor_ = EditorGui::Create(*window_, *engine_);
 
     input_events::OnClose.connect(this, &Application::OnClose);
     input_events::OnResize.connect(this, &Application::OnResize);
-
-    // TODO
-    {
-        render_tex = std::make_unique<Texture>(Texture{
-            gfx::MemoryPtr{}, (uint32_t) window_->get_resolution().x, (uint32_t) window_->get_resolution().y,
-            gfx::TextureFormat::RGBA8, gfx::TextureWrap{}, gfx::TextureFilter{}, gfx::TextureFlags::None});
-        depth_tex = gfx::CreateTexture((uint32_t) window_->get_resolution().x,
-                                       (uint32_t) window_->get_resolution().y,
-                                       gfx::TextureFormat::D24S8,
-                                       {},
-                                       {},
-                                       gfx::TextureFlags::RenderTarget,
-                                       {});
-        frame_buffer = gfx::CreateFrameBuffer({render_tex->get_handle(), depth_tex});
-
-        engine_->SetOutput(frame_buffer);
-    }
 }
 
 Application::~Application() {
@@ -60,6 +33,7 @@ Application::~Application() {
 int Application::Run() {
 
     while (running_) {
+
         window_->Update();
         WindowEvent event;
         while (running_ && window_->PollEvent(event)) { input_events::OnEvent(event); }
@@ -68,13 +42,7 @@ int Application::Run() {
 
         engine_->Update();
 
-        // TODO
-        {
-            TestGui(engine_->get_delta().AsSeconds());
-            float width = ImGui::GetWindowWidth();
-            float height = render_tex->get_height() * (width / render_tex->get_width());
-            ImGui::Image((ImTextureID)(intptr_t)render_tex->get_handle().id, {width, height}, {0,1}, {1, 0});
-        }
+        editor_->OnGui();
 
         imgui_renderer_->EndFrame();
 

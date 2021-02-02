@@ -21,7 +21,7 @@ private:
     std::unique_ptr<Window> window_;
     std::unique_ptr<Engine> engine_;
     std::unique_ptr<ImGuiRenderer> imgui_renderer_;
-    std::unique_ptr<EditorGUI> editor_;
+    std::unique_ptr<EditorGui> editor_;
     bool running_ = true;
 };
 

@@ -13,16 +13,17 @@ private:
 public:
     static std::unique_ptr<Scene> Create();
 
-    Scene() = default;
+    Scene();
     ~Scene() = default;
 
-    ecs::entity_t CreateEntity(const Transform& local = {}, ecs::entity_t parent = ecs::null) {
-        auto entity = registry::create();
-        auto transform_component = registry::emplace<TransformComponent>(entity, *this, entity);
-        transform_component.SetParent(parent);
-        transform_component.SetLocalTransform(local);
-        return entity;
-    }
+    ecs::entity_t CreateEntity(const Transform& local = {}, TransformComponent* parent = nullptr);
+
+    TransformComponent::iterator GetRoots();
+    TransformComponent::const_iterator GetRoots() const;
+    size_t GetRootsSize() const;
+
+private:
+    TransformComponent root_;
 };
 
 }
