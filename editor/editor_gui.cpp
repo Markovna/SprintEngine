@@ -1,11 +1,7 @@
-#include "imgui.h"
-#include "imgui_internal.h"
+#include "gui.h"
 
 #include "texture.h"
 #include "editor_gui.h"
-#include "signals/delegate.h"
-#include "signals/event.h"
-#include "gui.h"
 
 namespace sprint::editor {
 
@@ -13,11 +9,41 @@ namespace sprint::editor {
 static std::unique_ptr<Texture> render_tex;
 static gfx::texture_handle depth_tex;
 static gfx::framebuf_handle frame_buffer;
-static void TestGui(float delta) {
 
-    static bool show = true;
-    ImGui::ShowDemoWindow(&show);
-    ImGui::Text("%s", log::Format("fps={0:.5f}", 1.0f / delta).c_str());
+static void Begin() {
+    static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->GetWorkPos());
+    ImGui::SetNextWindowSize(viewport->GetWorkSize());
+    ImGui::SetNextWindowViewport(viewport->ID);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+    if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+        window_flags |= ImGuiWindowFlags_NoBackground;
+
+    ImGui::Begin("DockSpace", nullptr, window_flags);
+    ImGui::PopStyleVar(3);
+
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+
+    if (ImGui::BeginMenuBar()) {
+        if (ImGui::BeginMenu("Options")) {
+            if (ImGui::MenuItem("Close", NULL, false, true)) {}
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMenuBar();
+    }
+
+    ImGui::End();
 }
 
 std::unique_ptr<EditorGui> EditorGui::Create(Window& window, Engine& engine) {
@@ -53,12 +79,19 @@ EditorGui::~EditorGui() {
 
 void EditorGui::OnGui() {
 
-    // TODO
+    Begin();
+
+    // game view
     {
-        TestGui(engine_.get_delta().AsSeconds());
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        gui::Begin("Game View");
+        ImGui::PopStyleVar();
+
         float width = ImGui::GetWindowWidth();
         float height = render_tex->get_height() * (width / render_tex->get_width());
         ImGui::Image((ImTextureID)(intptr_t)render_tex->get_handle().id, {width, height}, {0,1}, {1, 0});
+
+        gui::End();
     }
 
     scene_graph_gui_->OnGui();
