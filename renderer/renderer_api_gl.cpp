@@ -1,7 +1,6 @@
 #include "renderer_api_gl.h"
 #include "log.h"
 #include "shader_utils.h"
-#include "../debug/profiler.h"
 
 namespace sprint::gfx::details {
 

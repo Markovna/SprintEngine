@@ -49,12 +49,15 @@ set(SPRINT_SRCS
         core/scene.cpp core/scene.h
         math/transform.cpp math/transform.h
         math/math_utils.h
-        core/components/transform_component.cpp core/components/transform_component.h)
+        core/components/transform_component.cpp core/components/transform_component.h sprintpch.h)
 
 set(EDITOR_SRCS ${SPRINT_SRCS} editor/editor_app.cpp editor/editor_app.h editor/imgui_renderer.cpp editor/imgui_renderer.h editor/editor_gui.h editor/editor_gui.cpp editor/scene_graph_gui.cpp editor/scene_graph_gui.h editor/gui.h editor/gui.cpp editor/properties_gui.cpp editor/properties_gui.h)
 
 add_executable(SprintEngine ${SPRINT_SRCS} core/main.cpp)
 add_executable(SprintEngine_Editor ${EDITOR_SRCS} editor/main.cpp)
+
+target_precompile_headers(SprintEngine PRIVATE sprintpch.h)
+target_precompile_headers(SprintEngine_Editor PRIVATE sprintpch.h)
 
 target_include_directories(SprintEngine PRIVATE core/ renderer/ math/ common/)
 target_include_directories(SprintEngine_Editor PRIVATE core/ renderer/ math/ common/)

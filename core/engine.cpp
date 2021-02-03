@@ -1,13 +1,12 @@
-#include <gfx.h>
-#include <matrix.h>
-#include <texture.h>
-#include <shader.h>
+#include "gfx.h"
+#include "matrix.h"
+#include "texture.h"
+#include "shader.h"
 #include "engine.h"
 #include "log.h"
 #include "sparse_set.h"
 #include "ecs/ecs.h"
 #include "input_events.h"
-#include "../debug/profiler.h"
 
 namespace sprint {
 

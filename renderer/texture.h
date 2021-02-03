@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-//#include "GL.h"
 #include "gfx.h"
 
 namespace sprint {

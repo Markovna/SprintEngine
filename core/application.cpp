@@ -1,9 +1,7 @@
 #include <gfx.h>
 #include "application.h"
 #include "window.h"
-#include "log.h"
 #include "input_events.h"
-#include "../debug/profiler.h"
 #include "config.h"
 
 namespace sprint {

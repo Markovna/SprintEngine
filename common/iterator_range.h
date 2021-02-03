@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdio>
-
 template <typename It>
 class iterator_range {
 public:

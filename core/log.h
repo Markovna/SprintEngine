@@ -3,7 +3,6 @@
 #include "spdlog/spdlog.h"
 #include <iostream>
 
-
 namespace sprint {
 
 namespace log {

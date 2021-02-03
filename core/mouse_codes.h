@@ -1,8 +1,5 @@
 #pragma once
 
-#include <cstdint>
-
-
 namespace sprint {
 
 using MouseCode = uint16_t;
