@@ -26,7 +26,6 @@ set(SPRINT_SRCS
         common/color.cpp common/color.h
         common/signals/delegate.h
         common/signals/event.cpp common/signals/event.h
-        common/signals/function_ref.cpp common/signals/function_ref.h
         common/signals/delegate_tests.cpp common/signals/delegate_tests.h
         common/slot_map.h
         common/time_span.cpp common/time_span.h
@@ -52,7 +51,7 @@ set(SPRINT_SRCS
         math/math_utils.h
         core/components/transform_component.cpp core/components/transform_component.h)
 
-set(EDITOR_SRCS ${SPRINT_SRCS} editor/editor_app.cpp editor/editor_app.h editor/imgui_renderer.cpp editor/imgui_renderer.h editor/editor_gui.h editor/editor_gui.cpp editor/scene_graph_gui.cpp editor/scene_graph_gui.h editor/gui.h editor/gui.cpp)
+set(EDITOR_SRCS ${SPRINT_SRCS} editor/editor_app.cpp editor/editor_app.h editor/imgui_renderer.cpp editor/imgui_renderer.h editor/editor_gui.h editor/editor_gui.cpp editor/scene_graph_gui.cpp editor/scene_graph_gui.h editor/gui.h editor/gui.cpp editor/properties_gui.cpp editor/properties_gui.h)
 
 add_executable(SprintEngine ${SPRINT_SRCS} core/main.cpp)
 add_executable(SprintEngine_Editor ${EDITOR_SRCS} editor/main.cpp)

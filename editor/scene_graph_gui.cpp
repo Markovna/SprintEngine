@@ -14,7 +14,7 @@ static void EntityPopupMenu(ecs::entity_t id, void* ptr_id, std::vector<EditorGu
     }
 
     if (ImGui::MenuItem("Destroy")) {
-
+        //TODO
     }
 
     ImGui::Separator();
