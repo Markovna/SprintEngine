@@ -1,11 +1,8 @@
 #pragma once
 
 #include "spdlog/spdlog.h"
-#include <iostream>
 
-namespace sprint {
-
-namespace log {
+namespace sprint::log {
 
 namespace details {
 
@@ -54,8 +51,6 @@ static std::string Format(const std::string& str, const Args&... args) {
     spdlog::memory_buf_t buf;
     fmt::format_to(buf, str, args...);
     return { buf.data(), buf.size() };
-}
-
 }
 
 }

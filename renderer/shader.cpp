@@ -2,7 +2,6 @@
 #include "log.h"
 
 #include <fstream>
-#include <sstream>
 
 namespace sprint {
 

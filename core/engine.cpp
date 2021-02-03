@@ -8,6 +8,8 @@
 #include "ecs/ecs.h"
 #include "input_events.h"
 
+#include <GLFW/glfw3.h>
+
 namespace sprint {
 
 static std::unique_ptr<Shader> m_Shader;

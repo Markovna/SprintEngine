@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <iomanip>
 #include "spdlog/fmt/ostr.h"
 
 namespace sprint {

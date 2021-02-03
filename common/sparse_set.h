@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vector"
+#include <vector>
 
 template<class T, size_t PAGE_SIZE = 1u << 15u>
 class sparse_set {

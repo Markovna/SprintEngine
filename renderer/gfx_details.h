@@ -5,7 +5,6 @@
 #include "iterator_range.h"
 #include "semaphore.h"
 
-#include <utility>
 #include <variant>
 #include <thread>
 

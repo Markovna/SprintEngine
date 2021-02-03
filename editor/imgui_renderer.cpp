@@ -1,7 +1,6 @@
-#include <gfx.h>
+#include "gfx.h"
 #include "imgui_renderer.h"
 #include "input_events.h"
-#include "../debug/profiler.h"
 
 namespace sprint::editor {
 

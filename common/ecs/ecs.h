@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdint>
-#include <log.h>
 #include "sparse_set.h"
 
 namespace sprint::ecs {

@@ -1,13 +1,11 @@
 #pragma once
 
 #include "window_event.h"
-#include "window.h"
-#include "signals/event.h"
-
-#include "../editor/imgui_renderer.h"
-#include "engine.h"
 
 namespace sprint {
+
+class Window;
+class Engine;
 
 class Application {
 public:

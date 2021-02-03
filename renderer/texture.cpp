@@ -1,8 +1,4 @@
 #include "texture.h"
-
-#include <memory>
-#include <utility>
-
 #include "stb_image.h"
 #include "log.h"
 

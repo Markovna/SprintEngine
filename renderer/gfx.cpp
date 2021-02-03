@@ -3,7 +3,6 @@
 #include <utility>
 #include "gfx_details.h"
 #include "log.h"
-//#include "../debug/profiler.h"
 
 namespace sprint {
 

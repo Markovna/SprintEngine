@@ -5,11 +5,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-namespace sprint {
-
-namespace gfx {
-
-namespace details {
+namespace sprint::gfx::details {
 
 struct TextureFormatInfo {
     GLint internal_format;
@@ -111,9 +107,5 @@ private:
     Texture textures_[static_config::kTexturesCapacity];
     UniformInfo uniforms_[static_config::kUniformsCapacity];
 };
-
-}
-
-}
 
 }

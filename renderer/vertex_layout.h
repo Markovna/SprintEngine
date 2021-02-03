@@ -2,9 +2,7 @@
 
 #include "gfx_config.h"
 
-namespace sprint {
-
-namespace gfx {
+namespace sprint::gfx {
 
 struct Attribute {
 
@@ -97,8 +95,6 @@ private:
     uint32_t stride_ = 0;
     uint32_t size_ = 0;
 };
-
-}
 
 }
 

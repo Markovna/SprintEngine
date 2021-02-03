@@ -3,7 +3,6 @@
 #include "window_event.h"
 
 #include <queue>
-#include <functional>
 #include <GLFW/glfw3.h>
 
 namespace sprint {

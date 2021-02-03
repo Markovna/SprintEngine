@@ -1,6 +1,5 @@
 #pragma once
 
-#include <memory>
 #include "window.h"
 #include "engine.h"
 #include "scene_graph_gui.h"

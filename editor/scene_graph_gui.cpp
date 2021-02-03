@@ -3,7 +3,6 @@
 
 #include "scene_graph_gui.h"
 #include "gui.h"
-#include "signals/event.h"
 
 namespace sprint::editor {
 
