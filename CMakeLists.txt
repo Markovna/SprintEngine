@@ -4,12 +4,15 @@ project(SprintEngine)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/spdlog)
-add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/glfw)
-add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/glad)
-add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/stb_image)
-add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/imgui)
-#add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/assimp)
+set(CMAKE_EXPORT_COMPILE_COMMANDS YES)
+
+add_subdirectory(thirdparty/spdlog spdlog)
+add_subdirectory(thirdparty/glfw glfw)
+add_subdirectory(thirdparty/glad glad)
+add_subdirectory(thirdparty/stb_image stb_image)
+add_subdirectory(thirdparty/imgui imgui)
+
+add_subdirectory(reflection/parser)
 
 set(SPRINT_SRCS
         core/log.cpp core/log.h
@@ -53,28 +56,73 @@ set(SPRINT_SRCS
 
 set(EDITOR_SRCS ${SPRINT_SRCS} editor/editor_app.cpp editor/editor_app.h editor/imgui_renderer.cpp editor/imgui_renderer.h editor/editor_gui.h editor/editor_gui.cpp editor/scene_graph_gui.cpp editor/scene_graph_gui.h editor/gui.h editor/gui.cpp editor/properties_gui.cpp editor/properties_gui.h)
 
-add_executable(SprintEngine ${SPRINT_SRCS} core/main.cpp)
-add_executable(SprintEngine_Editor ${EDITOR_SRCS} editor/main.cpp)
+set(INCLUDE_DIRECTORIES core/ renderer/ math/ common/)
+set(LIBRARIES glfw spdlog glad stb_image imgui)
+
+# ------------------------------------
+# ----------- SprintEngine -----------
+# ------------------------------------
+
+add_executable(SprintEngine)
 
 target_precompile_headers(SprintEngine PRIVATE sprintpch.h)
-target_precompile_headers(SprintEngine_Editor PRIVATE sprintpch.h)
-
-target_include_directories(SprintEngine PRIVATE core/ renderer/ math/ common/)
-target_include_directories(SprintEngine_Editor PRIVATE core/ renderer/ math/ common/)
-
-target_link_libraries(SprintEngine PRIVATE glfw)
-target_link_libraries(SprintEngine PRIVATE spdlog)
-target_link_libraries(SprintEngine PRIVATE glad)
-target_link_libraries(SprintEngine PRIVATE stb_image)
-target_link_libraries(SprintEngine PRIVATE imgui)
-#target_link_libraries(SprintEngine PRIVATE assimp)
-
-target_link_libraries(SprintEngine_Editor PRIVATE glfw)
-target_link_libraries(SprintEngine_Editor PRIVATE spdlog)
-target_link_libraries(SprintEngine_Editor PRIVATE glad)
-target_link_libraries(SprintEngine_Editor PRIVATE stb_image)
-target_link_libraries(SprintEngine_Editor PRIVATE imgui)
-#target_link_libraries(SprintEngine PRIVATE assimp)
-
+target_include_directories(SprintEngine PRIVATE ${INCLUDE_DIRECTORIES})
+target_link_libraries(SprintEngine PRIVATE ${LIBRARIES})
 target_compile_definitions(SprintEngine PRIVATE GLFW_INCLUDE_NONE)
-target_compile_definitions(SprintEngine_Editor PRIVATE GLFW_INCLUDE_NONE)
+target_sources(SprintEngine PUBLIC ${SPRINT_SRCS} core/main.cpp)
+
+# ------------------------------------
+# ----------- SprintEditor -----------
+# ------------------------------------
+
+add_executable(SprintEditor)
+
+set(PARSER_INPUT renderer_api_gl.h)
+set(PARSER_OUT_HPP dummy.hpp)
+set(PARSER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/renderer")
+
+set(ALL_INCLUDES $<TARGET_PROPERTY:SprintEditor,INCLUDE_DIRECTORIES>)
+set(ALL_DEFINES $<TARGET_PROPERTY:SprintEditor,COMPILE_DEFINITIONS>)
+#set(ALL_PCH $<TARGET_PROPERTY:SprintEditor,PRECOMPILE_HEADERS>)
+
+add_custom_target(test_cpp_parse
+        COMMAND ${CMAKE_COMMAND}
+        ARGS
+            -DINPUT=profiler.h
+            -DIMPLICIT_INCLUDES="${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}"
+            -DINCLUDES="${ALL_INCLUDES}"
+            -DDEFINES="${ALL_DEFINES}"
+            -DGEN=$<TARGET_FILE:cpp_parser>
+            -P ${CMAKE_SOURCE_DIR}/cmake/RunCppParser.cmake
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/debug"
+        )
+
+add_custom_command(
+        OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/${PARSER_OUT_HPP}
+        COMMAND ${CMAKE_COMMAND}
+        ARGS
+            -DINPUT=${PARSER_INPUT}
+            -DIMPLICIT_INCLUDES="${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}"
+            -DINCLUDES="${ALL_INCLUDES}"
+            -DDEFINES="${ALL_DEFINES}"
+            -DGEN=$<TARGET_FILE:cpp_parser>
+            -P ${CMAKE_SOURCE_DIR}/cmake/RunCppParser.cmake
+        WORKING_DIRECTORY "${PARSER_WORKING_DIRECTORY}"
+)
+
+target_precompile_headers(SprintEditor PRIVATE sprintpch.h)
+target_include_directories(SprintEditor PRIVATE ${INCLUDE_DIRECTORIES})
+target_link_libraries(SprintEditor PRIVATE ${LIBRARIES})
+target_compile_definitions(SprintEditor PRIVATE GLFW_INCLUDE_NONE)
+target_sources(SprintEditor PUBLIC ${EDITOR_SRCS} editor/main.cpp ${CMAKE_CURRENT_SOURCE_DIR}/${PARSER_OUT_HPP})
+
+#----------------
+
+# TODO
+#add_custom_command(TARGET SprintEditor PRE_BUILD
+#        DEPENDS "${CMAKE_CURRENT_LIST_DIR}/reflection/parser/main.cpp"
+#        COMMAND $<TARGET_FILE:cpp_parser>
+#        --sources "reflection/parser/test.hpp"
+#        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+#        )
+

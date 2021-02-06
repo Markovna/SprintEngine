@@ -1,11 +1,6 @@
 #pragma once
 
-#include <cstdint>
-#include <cstdio>
-
-namespace sprint {
-
-namespace gfx {
+namespace sprint::gfx {
 
 namespace static_config {
 
@@ -25,8 +20,6 @@ constexpr static const uint16_t kMaxUniformsPerDrawCall = 128;
 constexpr static const uint16_t kMaxFrameCommandsCount = 2048;
 
 };
-
-}
 
 }
 

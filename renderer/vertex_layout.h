@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include "gfx_config.h"
 
 namespace sprint::gfx {

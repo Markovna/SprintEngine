@@ -1,7 +1,7 @@
 #pragma once
 
-#include <ecs/ecs.h>
-#include <transform.h>
+#include "ecs/ecs.h"
+#include "transform.h"
 
 namespace sprint {
 
