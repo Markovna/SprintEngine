@@ -54,7 +54,15 @@ set(SPRINT_SRCS
         math/math_utils.h
         core/components/transform_component.cpp core/components/transform_component.h sprintpch.h)
 
-set(EDITOR_SRCS ${SPRINT_SRCS} editor/editor_app.cpp editor/editor_app.h editor/imgui_renderer.cpp editor/imgui_renderer.h editor/editor_gui.h editor/editor_gui.cpp editor/scene_graph_gui.cpp editor/scene_graph_gui.h editor/gui.h editor/gui.cpp editor/properties_gui.cpp editor/properties_gui.h)
+set(EDITOR_SRCS ${SPRINT_SRCS}
+        editor/editor_app.cpp editor/editor_app.h
+        editor/imgui_renderer.cpp editor/imgui_renderer.h
+        editor/editor_gui.h editor/editor_gui.cpp
+        editor/scene_graph_gui.cpp editor/scene_graph_gui.h
+        editor/gui.h editor/gui.cpp
+        editor/properties_gui.cpp editor/properties_gui.h
+        reflection/runtime.cpp reflection/runtime.h
+        )
 
 set(INCLUDE_DIRECTORIES core/ renderer/ math/ common/)
 set(LIBRARIES glfw spdlog glad stb_image imgui)
@@ -88,13 +96,13 @@ set(ALL_DEFINES $<TARGET_PROPERTY:SprintEditor,COMPILE_DEFINITIONS>)
 add_custom_target(test_cpp_parse
         COMMAND ${CMAKE_COMMAND}
         ARGS
-            -DINPUT=profiler.h
+            -DINPUT=gfx_details.h
             -DIMPLICIT_INCLUDES="${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}"
             -DINCLUDES="${ALL_INCLUDES}"
             -DDEFINES="${ALL_DEFINES}"
             -DGEN=$<TARGET_FILE:cpp_parser>
             -P ${CMAKE_SOURCE_DIR}/cmake/RunCppParser.cmake
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/debug"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/renderer"
         )
 
 add_custom_command(
