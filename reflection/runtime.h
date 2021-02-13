@@ -4,8 +4,8 @@
 #include <vector>
 #include <unordered_map>
 
-#define REGISTER_TYPE(__TYPE, ...) \
-            auto& __info ## __TYPE = ::sprint::meta::details::Registry().Register<__TYPE>(#__TYPE); \
+#define REGISTER_TYPE(__TYPE) \
+            auto& __info ## __TYPE = ::sprint::meta::details::Registry().Register<__TYPE>(#__TYPE);
 
 #ifdef __CPP_PARSER_META__
  #define META(...) __attribute__((annotate(#__VA_ARGS__)))
@@ -25,29 +25,16 @@ using TypeId = uint32_t;
 
 static constexpr TypeId InvalidTypeId = std::numeric_limits<TypeId>::max();
 
+class Field;
+
 namespace details {
-
-class FieldGetter {
-public:
-    void* Get(const void*);
-};
-
-class FieldInfo {
-    std::string name;
-};
 
 class TypeInfo {
 public:
-    TypeId id{};
+    TypeId id = InvalidTypeId;
     std::string name;
-    std::vector<FieldInfo> fields;
+    std::vector<Field> fields;
 };
-
-template<class ...Args>
-static void AddFields(TypeInfo& type_info, Args&&... fields) {
-    static_assert(std::is_same<FieldInfo, std::decay_t<Args>...>::value, "Invalid argument");
-    type_info.fields.emplace_back(std::forward<Args>(fields)...);
-}
 
 template<class T>
 using clear_type = std::remove_reference_t<std::remove_cv_t<std::decay_t<T>>>;
@@ -106,7 +93,7 @@ static MetaRegistry& Registry() {
 }
 
 template<class T>
-class Reflection {};
+class Reflection;
 
 }
 
@@ -125,12 +112,59 @@ public:
         return details::Registry()[id_].name;
     }
 
+    [[nodiscard]] const std::vector<Field>& GetFields() const {
+        return details::Registry()[id_].fields;
+    }
+
+    [[nodiscard]] bool Valid() const {
+        return id_ != InvalidTypeId;
+    }
+
 private:
     explicit Type(TypeId id) : id_(id) {};
 
 private:
     TypeId id_;
 };
+
+class Field {
+public:
+    Field(std::string name, Type type, Type owner_type) :
+        name_(std::move(name)), type_(type), owner_type_(owner_type)
+    {}
+
+public:
+    [[nodiscard]] Type GetType() const { return type_; }
+    [[nodiscard]] Type GetOwnerType() const { return owner_type_; }
+    [[nodiscard]] const std::string& GetName() const { return name_; }
+
+private:
+    Type type_;
+    Type owner_type_;
+    std::string name_;
+};
+
+namespace details {
+
+template<class T>
+class TypeInitializer {
+public:
+    explicit TypeInitializer(std::string name) :
+        info_(::sprint::meta::details::Registry().Register<T>(name))
+    {}
+
+protected:
+    template<class FieldType>
+    void AddField(std::string name) {
+        if (Type::Get<FieldType>().Valid())
+            info_.fields.emplace_back(name, Type::Get<T>(), Type::Get<FieldType>());
+    }
+
+private:
+    TypeInfo& info_;
+};
+
+}
 
 /*
 class ObjectPtr {
@@ -150,27 +184,19 @@ public:
 */
 
 
-class TestClass {
+class SERIALIZED TestClass {
 private:
+
+    META()
     int value_;
 
     template<class T>
     friend class ::sprint::meta::details::Reflection;
 };
 
-template<>
-class ::sprint::meta::details::Reflection<TestClass> {
-
-    Reflection() {
-
-    }
-};
-
 void Test() {
 
-
-
-
+    Type::Get<TestClass>().Valid();
     REGISTER_TYPE(TestClass)
 
 }

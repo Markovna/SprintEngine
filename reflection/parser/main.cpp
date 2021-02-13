@@ -1,185 +1,16 @@
-#include <clang-c/Index.h>
-#include <clang-c/CXCompilationDatabase.h>
-#include <iostream>
-#include <sstream>
-#include <filesystem>
-#include <vector>
+#include "cpp_parser.hpp"
+#include "inja.hpp"
+#include <nlohmann/json.hpp>
 #include <string>
 
-std::ostream &operator<<(std::ostream &stream, const CXString &str) {
-    stream << clang_getCString(str);
-    clang_disposeString(str);
-    return stream;
-}
-
-class CppParser {
-public:
-    struct Options {
-        static const std::string include;
-        static const std::string system_include;
-        static const std::string define;
-
-        std::string source_file;
-        std::vector<std::string> arguments;
-    };
-
-    struct Field {
-        explicit Field(CXCursor cursor) :
-            cursor(cursor),
-            specifier(clang_getCXXAccessSpecifier(cursor))
-        {
-            ExtractString(clang_getTypeSpelling(clang_getCursorType(cursor)), type_name);
-            ExtractString(clang_getCursorSpelling(cursor), name);
-        }
-
-        CXCursor cursor;
-        CX_CXXAccessSpecifier specifier;
-        std::string name;
-        std::string type_name;
-    };
-
-    struct Class {
-        explicit Class(CXCursor cursor) :
-            cursor(cursor),
-            type(clang_getCursorType(cursor))
-        {
-            CXString name_str = clang_getTypeSpelling(type);
-            name = clang_getCString(name_str);
-            clang_disposeString(name_str);
-
-            clang_Type_visitFields(
-                type,
-                [] (CXCursor c, CXClientData client_data) {
-                    ((Class*) client_data)->fields.emplace_back(c);
-                    return CXVisit_Continue;
-                },
-                this
-            );
-
-            clang_visitChildren(
-                cursor,
-                [](CXCursor c, CXCursor parent, CXClientData client_data){
-                    CXCursorKind kind = clang_getCursorKind(c);
-                    if (kind == CXCursor_AnnotateAttr) {
-                        if (CompareCXString(clang_getCursorSpelling(c), "__CLASS_SERIALIZED__") == 0) {
-                            ((Class*)client_data)->serialized = true;
-                            return CXChildVisit_Break;
-                        }
-                    }
-                    return CXChildVisit_Continue;
-                },
-                this
-            );
-        }
-
-        CXCursor cursor;
-        CXType type;
-        std::string name;
-        bool serialized = false;
-        std::vector<Field> fields;
-    };
-
-public:
-    int Parse(const Options& options) {
-        std::vector<const char *> args;
-        for (auto &str : options.arguments) {
-            args.push_back(str.c_str());
-            std::cout << args.back() << "\n";
-        }
-
-        CXIndex index = clang_createIndex(true, true);
-        CXTranslationUnit unit;
-        CXErrorCode error = clang_parseTranslationUnit2(
-            index,
-            options.source_file.c_str(),
-            args.data(), args.size(),
-            nullptr, 0,
-            CXTranslationUnit_SkipFunctionBodies | CXTranslationUnit_Incomplete,
-            &unit
-        );
-
-        bool succeed = error == CXError_Success;
-        if (succeed) {
-            CXCursor cursor = clang_getTranslationUnitCursor(unit);
-            ParseClasses(cursor);
-        } else {
-            Diagnostic(unit, error);
-        }
-
-        clang_disposeTranslationUnit(unit);
-        clang_disposeIndex(index);
-        return succeed ? 0 : -1;
-    }
-
-    [[nodiscard]] const std::vector<Class>& GetClasses() const {
-        return classes_;
-    }
-
-private:
-    static void ExtractString(const CXString& cx_str, std::string& str) {
-        str = clang_getCString(cx_str);
-        clang_disposeString(cx_str);
-    }
-
-    static int CompareCXString(const CXString& cx_str, const char* str) {
-        int cmp = strcmp(str, clang_getCString(cx_str));
-        clang_disposeString(cx_str);
-        return cmp;
-    }
-
-    static bool Diagnostic(CXTranslationUnit unit, CXErrorCode error) {
-        auto diagnostics = clang_getNumDiagnostics(unit);
-        if (diagnostics != 0) {
-            std::cerr << "\n> Diagnostics:" << std::endl;
-            for (int i = 0; i != diagnostics; ++i) {
-                auto diag = clang_getDiagnostic(unit, i);
-                std::cerr << ">>> " << clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions())
-                          << std::endl;
-            }
-        }
-
-        if (error != CXError_Success) {
-            std::cerr << "Unable to parse translation unit. Quitting." << std::endl;
-            return false;
-        }
-
-        return true;
-    }
-
-    void ParseClasses(CXCursor root) {
-        clang_visitChildren(
-            root,
-            [](CXCursor c, CXCursor parent, CXClientData client_data) {
-                CXSourceLocation location = clang_getCursorLocation(c);
-                if (!clang_Location_isFromMainFile(location))
-                    return CXChildVisit_Continue;
-
-                CXCursorKind kind = clang_getCursorKind(c);
-                if (kind == CXCursor_StructDecl || kind == CXCursor_ClassDecl) {
-                    ((CppParser*)client_data)->classes_.emplace_back(c);
-                }
-
-                return CXChildVisit_Recurse;
-            },
-            this
-        );
-    }
-
-private:
-    std::vector<Class> classes_;
-};
-
-const std::string CppParser::Options::include = "-I";
-const std::string CppParser::Options::system_include = "-isystem";
-const std::string CppParser::Options::define = "-D";
-
-static CppParser::Options ParseCmdLine(int argc, char* argv[]) {
+static CppParser::Options ParseCmdLine(int argc, char* argv[], std::string& output) {
     using options = CppParser::Options;
     options opt;
 
     static const char* kArgIncludes = "--includes";
     static const char* kArgImplicitIncludes = "--implicit-includes";
-    static const char* kArgSourceFile = "--in-source";
+    static const char* kArgSourceFile = "--sources";
+    static const char* kArgOutputDirectory = "--output";
     static const char* kArgDefines = "--defines";
     static const char* kArgNameStartSymbols = "--";
 
@@ -209,9 +40,19 @@ static CppParser::Options ParseCmdLine(int argc, char* argv[]) {
                 ++idx;
             }
         } else if (strcmp(kArgSourceFile, arg) == 0) {
-            opt.source_file = argv[++idx];
             ++idx;
-        } else {
+            while (idx < argc && strncmp(argv[idx], kArgNameStartSymbols, 2) != 0) {
+                char* token = std::strtok(argv[idx], " ");
+                while (token) {
+                    opt.source_files.emplace_back(token);
+                    token = std::strtok(nullptr, " ");
+                }
+                ++idx;
+            }
+        } else if (strcmp(kArgOutputDirectory, arg) == 0) {
+            output = argv[++idx];
+        }
+        else {
             ++idx;
         }
     }
@@ -227,19 +68,86 @@ static CppParser::Options ParseCmdLine(int argc, char* argv[]) {
 int main(int argc, char *argv[]) {
     std::cout << "parser started...\n";
     CppParser parser;
-    int error = parser.Parse(ParseCmdLine(argc, argv));
-    if (!error) {
-        for (const CppParser::Class& klass : parser.GetClasses()) {
-            std::cout << "================================= \n" << klass.name;
+    std::string output;
+    int error = parser.Parse(ParseCmdLine(argc, argv, output));
+    if (error)
+        return error;
+
+    parser.ForEachClass(
+        [](const CppParser::Class& klass) {
+            std::cout << "\n" << klass.name << "\n(" << klass.path << ")";
             if (klass.serialized) {
                 std::cout << " (serialized)";
             }
-            std::cout << "\n";
+            std::cout << "\n-----------------------------------\n";
 
             for (const CppParser::Field& field : klass.fields) {
-                std::cout << "     " << field.type_name << " " << field.name << "\n";
+                std::cout << "    " << field.type_name << " " << field.name << "\n";
             }
         }
+    );
+
+    {
+        static const std::stringstream template_stream(
+            "#include \"runtime.h\"\n"
+            "#include \"{{header}}\"\n"
+            "\n"
+            "## for class in classes\n"
+            "template<>\n"
+            "class ::sprint::meta::details::Reflection<{{class.type}}>\n"
+            "   : public ::sprint::meta::details::TypeInitializer<{{class.type}}> {\n"
+            "public:\n"
+            "    Reflection()\n"
+            "        : TypeInitializer(\"{{class.type}}\")\n"
+            "    {}\n"
+            "\n"
+            "    void InitFields() {\n"
+            "## if existsIn(class, \"fields\")\n"
+            "## for field in class.fields\n"
+            "        AddField<{{field.type}}>(\"{{field.name}}\");\n"
+            "## endfor\n"
+            "## endif\n"
+            "    }\n"
+            "\n"
+            "};\n"
+            "## endfor");
+
+        nlohmann::json data;
+        parser.ForEachClass(
+            [&](const CppParser::Class& klass) {
+                nlohmann::json class_data;
+                class_data["type"] = klass.name;
+                for (auto& field : klass.fields) {
+                    class_data["fields"].push_back({
+                         {"name", field.name},
+                         {"type", field.type_name}
+                    });
+                }
+
+                data[klass.path]["classes"].emplace_back(std::move(class_data));
+            }
+        );
+
+        namespace fs = std::filesystem;
+
+        inja::Environment env;
+        inja::Template temp = env.parse(template_stream.str());
+        for (auto& [key, value] : data.items()) {
+            auto path = fs::path(key);
+            auto output_path = fs::path(output).append(fs::relative(path, fs::current_path()).string());
+            auto output_directory = output_path.parent_path();
+
+            value["header"] = fs::relative(path, output_directory);
+
+            if (!fs::exists(output_directory)) {
+                fs::create_directories(output_directory);
+            }
+
+            std::ofstream file(output_path.replace_extension(".gen.h"));
+            env.render_to(file, temp, value);
+            file.close();
+        }
     }
-    return error;
+
+    return 0;
 }
