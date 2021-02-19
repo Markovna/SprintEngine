@@ -29,6 +29,7 @@ static void EntityPopupMenu(ecs::entity_t id, void* ptr_id, std::vector<EditorGu
 static bool BeginEntityTreeNode(const TransformComponent* comp, bool& accept_drop, ecs::entity_t& selected_id, std::vector<EditorGuiCommand>& commands) {
     static const char* DRAG_DROP_TYPE = "DND";
     static const char* label = "ent %d";
+    static const float spacing = 4.0f;
 
     auto id = comp->GetID();
     void* ptr_id = (void*)(intptr_t)comp->GetID();
@@ -40,7 +41,7 @@ static bool BeginEntityTreeNode(const TransformComponent* comp, bool& accept_dro
     bool open;
     bool hovered;
 
-    float cursor_pos = ImGui::GetCursorPosX();
+    float cursor_pos_x = ImGui::GetCursorPosX();
     float width = ImGui::GetContentRegionAvailWidth();
     float height = ImGui::GetTextLineHeight();
     auto column_width = ImGui::GetContentRegionAvailWidth() - 25;
@@ -48,7 +49,7 @@ static bool BeginEntityTreeNode(const TransformComponent* comp, bool& accept_dro
     ImGui::Dummy({width, height});
     hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlapped | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
-    ImGui::SameLine(); ImGui::SetCursorPosX(cursor_pos);
+    ImGui::SameLine(); ImGui::SetCursorPosX(cursor_pos_x);
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0,0});
     ImGui::BeginColumns(nullptr, 2, ImGuiColumnsFlags_NoBorder | ImGuiColumnsFlags_NoResize);
     ImGui::SetColumnWidth(0, column_width);
@@ -56,28 +57,30 @@ static bool BeginEntityTreeNode(const TransformComponent* comp, bool& accept_dro
 
     if (accept_drop) {
         bool small_target_hovered = false;
-        if (const ImGuiPayload* payload = gui::DragDropTarget(ptr_id, DRAG_DROP_TYPE, {width, 3}, small_target_hovered)) {
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() - spacing);
+        if (const ImGuiPayload* payload = gui::DragDropTarget(ptr_id, DRAG_DROP_TYPE, {width, spacing}, small_target_hovered)) {
             uint32_t child_id = *(uint32_t *) payload->Data;
             auto *parent = comp->GetParent();
             ecs::entity_t parent_id = parent ? parent->GetID() : ecs::null;
             commands.emplace_back(SetParentCommand{child_id, parent_id, id });
         }
+        ImGui::SameLine();
+        ImGui::SetCursorPos({cursor_pos_x, ImGui::GetCursorPosY() + spacing});
 
         if (!small_target_hovered) {
-            ImGui::SameLine(); ImGui::SetCursorPosX(cursor_pos);
             if (const ImGuiPayload *payload = gui::DragDropTarget(ptr_id, DRAG_DROP_TYPE, {width, height})) {
                 uint32_t child_id = *(uint32_t *) payload->Data;
                 commands.emplace_back(SetParentCommand{child_id, id, ecs::null});
             }
+            ImGui::SameLine(); ImGui::SetCursorPosX(cursor_pos_x);
         }
-        ImGui::SameLine(); ImGui::SetCursorPosX(cursor_pos);
     }
 
     ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_OpenOnArrow;
     if (leaf) flag |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
     if (selected) flag |= ImGuiTreeNodeFlags_Selected;
 
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0,0});
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, spacing });
     open = ImGui::TreeNodeEx(ptr_id, flag, label, id);
     ImGui::PopStyleVar();
 
