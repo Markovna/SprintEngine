@@ -1,14 +1,10 @@
 #include "ecs.h"
 
-namespace sprint {
+namespace sprint::ecs {
 
-namespace ecs {
-
-component_id details::next_id() {
-    static component_id value{};
+uint32_t details::next_index() {
+    static size_t value{};
     return value++;
-}
-
 }
 
 }

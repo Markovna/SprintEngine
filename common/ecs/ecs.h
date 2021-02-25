@@ -1,11 +1,11 @@
 #pragma once
 
 #include "sparse_set.h"
+#include "meta_runtime.h"
 
 namespace sprint::ecs {
 
 using entity_t = uint32_t;
-using component_id = uint32_t;
 
 namespace details {
 
@@ -82,7 +82,7 @@ private:
     std::vector<Component> components_;
 };
 
-component_id next_id();
+uint32_t next_index();
 
 }
 
@@ -91,9 +91,9 @@ static constexpr entity_t null = details::entity_traits::index_mask | details::e
 template<class Component>
 struct component_info {
 public:
-    static component_id id() {
-        static component_id id = details::next_id();
-        return id;
+    static uint32_t index() {
+        static uint32_t index = details::next_index();
+        return index;
     }
 };
 
@@ -230,7 +230,7 @@ public:
     }
 
     template<class ...Comp>
-    decltype(auto) get(entity_t entity) const {
+    auto get(entity_t entity) const {
         assert(contains(entity));
 
         if constexpr (sizeof...(Comp) == 0) {
@@ -249,8 +249,6 @@ private:
     const sparse_set<entity_t>* entities_;
 };
 
-
-
 struct registry {
 private:
     static constexpr size_t invalid_idx = details::entity_traits::get_index(null);
@@ -260,32 +258,40 @@ private:
     using pool_ptr = std::unique_ptr<sparse_set<entity_t>>;
     using entity_traits = details::entity_traits;
 
+    struct pool_info {
+        pool_ptr ptr;
+        meta::TypeId type_id;
+    };
+
     template<class Component>
     pool_t<Component>& assure() {
-        component_id id = component_info<Component>::id();
-        if (id >= pools_.size()) {
-            pools_.resize(id+1);
+        uint32_t idx = component_info<Component>::index();
+        if (idx >= pools_.size()) {
+            pools_.resize(idx+1);
         }
 
-        if (!pools_[id]) {
-            pools_[id].reset(new pool_t<Component>);
+        auto& [ptr, id] = pools_[idx];
+
+        if (!ptr) {
+            ptr.reset(new pool_t<Component>);
+            id = meta::Type::Get<Component>().Id();
         }
 
-        return *static_cast<pool_t<Component>*>(pools_[id].get());
+        return *static_cast<pool_t<Component>*>(ptr.get());
     }
 
     template<class Component>
     const pool_t<Component>* get_pool() const {
-        component_id id = component_info<Component>::id();
-        assert(id < pools_.size());
-        return pools_[id] ? static_cast<pool_t<Component>*>(pools_[id].get()) : nullptr;
+        uint32_t idx = component_info<Component>::index();
+        assert(idx < pools_.size());
+        return pools_[idx].ptr ? static_cast<pool_t<Component>*>(pools_[idx].ptr.get()) : nullptr;
     }
 
     template<class Component>
     pool_t<Component>* get_pool() {
-        component_id id = component_info<Component>::id();
-        assert(id < pools_.size());
-        return pools_[id] ? static_cast<pool_t<Component>*>(pools_[id].get()) : nullptr;
+        uint32_t idx = component_info<Component>::index();
+        assert(idx < pools_.size());
+        return pools_[idx].ptr ? static_cast<pool_t<Component>*>(pools_[idx].ptr.get()) : nullptr;
     }
 
 public:
@@ -295,13 +301,12 @@ public:
             entity_traits::set_index(entity, entities_.size());
             entity_traits::set_generation(entity, {});
             entities_.push_back(entity);
-        } else {
+        }
+        else {
             entity_t free = entities_[free_idx_];
-
             entity_traits::set_index(entity, free_idx_);
             entity_traits::set_generation(entity, entity_traits::get_generation(free));
             entities_[free_idx_] = entity;
-
             free_idx_ = entity_traits::get_index(free);
         }
         assert(valid(entity));
@@ -322,6 +327,15 @@ public:
         return index < entities_.size() && entities_[index] == entity;
     }
 
+    template<typename Func>
+    void visit(entity_t entity, Func func) const {
+        for (auto& [ptr, id] : pools_) {
+            if (ptr && ptr->contains(entity)) {
+                func(id);
+            }
+        }
+    }
+
     template<class Component, class ...Args>
     Component& emplace(entity_t entity, Args &&... args) {
         assert(valid(entity));
@@ -336,9 +350,9 @@ public:
 
     void remove_all(entity_t entity) {
         assert(valid(entity));
-        for (auto& pool : pools_) {
-            if (pool && pool->contains(entity)) {
-                pool->erase(entity);
+        for (auto& [ptr, _] : pools_) {
+            if (ptr && ptr->contains(entity)) {
+                ptr->erase(entity);
             }
         }
     }
@@ -376,8 +390,8 @@ public:
     template<class Component>
     [[nodiscard]] bool has(entity_t entity) const {
         assert(valid(entity));
-        auto id = component_info<Component>::id();
-        return id < pools_.size() && pools_[id] && pools_[id]->contains(entity);
+        auto idx = component_info<Component>::index();
+        return idx < pools_.size() && pools_[idx].ptr && pools_[idx].ptr->contains(entity);
     }
 
     template<class ...Component>
@@ -386,7 +400,7 @@ public:
     }
 
 private:
-    std::vector<pool_ptr> pools_{};
+    std::vector<pool_info> pools_{};
     std::vector<entity_t> entities_{};
     size_t free_idx_{invalid_idx};
 };

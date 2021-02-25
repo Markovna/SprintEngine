@@ -1,10 +1,13 @@
 #pragma once
+#include "meta_runtime.h"
 
 namespace sprint {
 
-struct Rect {
-    int x{}, y{};
-    uint32_t width{}, height{};
+struct SERIALIZED Rect {
+    int x{};
+    int y{};
+    uint32_t width{};
+    uint32_t height{};
 };
 
 inline bool Valid(const Rect& rect) { return rect.width > 0 && rect.height > 0; }

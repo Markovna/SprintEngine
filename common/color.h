@@ -1,8 +1,9 @@
 #pragma once
+#include "meta_runtime.h"
 
 namespace sprint {
 
-struct Color {
+struct SERIALIZED Color {
 
     static const Color Black;
     static const Color White;
@@ -13,7 +14,10 @@ struct Color {
     Color(float r, float g, float b, float a = 1.0f) noexcept;
     Color() noexcept;
 
-    float r, g, b, a;
+    float r;
+    float g;
+    float b;
+    float a;
 
     Color operator*(const Color& rhs) const;
     void operator*=(const Color& other);

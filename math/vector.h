@@ -3,6 +3,7 @@
 #include <string>
 #include <iomanip>
 #include "spdlog/fmt/ostr.h"
+#include "meta_runtime.h"
 
 namespace sprint {
 
@@ -18,7 +19,7 @@ using Vec3 = vector<3>;
 using Vec4 = vector<4>;
 
 template <size_t N>
-struct vector {
+struct SERIALIZED vector {
 
     const float& operator[] (size_t index) const {
         assert(index >= 0 && index < N);
@@ -35,7 +36,7 @@ private:
 };
 
 template<>
-struct vector<2> {
+struct SERIALIZED vector<2> {
     float x, y;
     static constexpr const size_t N = 2;
 
@@ -66,7 +67,7 @@ struct vector<2> {
 };
 
 template<>
-struct vector<3> {
+struct SERIALIZED vector<3> {
     float x, y, z;
     static constexpr const size_t N = 3;
 

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <filesystem>
 
 std::ostream &operator<<(std::ostream &stream, const CXString &str) {
     stream << clang_getCString(str);
@@ -30,12 +31,27 @@ public:
         {
             ExtractString(clang_getCursorSpelling(cursor), name);
             ExtractString(clang_getTypeSpelling(clang_getCanonicalType(clang_getCursorType(cursor))), type_name);
+
+            clang_visitChildren(
+                cursor,
+                [](CXCursor c, CXCursor parent, CXClientData client_data){
+                    CXCursorKind kind = clang_getCursorKind(c);
+                    if (kind == CXCursor_AnnotateAttr) {
+                        if (CompareCXString(clang_getCursorSpelling(c), "__FIELD_SERIALIZED__") == 0) {
+                            ((Field*)client_data)->serializable = true;
+                        }
+                    }
+                    return CXChildVisit_Continue;
+                },
+                this
+            );
         }
 
         CXCursor cursor;
         CX_CXXAccessSpecifier specifier;
         std::string name;
         std::string type_name;
+        bool serializable = false;
     };
 
     struct Class {
@@ -83,6 +99,35 @@ public:
         std::vector<Field> fields;
     };
 
+    static bool CreatePch(std::string header, CXIndex& index, const Options& options, std::string& output) {
+        if (header.empty())
+            return false;
+
+        std::vector<const char *> args;
+        for (auto &str : options.arguments) {
+            args.push_back(str.c_str());
+        }
+
+        CXTranslationUnit unit;
+        CXErrorCode error = clang_parseTranslationUnit2(
+            index,
+            header.c_str(),
+            args.data(), args.size(),
+            nullptr, 0,
+            CXTranslationUnit_ForSerialization,
+            &unit);
+        Diagnostic(unit, error);
+
+        namespace fs = std::filesystem;
+
+        output = fs::path(header).filename().replace_extension("pch").string();
+        clang_saveTranslationUnit(unit, output.c_str(), clang_defaultSaveOptions(unit));
+        clang_disposeTranslationUnit(unit);
+
+        std::cout << "Precompiled header " << output << " was created."<< std::endl;
+        return true;
+    }
+
 public:
     int Parse(const Options& options) {
         std::vector<const char *> args;
@@ -121,7 +166,7 @@ public:
     }
 
     template <class F>
-    void ForEachClass(F func) {
+    void ForEachClass(F func) const {
         for (const Class& klass : classes_) {
             func(klass);
         }

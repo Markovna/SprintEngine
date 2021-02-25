@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 namespace sprint::gfx {
 
 namespace static_config {

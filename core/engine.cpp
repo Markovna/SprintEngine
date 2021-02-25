@@ -154,44 +154,44 @@ static void TestEcs() {
     assert(set.valid(entity4));
 
 
-    struct TransformComponent {
-        Vec3 positions;
-        Quat rotation;
-        Vec3 scale;
-    };
+//    struct TransformComponent {
+//        Vec3 positions;
+//        Quat rotation;
+//        Vec3 scale;
+//    };
+//
+//    struct MeshComponent {
+//        float value;
+//    };
+//
+//    set.emplace<TransformComponent>(entity1, TransformComponent{Vec3::Zero, Quat::Identity, Vec3::One});
+//    set.emplace<MeshComponent>(entity1, MeshComponent{1.0f});
+//
+//    set.emplace<TransformComponent>(entity2, TransformComponent{Vec3::Zero, Quat::Identity, Vec3::One});
+//    set.emplace<MeshComponent>(entity2, MeshComponent{1.0f});
+//
+//    set.emplace<TransformComponent>(entity3, TransformComponent{Vec3::Zero, Quat::Identity, Vec3::One});
+//    set.emplace<TransformComponent>(entity4, TransformComponent{Vec3::Zero, Quat::Identity, Vec3::One});
+//
+//    auto view = set.view<TransformComponent, MeshComponent>();
+//    for (auto e : view) {
+//        TransformComponent& tr = view.get<TransformComponent>(e);
+//        auto [trans, mesh] = view.get<TransformComponent, MeshComponent>(e);
+//        trans.scale = 2*Vec3::One;
+//
+//        auto [trans1, mesh1] = view.get(e);
+//
+//        log::core::Info("TransformComponent & MeshComponent entity: {}", e);
+//    }
 
-    struct MeshComponent {
-        float value;
-    };
-
-    set.emplace<TransformComponent>(entity1, TransformComponent{Vec3::Zero, Quat::Identity, Vec3::One});
-    set.emplace<MeshComponent>(entity1, MeshComponent{1.0f});
-
-    set.emplace<TransformComponent>(entity2, TransformComponent{Vec3::Zero, Quat::Identity, Vec3::One});
-    set.emplace<MeshComponent>(entity2, MeshComponent{1.0f});
-
-    set.emplace<TransformComponent>(entity3, TransformComponent{Vec3::Zero, Quat::Identity, Vec3::One});
-    set.emplace<TransformComponent>(entity4, TransformComponent{Vec3::Zero, Quat::Identity, Vec3::One});
-
-    auto view = set.view<TransformComponent, MeshComponent>();
-    for (auto e : view) {
-        TransformComponent& tr = view.get<TransformComponent>(e);
-        auto [trans, mesh] = view.get<TransformComponent, MeshComponent>(e);
-        trans.scale = 2*Vec3::One;
-
-        auto [trans1, mesh1] = view.get(e);
-
-        log::core::Info("TransformComponent & MeshComponent entity: {}", e);
-    }
-
-    auto& tr = set.get<TransformComponent>(entity1);
-    assert(tr.scale == 2*Vec3::One);
-
-    auto transform_view = set.view<TransformComponent>();
-    for (auto e : transform_view) {
-        TransformComponent& tr = transform_view.get(e);
-        log::core::Info("TransformComponent entity: {}", e);
-    }
+//    auto& tr = set.get<TransformComponent>(entity1);
+//    assert(tr.scale == 2*Vec3::One);
+//
+//    auto transform_view = set.view<TransformComponent>();
+//    for (auto e : transform_view) {
+//        TransformComponent& tr = transform_view.get(e);
+//        log::core::Info("TransformComponent entity: {}", e);
+//    }
 
 }
 

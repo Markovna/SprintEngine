@@ -3,10 +3,11 @@
 #include "vector.h"
 #include "quat.h"
 #include "matrix.h"
+#include "meta_runtime.h"
 
 namespace sprint {
 
-class Transform {
+class SERIALIZED Transform {
 public:
     Transform() noexcept
         : position_(), rotation_(), scale_(Vec3::One) {}
@@ -61,9 +62,9 @@ public:
     void set_scale(const vec3& scale) { scale_ = scale; }
     void set_rotation(const quat& rot) { rotation_ = rot; }
 private:
-    vec3 position_;
-    quat rotation_;
-    vec3 scale_;
+    SERIALIZABLE vec3 position_;
+    SERIALIZABLE quat rotation_;
+    SERIALIZABLE vec3 scale_;
 };
 
 }

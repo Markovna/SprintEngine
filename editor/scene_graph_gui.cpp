@@ -3,6 +3,7 @@
 
 #include "scene_graph_gui.h"
 #include "gui.h"
+#include "meta_runtime.h"
 
 namespace sprint::editor {
 
@@ -151,9 +152,60 @@ std::unique_ptr<SceneGraphEditorGui> SceneGraphEditorGui::Create(Engine& e) {
     return std::make_unique<SceneGraphEditorGui>(e);
 }
 
+static void Draw(meta::Reference& instance, const meta::Field& field) {
+    meta::Type type(field.GetType());
+    meta::Reference ref(field.GetReference(instance));
+
+    gui::PushID(field.GetName().c_str());
+
+    if (type.Is<int>() ||
+        type.Is<uint32_t>() ||
+        type.Is<size_t>()) {
+        auto& value = ref.Get<int>();
+        gui::InputInt(field.GetName().c_str(), &value);
+    } else if (type.Is<float>()) {
+        auto& value = ref.Get<float>();
+        gui::InputFloat(field.GetName().c_str(), &value);
+    } else if (type.Is<double>()) {
+        auto& value = ref.Get<double>();
+        gui::InputDouble(field.GetName().c_str(), &value);
+    } else if (type.Is<bool>()) {
+        auto& value = ref.Get<bool>();
+        gui::Checkbox(field.GetName().c_str(), &value);
+    } else {
+        gui::Text("%s: ", field.GetName().c_str());
+        gui::Indent(20.0f);
+        for (const auto& inner_field : type.GetFields()) {
+            Draw(ref, inner_field);
+        }
+        gui::Unindent(20.0f);
+    }
+
+    gui::PopID();
+
+}
+
 void SceneGraphEditorGui::OnGui() {
     ImGui::Begin("Scene Graph");
     DrawTreeRecursive(engine_.get_scene()->GetRoots(), true, selected_, commands_);
+    ImGui::End();
+
+    ImGui::Begin("Test Properties");
+    if (selected_ != ecs::null) {
+        Scene *scene = engine_.get_scene();
+        scene->visit(selected_, [&] (const meta::TypeId id) {
+            meta::Type type(id);
+
+            if (type.Is<TransformComponent>()) {
+                meta::Reference ref(scene->get<TransformComponent>(selected_));
+                gui::Text("Type: %s (%d)", type.Name().c_str(), id);
+
+                for (const auto &field : type.GetFields()) {
+                    Draw(ref, field);
+                }
+            }
+        });
+    }
     ImGui::End();
 
     for (const auto& command : commands_) {

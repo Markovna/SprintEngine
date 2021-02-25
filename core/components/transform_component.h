@@ -2,10 +2,11 @@
 
 #include "ecs/ecs.h"
 #include "transform.h"
+#include "meta_runtime.h"
 
 namespace sprint {
 
-struct TransformComponent {
+struct SERIALIZED TransformComponent {
 public:
     template<class T>
     struct child_iterator {
@@ -134,18 +135,18 @@ private:
     static bool IsChildOf(const TransformComponent& child, const TransformComponent& parent);
 
 private:
-    ecs::registry& registry_;
-    TransformComponent* root_;
-    ecs::entity_t entity_;
-    ecs::entity_t parent_;
-    ecs::entity_t child_first_;
-    ecs::entity_t child_last_;
-    ecs::entity_t next_;
-    ecs::entity_t prev_;
-    size_t child_count_;
-    Transform local_;
+    SERIALIZABLE ecs::registry& registry_;
+    SERIALIZABLE TransformComponent* root_;
+    SERIALIZABLE ecs::entity_t entity_;
+    SERIALIZABLE ecs::entity_t parent_;
+    SERIALIZABLE ecs::entity_t child_first_;
+    SERIALIZABLE ecs::entity_t child_last_;
+    SERIALIZABLE ecs::entity_t next_;
+    SERIALIZABLE ecs::entity_t prev_;
+    SERIALIZABLE Transform local_;
     mutable Transform world_;
-    mutable bool dirty_;
+    SERIALIZABLE size_t child_count_;
+    SERIALIZABLE mutable bool dirty_;
 };
 
 }
