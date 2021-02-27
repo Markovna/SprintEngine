@@ -1,7 +1,6 @@
-#include <imgui.h>
-#include <imgui_internal.h>
-
 #include "scene_graph_gui.h"
+#include "engine.h"
+#include "editor_gui.h"
 #include "gui.h"
 #include "meta_runtime.h"
 
@@ -32,7 +31,9 @@ static bool BeginEntityTreeNode(const TransformComponent* comp, bool& accept_dro
     static const char* label = "ent %d";
     static const float spacing = 4.0f;
 
-    auto id = comp->GetID();
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {2,2});
+
+    const auto id = comp->GetID();
     void* ptr_id = (void*)(intptr_t)comp->GetID();
     char str_ptr[16];
     sprintf(str_ptr,"%u", id);
@@ -40,26 +41,31 @@ static bool BeginEntityTreeNode(const TransformComponent* comp, bool& accept_dro
     bool leaf = comp->GetChildren() == nullptr;
     bool selected = selected_id == id;
     bool open;
-    bool hovered;
+    bool hovered = false;
 
-    float cursor_pos_x = ImGui::GetCursorPosX();
-    float width = ImGui::GetContentRegionAvailWidth();
-    float height = ImGui::GetTextLineHeight();
-    auto column_width = ImGui::GetContentRegionAvailWidth() - 25;
+    const float cursor_pos_x = ImGui::GetCursorPosX();
+    const float width = ImGui::GetContentRegionAvail().x;
+    const float height = ImGui::GetFrameHeight();
+    const float button_size = ImGui::GetFrameHeight();
+    auto column_width = width - button_size - spacing;
+
+    const ImRect clip_rect(
+        ImGui::GetCursorScreenPos(),
+        { ImGui::GetCursorScreenPos().x + column_width, ImGui::GetCursorScreenPos().y + height});
 
     ImGui::Dummy({width, height});
-    hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlapped | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    if (!ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
+        hovered = ImGui::IsItemHovered(
+            ImGuiHoveredFlags_AllowWhenOverlapped | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    }
 
     ImGui::SameLine(); ImGui::SetCursorPosX(cursor_pos_x);
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0,0});
-    ImGui::BeginColumns(nullptr, 2, ImGuiColumnsFlags_NoBorder | ImGuiColumnsFlags_NoResize);
-    ImGui::SetColumnWidth(0, column_width);
-    ImGui::PopStyleVar();
 
     if (accept_drop) {
         bool small_target_hovered = false;
         ImGui::SetCursorPosY(ImGui::GetCursorPosY() - spacing);
-        if (const ImGuiPayload* payload = gui::DragDropTarget(ptr_id, DRAG_DROP_TYPE, {width, spacing}, small_target_hovered)) {
+
+        if (const ImGuiPayload* payload = gui::DragDropTarget(ptr_id, DRAG_DROP_TYPE, {column_width, spacing}, small_target_hovered)) {
             uint32_t child_id = *(uint32_t *) payload->Data;
             auto *parent = comp->GetParent();
             ecs::entity_t parent_id = parent ? parent->GetID() : ecs::null;
@@ -69,7 +75,7 @@ static bool BeginEntityTreeNode(const TransformComponent* comp, bool& accept_dro
         ImGui::SetCursorPos({cursor_pos_x, ImGui::GetCursorPosY() + spacing});
 
         if (!small_target_hovered) {
-            if (const ImGuiPayload *payload = gui::DragDropTarget(ptr_id, DRAG_DROP_TYPE, {width, height})) {
+            if (const ImGuiPayload *payload = gui::DragDropTarget(ptr_id, DRAG_DROP_TYPE, {column_width, height})) {
                 uint32_t child_id = *(uint32_t *) payload->Data;
                 commands.emplace_back(SetParentCommand{child_id, id, ecs::null});
             }
@@ -77,7 +83,11 @@ static bool BeginEntityTreeNode(const TransformComponent* comp, bool& accept_dro
         }
     }
 
-    ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_OpenOnArrow;
+    ImGui::PushClipRect(clip_rect.Min, clip_rect.Max, true);
+    ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_SpanAvailWidth |
+                            ImGuiTreeNodeFlags_AllowItemOverlap |
+                            ImGuiTreeNodeFlags_OpenOnArrow |
+                            ImGuiTreeNodeFlags_FramePadding;
     if (leaf) flag |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
     if (selected) flag |= ImGuiTreeNodeFlags_Selected;
 
@@ -111,23 +121,21 @@ static bool BeginEntityTreeNode(const TransformComponent* comp, bool& accept_dro
         ImGui::EndPopup();
     }
 
-    ImGui::NextColumn();
+    ImGui::PopClipRect();
 
     // Add Child button
     if (hovered) {
+        ImGui::SameLine(clip_rect.Max.x + spacing);
         auto btn_flags = ImGuiButtonFlags_PressedOnClick | ImGuiButtonFlags_AlignTextBaseLine |
             ImGuiButtonFlags_NoHoldingActiveId | ImGuiButtonFlags_NoHoveredOnFocus | ImGuiButtonFlags_AllowItemOverlap;
 
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {0,0});
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0,0});
-        if (ImGui::ButtonEx("+", ImVec2(15, 0), btn_flags)) {
+        if (ImGui::ButtonEx("+", ImVec2(button_size, button_size), btn_flags)) {
             gui::SetItemOpen(ptr_id, true);
             commands.emplace_back(CreateEntityCommand{id});
         }
-        ImGui::PopStyleVar(2);
     }
 
-    ImGui::EndColumns();
+    ImGui::PopStyleVar(1);
 
     return open && !leaf;
 }
@@ -148,65 +156,17 @@ static void DrawTreeRecursive(TransformComponent::iterator it, bool accept_drop,
     }
 }
 
-std::unique_ptr<SceneGraphEditorGui> SceneGraphEditorGui::Create(Engine& e) {
-    return std::make_unique<SceneGraphEditorGui>(e);
-}
-
-static void Draw(meta::Reference& instance, const meta::Field& field) {
-    meta::Type type(field.GetType());
-    meta::Reference ref(field.GetReference(instance));
-
-    gui::PushID(field.GetName().c_str());
-
-    if (type.Is<int>() ||
-        type.Is<uint32_t>() ||
-        type.Is<size_t>()) {
-        auto& value = ref.Get<int>();
-        gui::InputInt(field.GetName().c_str(), &value);
-    } else if (type.Is<float>()) {
-        auto& value = ref.Get<float>();
-        gui::InputFloat(field.GetName().c_str(), &value);
-    } else if (type.Is<double>()) {
-        auto& value = ref.Get<double>();
-        gui::InputDouble(field.GetName().c_str(), &value);
-    } else if (type.Is<bool>()) {
-        auto& value = ref.Get<bool>();
-        gui::Checkbox(field.GetName().c_str(), &value);
-    } else {
-        gui::Text("%s: ", field.GetName().c_str());
-        gui::Indent(20.0f);
-        for (const auto& inner_field : type.GetFields()) {
-            Draw(ref, inner_field);
-        }
-        gui::Unindent(20.0f);
-    }
-
-    gui::PopID();
-
+std::unique_ptr<SceneGraphEditorGui> SceneGraphEditorGui::Create(EditorGui& editor, Engine& engine) {
+    return std::make_unique<SceneGraphEditorGui>(editor, engine);
 }
 
 void SceneGraphEditorGui::OnGui() {
+    ecs::entity_t selected = editor_.Selected();
     ImGui::Begin("Scene Graph");
-    DrawTreeRecursive(engine_.get_scene()->GetRoots(), true, selected_, commands_);
+    DrawTreeRecursive(engine_.get_scene()->GetRoots(), true, selected, commands_);
     ImGui::End();
 
-    ImGui::Begin("Test Properties");
-    if (selected_ != ecs::null) {
-        Scene *scene = engine_.get_scene();
-        scene->visit(selected_, [&] (const meta::TypeId id) {
-            meta::Type type(id);
-
-            if (type.Is<TransformComponent>()) {
-                meta::Reference ref(scene->get<TransformComponent>(selected_));
-                gui::Text("Type: %s (%d)", type.Name().c_str(), id);
-
-                for (const auto &field : type.GetFields()) {
-                    Draw(ref, field);
-                }
-            }
-        });
-    }
-    ImGui::End();
+    editor_.Select(selected);
 
     for (const auto& command : commands_) {
         std::visit([&](const auto& cmd) {

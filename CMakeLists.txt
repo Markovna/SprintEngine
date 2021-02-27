@@ -91,24 +91,24 @@ set(LIBRARIES
 # ---------------------- SprintEngine ----------------------
 # ----------------------------------------------------------
 
-add_executable(SprintEngine core/main.cpp)
+add_executable(SprintEngine core/main.cpp ${ENGINE_SRC})
 
 target_precompile_headers(SprintEngine PRIVATE sprintpch.h)
 target_include_directories(SprintEngine PRIVATE ${INCLUDE_DIRECTORIES})
 target_link_libraries(SprintEngine PRIVATE ${LIBRARIES})
 target_compile_definitions(SprintEngine PRIVATE GLFW_INCLUDE_NONE)
-target_sources(SprintEngine PUBLIC ${ENGINE_SRC})
+#target_sources(SprintEngine PUBLIC ${ENGINE_SRC})
 
 # ----------------------------------------------------------
 # ---------------------- SprintEditor ----------------------
 # ----------------------------------------------------------
 
-add_executable(SprintEditor editor/main.cpp)
+add_executable(SprintEditor editor/main.cpp ${EDITOR_SRC} ${ENGINE_SRC} ${REFLECTION_SRC})
 
 set(ALL_INCLUDES $<TARGET_PROPERTY:SprintEditor,INCLUDE_DIRECTORIES>)
 set(ALL_DEFINES $<TARGET_PROPERTY:SprintEditor,COMPILE_DEFINITIONS>)
 
-add_custom_target(test_cpp_parse
+add_custom_target(gen_meta_module
         COMMAND ${CMAKE_COMMAND}
         ARGS
             -DINPUT="${ENGINE_SRC}"
@@ -138,5 +138,5 @@ target_precompile_headers(SprintEditor PRIVATE sprintpch.h)
 target_include_directories(SprintEditor PRIVATE ${INCLUDE_DIRECTORIES})
 target_link_libraries(SprintEditor PRIVATE ${LIBRARIES})
 target_compile_definitions(SprintEditor PRIVATE GLFW_INCLUDE_NONE)
-target_sources(SprintEditor PUBLIC ${EDITOR_SRC} ${ENGINE_SRC} ${REFLECTION_SRC})
+#target_sources(SprintEditor PUBLIC ${EDITOR_SRC} ${ENGINE_SRC} ${REFLECTION_SRC})
 

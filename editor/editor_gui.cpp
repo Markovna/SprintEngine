@@ -2,6 +2,8 @@
 
 #include "texture.h"
 #include "editor_gui.h"
+#include "scene_graph_gui.h"
+#include "properties_gui.h"
 
 namespace sprint::editor {
 
@@ -53,7 +55,9 @@ std::unique_ptr<EditorGui> EditorGui::Create(Window& window, Engine& engine) {
 EditorGui::EditorGui(Window& window, Engine& engine)
     : window_(window), engine_(engine) {
 
-    scene_graph_gui_ = SceneGraphEditorGui::Create(engine_);
+    scene_graph_gui_ = SceneGraphEditorGui::Create(*this, engine_);
+    properties_gui_ = PropertiesEditorGui::Create(*this, engine_);
+
     // TODO
     {
         render_tex = std::make_unique<Texture>(Texture{
@@ -83,18 +87,19 @@ void EditorGui::OnGui() {
 
     // game view
     {
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        gui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
         gui::Begin("Game View");
-        ImGui::PopStyleVar();
+        gui::PopStyleVar();
 
         float width = ImGui::GetWindowWidth();
         float height = render_tex->get_height() * (width / render_tex->get_width());
-        ImGui::Image((ImTextureID)(intptr_t)render_tex->get_handle().id, {width, height}, {0,1}, {1, 0});
+        gui::Image((ImTextureID)(intptr_t)render_tex->get_handle().id, {width, height}, {0,1}, {1, 0});
 
         gui::End();
     }
 
     scene_graph_gui_->OnGui();
+    properties_gui_->OnGui();
 }
 
 }

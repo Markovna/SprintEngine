@@ -37,6 +37,7 @@ public:
     static const TypeInfo Invalid;
 
     TypeId id = InvalidTypeId;
+    std::string full_name{};
     std::string name{};
     std::vector<Field> fields{};
     bool is_pointer;
@@ -44,6 +45,15 @@ public:
 
 template<class T>
 using clean_type = std::decay_t<T>;
+
+static std::string GetName(const std::string& full_name) {
+    auto pos = full_name.find_last_of("::");
+    if (pos == std::string::npos) {
+        return full_name;
+    }
+
+    return full_name.substr(pos + 1);
+}
 
 class MetaRegistry {
 private:
@@ -57,17 +67,18 @@ public:
     static TypeId GetTypeId() { return TypeIds<clean_type<T>>::id; }
 
     template<class T>
-    TypeId Register(const std::string& name, bool is_pointer) {
+    TypeId Register(const std::string& full_name, bool is_pointer) {
         using type = clean_type<T>;
         assert(TypeIds<type>::id == InvalidTypeId);
 
         TypeInfo info;
         info.id = TypeIds<type>::id = types_.size();
-        info.name = name;
+        info.full_name = full_name;
+        info.name = GetName(full_name);
         info.is_pointer = is_pointer;
 
         if (!info.is_pointer)
-            name_to_ids_[name] = info.id;
+            name_to_ids_[full_name] = info.id;
 
         return types_.emplace_back(std::move(info)).id;
     }
@@ -141,6 +152,10 @@ public:
 
 public:
     explicit Type(TypeId id) noexcept : id_(id) {};
+
+    [[nodiscard]] const std::string& FullName() const {
+        return Valid() ? details::Registry()[id_].full_name : details::TypeInfo::Invalid.full_name;
+    }
 
     [[nodiscard]] const std::string& Name() const {
         return Valid() ? details::Registry()[id_].name : details::TypeInfo::Invalid.name;
