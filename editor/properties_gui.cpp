@@ -83,6 +83,18 @@ void PropertiesEditorGui::OnGui() {
                     gui::TreePop();
                     opened = true;
                 }
+            } else if (type.Is<MeshComponent>()) {
+                bool node_open = gui::TreeNodeEx(type.FullName().c_str(), ImGuiTreeNodeFlags_FramePadding, "%s", type.Name().c_str());
+                if (node_open) {
+                    gui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
+                    meta::Reference ref(scene->get<MeshComponent>(selected));
+                    for (const auto &field : type.GetFields()) {
+                        Draw(ref, field);
+                    }
+                    gui::PopStyleVar();
+                    gui::TreePop();
+                    opened = true;
+                }
             }
         });
 

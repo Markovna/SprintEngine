@@ -54,7 +54,7 @@ set(ENGINE_SRC
         math/math_utils.h
         core/components/transform_component.cpp core/components/transform_component.h
         sprintpch.h
-        )
+        core/components/mesh_component.cpp core/components/mesh_component.h)
 
 set(EDITOR_SRC
         editor/editor_app.cpp editor/editor_app.h

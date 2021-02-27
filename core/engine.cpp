@@ -7,6 +7,7 @@
 #include "sparse_set.h"
 #include "ecs/ecs.h"
 #include "input_events.h"
+#include "components/mesh_component.h"
 
 #include <GLFW/glfw3.h>
 
@@ -333,7 +334,7 @@ Engine::Engine(const Window& window) {
 
         scene_->get<TransformComponent>(ent1).SetParent(&scene_->get<TransformComponent>(ent0), &scene_->get<TransformComponent>(ent3));
         scene_->get<TransformComponent>(ent2).SetParent(&scene_->get<TransformComponent>(ent0), &scene_->get<TransformComponent>(ent3));
-
+        scene_->emplace<MeshComponent>(ent1);
     }
 
     if (false)
