@@ -1,18 +1,17 @@
 #include "../../../math/transform.h"
 
 template<>
-class ::meta::details::Reflection<sprint::Transform>
-   : public ::meta::details::TypeInitializer {
+class ::meta::details::Reflection<sprint::Transform> {
 public:
     static void Allocate() {
-        Register<sprint::Transform>("sprint::Transform");
-        Register<sprint::Transform*>("sprint::Transform", true);
+        ::meta::details::Register<sprint::Transform>("sprint::Transform");
+        ::meta::details::Register<sprint::Transform*>("sprint::Transform");
     }
 
     static void InitFields() {
-        AddField<sprint::Transform, sprint::vector<3>>("position_", &get_position_);
-        AddField<sprint::Transform, sprint::Quat>("rotation_", &get_rotation_);
-        AddField<sprint::Transform, sprint::vector<3>>("scale_", &get_scale_);
+        ::meta::details::AddField<sprint::Transform, sprint::vector<3>>("position_", &get_position_);
+        ::meta::details::AddField<sprint::Transform, sprint::Quat>("rotation_", &get_rotation_);
+        ::meta::details::AddField<sprint::Transform, sprint::vector<3>>("scale_", &get_scale_);
     }
 
     static Reference get_position_(Reference& instance) {

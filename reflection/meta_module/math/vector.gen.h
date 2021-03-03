@@ -1,17 +1,16 @@
 #include "../../../math/vector.h"
 
 template<>
-class ::meta::details::Reflection<sprint::vector<2>>
-   : public ::meta::details::TypeInitializer {
+class ::meta::details::Reflection<sprint::vector<2>> {
 public:
     static void Allocate() {
-        Register<sprint::vector<2>>("sprint::vector<2>");
-        Register<sprint::vector<2>*>("sprint::vector<2>", true);
+        ::meta::details::Register<sprint::vector<2>>("sprint::vector<2>");
+        ::meta::details::Register<sprint::vector<2>*>("sprint::vector<2>");
     }
 
     static void InitFields() {
-        AddField<sprint::vector<2>, float>("x", &get_x);
-        AddField<sprint::vector<2>, float>("y", &get_y);
+        ::meta::details::AddField<sprint::vector<2>, float>("x", &get_x);
+        ::meta::details::AddField<sprint::vector<2>, float>("y", &get_y);
     }
 
     static Reference get_x(Reference& instance) {
@@ -24,18 +23,17 @@ public:
 };
 
 template<>
-class ::meta::details::Reflection<sprint::vector<3>>
-   : public ::meta::details::TypeInitializer {
+class ::meta::details::Reflection<sprint::vector<3>> {
 public:
     static void Allocate() {
-        Register<sprint::vector<3>>("sprint::vector<3>");
-        Register<sprint::vector<3>*>("sprint::vector<3>", true);
+        ::meta::details::Register<sprint::vector<3>>("sprint::vector<3>");
+        ::meta::details::Register<sprint::vector<3>*>("sprint::vector<3>");
     }
 
     static void InitFields() {
-        AddField<sprint::vector<3>, float>("x", &get_x);
-        AddField<sprint::vector<3>, float>("y", &get_y);
-        AddField<sprint::vector<3>, float>("z", &get_z);
+        ::meta::details::AddField<sprint::vector<3>, float>("x", &get_x);
+        ::meta::details::AddField<sprint::vector<3>, float>("y", &get_y);
+        ::meta::details::AddField<sprint::vector<3>, float>("z", &get_z);
     }
 
     static Reference get_x(Reference& instance) {

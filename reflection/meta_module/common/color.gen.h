@@ -1,19 +1,18 @@
 #include "../../../common/color.h"
 
 template<>
-class ::meta::details::Reflection<sprint::Color>
-   : public ::meta::details::TypeInitializer {
+class ::meta::details::Reflection<sprint::Color> {
 public:
     static void Allocate() {
-        Register<sprint::Color>("sprint::Color");
-        Register<sprint::Color*>("sprint::Color", true);
+        ::meta::details::Register<sprint::Color>("sprint::Color");
+        ::meta::details::Register<sprint::Color*>("sprint::Color");
     }
 
     static void InitFields() {
-        AddField<sprint::Color, float>("r", &get_r);
-        AddField<sprint::Color, float>("g", &get_g);
-        AddField<sprint::Color, float>("b", &get_b);
-        AddField<sprint::Color, float>("a", &get_a);
+        ::meta::details::AddField<sprint::Color, float>("r", &get_r);
+        ::meta::details::AddField<sprint::Color, float>("g", &get_g);
+        ::meta::details::AddField<sprint::Color, float>("b", &get_b);
+        ::meta::details::AddField<sprint::Color, float>("a", &get_a);
     }
 
     static Reference get_r(Reference& instance) {

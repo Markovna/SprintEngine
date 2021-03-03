@@ -1,19 +1,18 @@
 #include "../../../math/quat.h"
 
 template<>
-class ::meta::details::Reflection<sprint::Quat>
-   : public ::meta::details::TypeInitializer {
+class ::meta::details::Reflection<sprint::Quat> {
 public:
     static void Allocate() {
-        Register<sprint::Quat>("sprint::Quat");
-        Register<sprint::Quat*>("sprint::Quat", true);
+        ::meta::details::Register<sprint::Quat>("sprint::Quat");
+        ::meta::details::Register<sprint::Quat*>("sprint::Quat");
     }
 
     static void InitFields() {
-        AddField<sprint::Quat, float>("x", &get_x);
-        AddField<sprint::Quat, float>("y", &get_y);
-        AddField<sprint::Quat, float>("z", &get_z);
-        AddField<sprint::Quat, float>("w", &get_w);
+        ::meta::details::AddField<sprint::Quat, float>("x", &get_x);
+        ::meta::details::AddField<sprint::Quat, float>("y", &get_y);
+        ::meta::details::AddField<sprint::Quat, float>("z", &get_z);
+        ::meta::details::AddField<sprint::Quat, float>("w", &get_w);
     }
 
     static Reference get_x(Reference& instance) {
