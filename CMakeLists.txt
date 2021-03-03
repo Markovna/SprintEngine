@@ -70,6 +70,7 @@ set(REFLECTION_SRC
         reflection/meta_module.h
         reflection/meta_module.cpp
         )
+        reflection/meta_registry.cpp reflection/meta_registry.h reflection/type_info.cpp reflection/type_info.h reflection/type_ids.cpp reflection/type_ids.h reflection/field.cpp reflection/field.h reflection/type.cpp reflection/type.h reflection/reference.cpp reflection/reference.h reflection/meta_runtime.h reflection/method.cpp reflection/method.h reflection/object.cpp reflection/object.h)
 
 set(INCLUDE_DIRECTORIES
         core/
@@ -103,7 +104,7 @@ target_compile_definitions(SprintEngine PRIVATE GLFW_INCLUDE_NONE)
 # ---------------------- SprintEditor ----------------------
 # ----------------------------------------------------------
 
-add_executable(SprintEditor editor/main.cpp ${EDITOR_SRC} ${ENGINE_SRC} ${REFLECTION_SRC})
+add_executable(SprintEditor editor/main.cpp ${ENGINE_SRC} ${REFLECTION_SRC} ${EDITOR_SRC})
 
 set(ALL_INCLUDES $<TARGET_PROPERTY:SprintEditor,INCLUDE_DIRECTORIES>)
 set(ALL_DEFINES $<TARGET_PROPERTY:SprintEditor,COMPILE_DEFINITIONS>)

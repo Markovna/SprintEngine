@@ -24,6 +24,42 @@ public:
         std::vector<std::string> arguments;
     };
 
+    struct Method {
+        explicit Method(CXCursor cursor) :
+            cursor(cursor)
+        {
+            ExtractString(clang_getCursorSpelling(cursor), name);
+            ExtractString(clang_getTypeSpelling(clang_getCanonicalType(clang_getCursorResultType(cursor))), ret_type_name);
+            is_static = clang_CXXMethod_isStatic(cursor);
+
+            clang_visitChildren(
+                cursor,
+                [](CXCursor c, CXCursor parent, CXClientData client_data){
+                    CXCursorKind kind = clang_getCursorKind(c);
+                    if (kind == CXCursor_AnnotateAttr) {
+                        if (CompareCXString(clang_getCursorSpelling(c), "__FIELD_SERIALIZED__") == 0) {
+                            ((Method*)client_data)->serializable = true;
+                        }
+                    } else if (kind == CXCursor_ParmDecl) {
+                        std::string type;
+                        ExtractString(clang_getTypeSpelling(clang_getCanonicalType(clang_getCursorType(c))), type);
+                        ((Method*)client_data)->args_type_names.emplace_back(std::move(type));
+                    }
+
+                    return CXChildVisit_Continue;
+                },
+                this
+            );
+        }
+
+        CXCursor cursor;
+        std::string name;
+        std::string ret_type_name;
+        std::vector<std::string> args_type_names;
+        bool serializable = false;
+        bool is_static = false;
+    };
+
     struct Field {
         explicit Field(CXCursor cursor) :
             cursor(cursor),
@@ -82,13 +118,16 @@ public:
                     if (kind == CXCursor_AnnotateAttr) {
                         if (CompareCXString(clang_getCursorSpelling(c), "__CLASS_SERIALIZED__") == 0) {
                             ((Class*)client_data)->serialized = true;
-                            return CXChildVisit_Break;
                         }
+                    } else if (kind == CXCursor_CXXMethod) {
+                        ((Class*)client_data)->methods.emplace_back(c);
                     }
                     return CXChildVisit_Continue;
                 },
                 this
             );
+
+            std::cout << name << " parsed" << std::endl;
         }
 
         CXCursor cursor;
@@ -97,6 +136,7 @@ public:
         std::string path;
         bool serialized = false;
         std::vector<Field> fields;
+        std::vector<Method> methods;
     };
 
     static bool CreatePch(std::string header, CXIndex& index, const Options& options, std::string& output) {

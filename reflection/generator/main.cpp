@@ -39,18 +39,27 @@ static const std::string template_str =
     "## for class in classes\n"
     "\n"
     "template<>\n"
-    "class ::meta::details::Reflection<{{class.type}}>\n"
-    "   : public ::meta::details::TypeInitializer {\n"
+    "class ::meta::details::Reflection<{{class.type}}> {\n"
     "public:\n"
     "    static void Allocate() {\n"
-    "        Register<{{class.type}}>(\"{{class.type}}\");\n"
-    "        Register<{{class.type}}*>(\"{{class.type}}\", true);\n"
+    "        ::meta::details::Register<{{class.type}}>(\"{{class.type}}\");\n"
+    "        ::meta::details::Register<{{class.type}}*>(\"{{class.type}}\");\n"
     "    }\n"
     "\n"
     "    static void InitFields() {\n"
     "## if existsIn(class, \"fields\")\n"
     "## for field in class.fields\n"
-    "        AddField<{{class.type}}, {{field.type}}>(\"{{field.name}}\", &get_{{field.name}});\n"
+    "        ::meta::details::AddField<{{class.type}}, {{field.type}}>(\"{{field.name}}\", &get_{{field.name}});\n"
+    "## endfor\n"
+    "## endif\n"
+    "## if existsIn(class, \"methods\")\n"
+    "\n"
+    "## for method in class.methods\n"
+    "        ::meta::details::AddMethod<{{class.type}}, {{method.return_type}}"
+    "{% if existsIn(method, \"args\")%}"
+    "{% for arg in method.args %}, {{arg}}{% endfor %}"
+    "{%endif%}>"
+    "(\"{{method.name}}\", &get_{{method.name}});\n"
     "## endfor\n"
     "## endif\n"
     "    }\n"
@@ -59,6 +68,35 @@ static const std::string template_str =
     "\n"
     "    static Reference get_{{field.name}}(Reference& instance) {\n"
     "        return Reference(instance.Get<{{class.type}}>().{{field.name}});\n"
+    "    }\n"
+    "## endfor\n"
+    "## endif\n"
+
+    "## if existsIn(class, \"methods\")\n"
+    "## for method in class.methods\n"
+    "\n"
+    "    static Object get_{{method.name}}(Reference& instance, std::initializer_list<Object> args) {\n"
+    "## if existsIn(method, \"args\")\n"
+    "        auto args_it = args.begin();\n"
+    "## for arg in method.args\n"
+    "        auto& arg{{loop.index}} = args_it->Get<{{arg}}>(); args_it++;\n"
+    "## endfor\n"
+    "## endif\n"
+    "{% if method.return_type != \"void\" %}"
+    "        return "
+    "{% else %}"
+    "        "
+    "{% endif %}"
+    "instance.Get<{{class.type}}>().{{method.name}}("
+    "{% if existsIn(method, \"args\") %}"
+    "{% for arg in method.args %}"
+    "{% if not loop.is_first %}, {% endif %}arg{{loop.index}}"
+    "{% endfor %}"
+    "{% endif %}"
+    ");\n"
+    "## if method.return_type == \"void\"\n"
+    "        return {};\n"
+    "## endif\n"
     "    }\n"
     "## endfor\n"
     "## endif\n"
@@ -90,6 +128,18 @@ static void Generate(const CppParser& parser, const std::string& output) {
                            { "name", field.name },
                            { "type", field.type_name }
                        });
+                }
+            }
+
+            for (auto& method : klass.methods) {
+                if (!method.is_static && method.serializable) {
+                    json method_data;
+                    method_data["name"] = method.name;
+                    method_data["return_type"] = method.ret_type_name;
+                    for (auto& arg : method.args_type_names) {
+                        method_data["args"].emplace_back(arg);
+                    }
+                    class_data["methods"].emplace_back(std::move(method_data));
                 }
             }
 
@@ -218,14 +268,26 @@ int main(int argc, char *argv[]) {
 
     parser.ForEachClass(
         [](const CppParser::Class& klass) {
+            if (!klass.serialized) return;
             std::cout << "\n" << klass.name << " (" << klass.path << ")";
             if (klass.serialized) {
                 std::cout << " [serialized]";
             }
-//            std::cout << "\n-----------------------------------\n";
-//            for (const CppParser::Field& field : klass.fields) {
-//                std::cout << "    " << field.type_name << " " << field.name << "\n";
-//            }
+            std::cout << "\n----------------- fields ------------------\n";
+            for (const CppParser::Field& field : klass.fields) {
+                std::cout << "    " << field.type_name << " " << field.name << "\n";
+            }
+            std::cout << "\n----------------- methods ------------------\n";
+            for (const CppParser::Method& method : klass.methods) {
+                std::cout << "    ";
+                if (method.is_static) std::cout << "static ";
+                std::cout << method.ret_type_name << " " << method.name << "(";
+                for (int i = 0; i < method.args_type_names.size(); i++) {
+                    if (i) std::cout << ", ";
+                    std::cout << method.args_type_names[i];
+                }
+                std::cout << ")\n";
+            }
         }
     );
 
