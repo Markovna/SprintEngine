@@ -97,8 +97,9 @@ struct dispatcher {
         destroy_impl<T>(object_ptr, local_storage<T>());
     }
 
-    template<class T, class F = std::decay_t<T>>
+    template<class T>
     static void create(T&& object, void* store_ptr) {
+        using F = std::decay_t<T>;
         create_impl(std::forward<T>(object), store_ptr, local_storage<F>());
     }
 
@@ -137,13 +138,15 @@ struct dispatcher {
         assert(false && "cannot copy delegate constructed from non-copyable type");
     }
 
-    template<class T, class F = std::decay_t<T>>
+    template<class T>
     static void create_impl(T&& object, void* store_ptr, std::true_type /* stored_locally */) {
+        using F = std::decay_t<T>;
         new (store_ptr) F (std::forward<T>(object));
     }
 
-    template<class T, class F = std::decay_t<T>>
+    template<class T>
     static void create_impl(T&& object, void* store_ptr, std::false_type /* stored_locally */) {
+        using F = std::decay_t<T>;
         new (store_ptr) F* (new F (std::forward<T>(object)));
     }
 
