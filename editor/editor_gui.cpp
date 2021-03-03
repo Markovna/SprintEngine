@@ -2,8 +2,11 @@
 
 #include "texture.h"
 #include "editor_gui.h"
+#include "window.h"
+#include "renderer.h"
 #include "scene_graph_gui.h"
 #include "properties_gui.h"
+#include "scene_view_gui.h"
 
 namespace sprint::editor {
 
@@ -57,6 +60,7 @@ EditorGui::EditorGui(Window& window, Engine& engine)
 
     scene_graph_gui_ = SceneGraphEditorGui::Create(*this, engine_);
     properties_gui_ = PropertiesEditorGui::Create(*this, engine_);
+    scene_view_gui_ = SceneViewGui::Create(*this, engine_);
 
     // TODO
     {
@@ -72,8 +76,8 @@ EditorGui::EditorGui(Window& window, Engine& engine)
                                        {});
         frame_buffer = gfx::CreateFrameBuffer({render_tex->get_handle(), depth_tex});
 
-        engine_.SetOutput(frame_buffer);
     }
+    renderer_ = Renderer::Create(*engine_.get_scene(), frame_buffer);
 }
 
 EditorGui::~EditorGui() {
@@ -91,6 +95,8 @@ void EditorGui::OnGui() {
         gui::Begin("Game View");
         gui::PopStyleVar();
 
+        renderer_->Render();
+
         float width = ImGui::GetWindowWidth();
         float height = render_tex->get_height() * (width / render_tex->get_width());
         gui::Image((ImTextureID)(intptr_t)render_tex->get_handle().id, {width, height}, {0,1}, {1, 0});
@@ -100,6 +106,7 @@ void EditorGui::OnGui() {
 
     scene_graph_gui_->OnGui();
     properties_gui_->OnGui();
+    scene_view_gui_->OnGui();
 }
 
 }

@@ -1,6 +1,7 @@
 #include "gfx.h"
 #include "application.h"
 #include "window.h"
+#include "renderer.h"
 #include "engine.h"
 #include "input_events.h"
 #include "config.h"
@@ -13,6 +14,7 @@ Application::Application() {
     window_ = Window::Create(config::window_size);
     gfx::Init({ window_->get_handle(), window_->get_resolution() });
     engine_ = Engine::Create(*window_);
+    renderer_ = Renderer::Create(*engine_->get_scene());
 
     input_events::OnClose.connect(this, &Application::OnClose);
     input_events::OnResize.connect(this, &Application::OnResize);
@@ -27,6 +29,7 @@ int Application::Run() {
         }
 
         engine_->Update();
+        renderer_->Render();
         gfx::Frame();
     }
     return 0;

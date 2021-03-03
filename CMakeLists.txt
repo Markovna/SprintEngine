@@ -54,7 +54,11 @@ set(ENGINE_SRC
         math/math_utils.h
         core/components/transform_component.cpp core/components/transform_component.h
         sprintpch.h
-        core/components/mesh_component.cpp core/components/mesh_component.h)
+        core/components/mesh_renderer.cpp core/components/mesh_renderer.h
+        core/components/camera.cpp core/components/camera.h
+        common/int_set.cpp common/int_set.h
+        core/renderer.cpp core/renderer.h
+        )
 
 set(EDITOR_SRC
         editor/editor_app.cpp editor/editor_app.h
@@ -63,13 +67,11 @@ set(EDITOR_SRC
         editor/scene_graph_gui.cpp editor/scene_graph_gui.h
         editor/gui.h editor/gui.cpp
         editor/properties_gui.cpp editor/properties_gui.h
-        reflection/meta_runtime.cpp reflection/meta_runtime.h
-        )
+        editor/scene_view_gui.cpp editor/scene_view_gui.h)
 
 set(REFLECTION_SRC
         reflection/meta_module.h
         reflection/meta_module.cpp
-        )
         reflection/meta_registry.cpp reflection/meta_registry.h reflection/type_info.cpp reflection/type_info.h reflection/type_ids.cpp reflection/type_ids.h reflection/field.cpp reflection/field.h reflection/type.cpp reflection/type.h reflection/reference.cpp reflection/reference.h reflection/meta_runtime.h reflection/method.cpp reflection/method.h reflection/object.cpp reflection/object.h)
 
 set(INCLUDE_DIRECTORIES
@@ -117,6 +119,20 @@ add_custom_target(gen_meta_module
             -DINCLUDES="${ALL_INCLUDES}"
             -DDEFINES="${ALL_DEFINES}"
             -DOUTPUT=${PROJECT_SOURCE_DIR}/reflection/meta_module.h
+            -DGEN=$<TARGET_FILE:meta_generator>
+            -P ${CMAKE_SOURCE_DIR}/cmake/RunCppParser.cmake
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        )
+
+set(TEST_META_SRC core/components/transform_component.h)
+add_custom_target(test_meta_module
+        COMMAND ${CMAKE_COMMAND}
+        ARGS
+            -DINPUT="${TEST_META_SRC}"
+            -DIMPLICIT_INCLUDES="${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}"
+            -DINCLUDES="${ALL_INCLUDES}"
+            -DDEFINES="${ALL_DEFINES}"
+            -DOUTPUT=${PROJECT_SOURCE_DIR}/reflection/meta_module_test.h
             -DGEN=$<TARGET_FILE:meta_generator>
             -P ${CMAKE_SOURCE_DIR}/cmake/RunCppParser.cmake
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"

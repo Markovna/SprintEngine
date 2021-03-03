@@ -1,4 +1,5 @@
-#include <components/mesh_component.h>
+#include <components/mesh_renderer.h>
+#include <components/camera.h>
 #include "properties_gui.h"
 #include "gui.h"
 #include "editor_gui.h"
@@ -9,40 +10,72 @@ std::unique_ptr<PropertiesEditorGui> PropertiesEditorGui::Create(EditorGui& edit
     return std::make_unique<PropertiesEditorGui>(editor, engine);
 }
 
-static void Draw(meta::Reference& instance, const meta::Field& field) {
+static bool Draw(meta::Reference& instance, const meta::Field& field) {
     meta::Type type(field.GetType());
     meta::Reference ref(field.GetReference(instance));
 
     gui::PushID(field.GetName().c_str());
 
-    if (type.Is<int>() ||
+    bool changed = false;
+
+    if (!type.Valid()) {
+
+    }
+    else if (type.Is<int>() ||
         type.Is<uint32_t>() ||
         type.Is<size_t>()) {
         auto& value = ref.Get<int>();
-        gui::IntField(field.GetName().c_str(), &value);
+        changed = gui::IntField(field.GetName().c_str(), &value);
     } else if (type.Is<float>()) {
         auto& value = ref.Get<float>();
-        gui::FloatField(field.GetName().c_str(), &value);
+        changed = gui::FloatField(field.GetName().c_str(), &value);
     } else if (type.Is<double>()) {
         auto& value = ref.Get<double>();
-        gui::DoubleField(field.GetName().c_str(), &value);
+        changed = gui::DoubleField(field.GetName().c_str(), &value);
     } else if (type.Is<bool>()) {
         auto& value = ref.Get<bool>();
-        gui::BoolField(field.GetName().c_str(), &value);
+        changed = gui::BoolField(field.GetName().c_str(), &value);
+    } else if (type.Is<vec4>()) {
+        auto& value = ref.Get<vec4>();
+        changed = gui::Vector4Field(field.GetName().c_str(), &value.x, &value.y, &value.z, &value.w);
+    } else if (type.Is<Color>()) {
+        auto& value = ref.Get<Color>();
+        changed = gui::Vector4Field(field.GetName().c_str(), &value.r, &value.g, &value.b, &value.a);
     } else if (type.Is<vec3>()) {
         auto& value = ref.Get<vec3>();
-        gui::Vector3Field(field.GetName().c_str(), &value.x, &value.y, &value.z);
+        changed = gui::Vector3Field(field.GetName().c_str(), &value.x, &value.y, &value.z);
+    } else if (type.Is<vec2>()) {
+        auto& value = ref.Get<vec2>();
+        changed = gui::Vector2Field(field.GetName().c_str(), &value.x, &value.y);
     }
     else {
         gui::Text("%s", field.GetName().c_str());
         gui::Indent(20.0f);
         for (const auto& inner_field : type.GetFields()) {
-            Draw(ref, inner_field);
+            changed |= Draw(ref, inner_field);
         }
         gui::Unindent(20.0f);
     }
 
     gui::PopID();
+    return changed;
+}
+
+template<class T>
+bool DrawComponent(Scene* scene, ecs::entity_t selected) {
+    meta::Type type = meta::GetType<T>();
+
+    bool node_open = gui::TreeNodeEx(type.FullName().c_str(), ImGuiTreeNodeFlags_FramePadding, "%s", type.Name().c_str());
+    if (node_open) {
+        gui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
+        meta::Reference ref(scene->get<T>(selected));
+        for (const auto &field : type.GetFields()) {
+            Draw(ref, field);
+        }
+        gui::PopStyleVar();
+        gui::TreePop();
+    }
+    return node_open;
 }
 
 void PropertiesEditorGui::OnGui() {
@@ -72,29 +105,25 @@ void PropertiesEditorGui::OnGui() {
                 if (node_open) {
                     gui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 
+                    DrawComponent<TransformComponent>(scene, selected);
+
                     meta::Reference ref(scene->get<TransformComponent>(selected));
-                    auto& fields = type.GetFields();
-                    auto transform_field = std::find_if(fields.begin(), fields.end(), [] (const meta::Field& f) { return f.GetName() == "local_"; });
+                    auto& transform_field = type.GetField("local_");
+                    bool changed = Draw(ref, transform_field);
 
-                    meta::Reference transform_ref(transform_field->GetReference(ref));
-                    Draw(transform_ref, *transform_field);
-
-                    gui::PopStyleVar();
-                    gui::TreePop();
-                    opened = true;
-                }
-            } else if (type.Is<MeshComponent>()) {
-                bool node_open = gui::TreeNodeEx(type.FullName().c_str(), ImGuiTreeNodeFlags_FramePadding, "%s", type.Name().c_str());
-                if (node_open) {
-                    gui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
-                    meta::Reference ref(scene->get<MeshComponent>(selected));
-                    for (const auto &field : type.GetFields()) {
-                        Draw(ref, field);
+                    if (changed) {
+                        auto& method = type.GetMethod("SetDirty");
+                        method.Invoke(ref, {true});
                     }
+
                     gui::PopStyleVar();
                     gui::TreePop();
                     opened = true;
                 }
+            } else if (type.Is<MeshRenderer>()) {
+                opened = DrawComponent<MeshRenderer>(scene, selected);
+            } else if (type.Is<Camera>()) {
+                opened = DrawComponent<Camera>(scene, selected);
             }
         });
 

@@ -9,10 +9,6 @@ std::unique_ptr<Scene> Scene::Create() {
 ecs::entity_t Scene::CreateEntity(const Transform &local, TransformComponent *parent) {
     auto entity = registry::create();
     TransformComponent::Create(entity, *this, &root_, parent, local);
-//    auto transform_component = registry::emplace<TransformComponent>(entity, *this, &root_, entity);
-//    if (parent)
-//        transform_component.SetParent(parent);
-//    transform_component.SetLocalTransform(local);
     return entity;
 }
 

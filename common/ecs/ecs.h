@@ -274,7 +274,7 @@ private:
 
         if (!ptr) {
             ptr.reset(new pool_t<Component>);
-            id = meta::Type::Get<Component>().Id();
+            id = meta::GetType<Component>().ID();
         }
 
         return *static_cast<pool_t<Component>*>(ptr.get());

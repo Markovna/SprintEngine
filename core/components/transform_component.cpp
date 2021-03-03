@@ -25,7 +25,7 @@ void TransformComponent::SetParent(TransformComponent* parent, TransformComponen
     } else {
         parent->PushChild(entity_);
     }
-    dirty_ = true;
+    SetDirty(true);
 }
 
 void TransformComponent::SetTransform(const Transform &transform) {
@@ -36,7 +36,7 @@ void TransformComponent::SetTransform(const Transform &transform) {
         local_ = transform;
     }
     world_ = transform;
-    dirty_ = false;
+    SetDirty(false);
 }
 
 void TransformComponent::EraseChild(ecs::entity_t e) {
@@ -78,7 +78,7 @@ void TransformComponent::PushChild(ecs::entity_t e) {
 void TransformComponent::Resolve() const {
     if (dirty_) {
         world_ = parent_ != ecs::null ? get(parent_).GetTransform() * local_ : local_;
-        dirty_ = false;
+        SetDirty(false);
     }
 }
 
@@ -89,7 +89,7 @@ const Transform &TransformComponent::GetTransform() const {
 
 void TransformComponent::SetLocalTransform(const Transform &transform) {
     local_ = transform;
-    dirty_ = true;
+    SetDirty(true);
 }
 
 TransformComponent* TransformComponent::GetParent() {
@@ -193,6 +193,18 @@ bool TransformComponent::IsChildOf(const TransformComponent &child, const Transf
 
 bool TransformComponent::IsChildOf(const TransformComponent &parent) const {
     return IsChildOf(*this, parent);
+}
+
+void TransformComponent::SetDirty(bool dirty) const {
+    dirty_ = dirty;
+
+    if (dirty_) {
+        auto children = GetChildren();
+        while (children != nullptr) {
+            children->SetDirty(dirty_);
+            children++;
+        }
+    }
 }
 
 }

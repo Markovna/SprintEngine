@@ -4,6 +4,8 @@
 #include "transform.h"
 #include "meta_runtime.h"
 
+#include <iostream>
+
 namespace sprint {
 
 struct SERIALIZED TransformComponent {
@@ -129,7 +131,7 @@ private:
     void EraseChild(ecs::entity_t e);
     void PushChild(ecs::entity_t e);
     void InsertChild(ecs::entity_t pos, ecs::entity_t e);
-
+    SERIALIZABLE void SetDirty(bool) const;
     static void PushChild(ecs::registry&, TransformComponent* parent, TransformComponent& child);
     static void InsertChild(ecs::registry&, TransformComponent* parent, TransformComponent& child, TransformComponent& next);
     static bool IsChildOf(const TransformComponent& child, const TransformComponent& parent);

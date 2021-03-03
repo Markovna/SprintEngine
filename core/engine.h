@@ -3,9 +3,10 @@
 #include "time_span.h"
 #include "gfx.h"
 #include "scene.h"
-#include "window.h"
 
 namespace sprint {
+
+class Window;
 
 class Engine {
 public:
@@ -16,7 +17,6 @@ public:
 
     void Update();
 
-    void SetOutput(gfx::framebuf_handle);
     [[nodiscard]] TimeSpan get_delta() const;
     [[nodiscard]] Scene* get_scene();
 

@@ -191,4 +191,84 @@ bool TextField(const char* label, char* buf, size_t buf_size, ImGuiInputTextFlag
     return changed;
 }
 
+bool Vector2Field(const char *label, float *x, float *y, const char *format, ImGuiSliderFlags flags) {
+    ImGuiWindow* window = GetCurrentWindow();
+    if (window->SkipItems)
+        return false;
+
+    BeginGroup(); // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
+    PushID(label);
+
+    ImGuiContext& g = *GImGui;
+    ImGuiStyle& style = g.Style;
+
+    FieldLabel(label);
+
+    bool changed = false;
+    float item_w = (GetContentRegionAvail().x - 2.0f * style.ItemSpacing.y) / 2.0f;
+    SetNextItemWidth(item_w);
+    PushID("x");
+    changed |= DragFloat("", x, 1.0f, 0.0f, 0.0f, format, flags);
+    PopID();
+
+    SameLine(0.0f, style.ItemSpacing.y);
+    SetNextItemWidth(GetContentRegionAvail().x);
+    PushID("y");
+    changed |= DragFloat("", y, 1.0f, 0.0f, 0.0f, format, flags);
+    PopID();
+
+    PopID();
+    EndGroup();
+    return changed;
+}
+
+bool Vector4Field(const char *label,
+                  float *x,
+                  float *y,
+                  float *z,
+                  float *w,
+                  const char *format,
+                  ImGuiSliderFlags flags) {
+    ImGuiWindow* window = GetCurrentWindow();
+    if (window->SkipItems)
+        return false;
+
+    BeginGroup(); // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
+    PushID(label);
+
+    ImGuiContext& g = *GImGui;
+    ImGuiStyle& style = g.Style;
+
+    FieldLabel(label);
+
+    bool changed = false;
+    float item_w = (GetContentRegionAvail().x - 2.0f * style.ItemSpacing.y) / 4.0f;
+    SetNextItemWidth(item_w);
+    PushID("x");
+    changed |= DragFloat("", x, 1.0f, 0.0f, 0.0f, format, flags);
+    PopID();
+
+    SameLine(0.0f, style.ItemSpacing.y);
+    SetNextItemWidth(item_w);
+    PushID("y");
+    changed |= DragFloat("", y, 1.0f, 0.0f, 0.0f, format, flags);
+    PopID();
+
+    SameLine(0.0f, style.ItemSpacing.y);
+    SetNextItemWidth(item_w);
+    PushID("z");
+    changed |= DragFloat("", z, 1.0f, 0.0f, 0.0f, format, flags);
+    PopID();
+
+    SameLine(0.0f, style.ItemSpacing.y);
+    SetNextItemWidth(GetContentRegionAvail().x);
+    PushID("w");
+    changed |= DragFloat("", w, 1.0f, 0.0f, 0.0f, format, flags);
+    PopID();
+
+    PopID();
+    EndGroup();
+    return changed;
+}
+
 }
