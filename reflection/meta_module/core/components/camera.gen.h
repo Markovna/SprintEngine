@@ -12,7 +12,8 @@ public:
         ::meta::details::AddField<sprint::Camera, float>("fov_", &get_fov_);
         ::meta::details::AddField<sprint::Camera, float>("near_", &get_near_);
         ::meta::details::AddField<sprint::Camera, float>("far_", &get_far_);
-        ::meta::details::AddField<sprint::Camera, sprint::vector<2>>("rect_size_", &get_rect_size_);
+        ::meta::details::AddField<sprint::Camera, float>("orthogonal_size_", &get_orthogonal_size_);
+        ::meta::details::AddField<sprint::Camera, sprint::Rect>("normalized_rect_", &get_normalized_rect_);
         ::meta::details::AddField<sprint::Camera, sprint::Color>("clear_color_", &get_clear_color_);
         ::meta::details::AddField<sprint::Camera, unsigned char>("clear_flag_", &get_clear_flag_);
     }
@@ -29,8 +30,12 @@ public:
         return Reference(instance.Get<sprint::Camera>().far_);
     }
 
-    static Reference get_rect_size_(Reference& instance) {
-        return Reference(instance.Get<sprint::Camera>().rect_size_);
+    static Reference get_orthogonal_size_(Reference& instance) {
+        return Reference(instance.Get<sprint::Camera>().orthogonal_size_);
+    }
+
+    static Reference get_normalized_rect_(Reference& instance) {
+        return Reference(instance.Get<sprint::Camera>().normalized_rect_);
     }
 
     static Reference get_clear_color_(Reference& instance) {

@@ -5,7 +5,7 @@
 #include "vector.h"
 #include "color.h"
 #include "matrix.h"
-#include "rect.h"
+#include "rect_int.h"
 #include <array>
 
 namespace sprint::gfx {
@@ -289,12 +289,12 @@ void SetBuffer(indexbuf_handle, uint32_t offset = 0, uint32_t num = 0);
 void SetTransform(const Matrix&);
 
 void SetView(CameraId, const Matrix&);
-void SetViewRect(CameraId, const Rect& rect);
+void SetViewRect(CameraId, const RectInt& rect);
 void SetViewBuffer(CameraId, framebuf_handle);
 void SetProjection(CameraId, const Matrix&);
 void SetClear(CameraId, ClearFlag::Type);
 void SetClearColor(CameraId, const Color&);
-void SetScissor(Rect rect);
+void SetScissor(RectInt rect);
 void SetOptions(DrawConfig::Options);
 
 MemoryPtr Copy(const void*, uint32_t);

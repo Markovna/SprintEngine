@@ -39,7 +39,7 @@ set(ENGINE_SRC
         renderer/shader_utils.cpp renderer/shader_utils.h
         renderer/gfx_config.cpp renderer/gfx_config.h
         common/iterator_range.h
-        common/rect.cpp common/rect.h
+        common/rect_int.cpp common/rect_int.h
         core/engine.cpp core/engine.h
         common/ecs/ecs.cpp common/ecs/ecs.h
         common/sparse_set.h
@@ -58,7 +58,7 @@ set(ENGINE_SRC
         core/components/camera.cpp core/components/camera.h
         common/int_set.cpp common/int_set.h
         core/renderer.cpp core/renderer.h
-        )
+        common/rect.cpp common/rect.h renderer/render_texture.cpp renderer/render_texture.h)
 
 set(EDITOR_SRC
         editor/editor_app.cpp editor/editor_app.h
@@ -67,7 +67,7 @@ set(EDITOR_SRC
         editor/scene_graph_gui.cpp editor/scene_graph_gui.h
         editor/gui.h editor/gui.cpp
         editor/properties_gui.cpp editor/properties_gui.h
-        editor/scene_view_gui.cpp editor/scene_view_gui.h)
+        editor/scene_view_gui.cpp editor/scene_view_gui.h editor/game_view_gui.cpp editor/game_view_gui.h)
 
 set(REFLECTION_SRC
         reflection/meta_module.h

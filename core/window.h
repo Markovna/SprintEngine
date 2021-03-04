@@ -40,14 +40,17 @@ public:
 
     [[nodiscard]] size_t get_width() const { return width_; }
     [[nodiscard]] size_t get_height() const { return height_; }
-    [[nodiscard]] Vec2Int get_resolution() const { return resolution_;  }
+    [[nodiscard]] Vec2Int get_resolution() const { return resolution_; }
+    [[nodiscard]] vec2 get_scale() const { return content_scale_; }
     [[nodiscard]] GLFWwindow* get_handle() const { return window_; }
 
 private:
     void PushEvent(Event event);
 
 private:
-    size_t width_, height_;
+    size_t width_;
+    size_t height_;
+    vec2 content_scale_;
     Vec2Int resolution_;
     GLFWwindow* window_;
     std::queue<Event> events_;

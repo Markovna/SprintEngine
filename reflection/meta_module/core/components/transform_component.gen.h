@@ -21,7 +21,6 @@ public:
         ::meta::details::AddField<sprint::TransformComponent, unsigned long>("child_count_", &get_child_count_);
         ::meta::details::AddField<sprint::TransformComponent, bool>("dirty_", &get_dirty_);
 
-        ::meta::details::AddMethod<sprint::TransformComponent, bool, const sprint::TransformComponent &>("IsChildOf", &get_IsChildOf);
         ::meta::details::AddMethod<sprint::TransformComponent, void, bool>("SetDirty", &get_SetDirty);
     }
 
@@ -67,12 +66,6 @@ public:
 
     static Reference get_dirty_(Reference& instance) {
         return Reference(instance.Get<sprint::TransformComponent>().dirty_);
-    }
-
-    static Object get_IsChildOf(Reference& instance, std::initializer_list<Object> args) {
-        auto args_it = args.begin();
-        auto& arg0 = args_it->Get<const sprint::TransformComponent &>(); args_it++;
-        return instance.Get<sprint::TransformComponent>().IsChildOf(arg0);
     }
 
     static Object get_SetDirty(Reference& instance, std::initializer_list<Object> args) {

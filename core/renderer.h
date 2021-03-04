@@ -1,5 +1,6 @@
 #pragma once
 
+#include <rect.h>
 #include "gfx.h"
 
 namespace sprint {
@@ -8,16 +9,15 @@ class Scene;
 
 class Renderer {
 public:
-    static std::unique_ptr<Renderer> Create(Scene&, gfx::framebuf_handle = gfx::framebuf_handle::null);
+    static std::unique_ptr<Renderer> Create(Scene&);
 
-    explicit Renderer(Scene& scene, gfx::framebuf_handle fb_handle)
-        : scene_(scene), fb_handle_(fb_handle)
+    explicit Renderer(Scene& scene)
+        : scene_(scene)
     {}
-    void Render();
+    void Render(Rect viewport, gfx::framebuf_handle = gfx::framebuf_handle::null);
 
 private:
     Scene& scene_;
-    gfx::framebuf_handle fb_handle_;
 };
 
 }

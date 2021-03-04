@@ -267,6 +267,8 @@ void GLRendererAPI::CreateTexture(texture_handle handle,
     texture.id = textureId;
     texture.render_buffer = render_buffer;
     texture.format = format;
+    texture.width = width;
+    texture.height = height;
 }
 
 GLRendererAPI::~GLRendererAPI() {
@@ -332,7 +334,11 @@ void GLRendererAPI::Destroy(shader_handle handle) {
 }
 
 void GLRendererAPI::Destroy(texture_handle handle) {
-    glDeleteTextures(1, &textures_[handle.index()].id);
+    if (textures_[handle.index()].render_buffer) {
+        glDeleteRenderbuffers(1, &textures_[handle.index()].id);
+    } else {
+        glDeleteTextures(1, &textures_[handle.index()].id);
+    }
 }
 
 static inline GLenum ToType(Attribute::Type::Enum type) {
@@ -358,7 +364,7 @@ static void DisableAttributes(uint16_t mask) {
     }
 }
 
-static void SetViewport(Rect rect, Vec2Int resolution) {
+static void SetViewport(RectInt rect, Vec2Int resolution) {
     CHECK_ERRORS(glViewport(
         rect.x,
         resolution.y - (rect.y + rect.height),
@@ -367,7 +373,7 @@ static void SetViewport(Rect rect, Vec2Int resolution) {
     ));
 }
 
-static void SetScissor(Rect scissor, Vec2Int resolution) {
+static void SetScissor(RectInt scissor, Vec2Int resolution) {
     if (Valid(scissor)) {
         CHECK_ERRORS(glEnable(GL_SCISSOR_TEST));
         CHECK_ERRORS(glScissor(
@@ -433,7 +439,7 @@ void GLRendererAPI::RenderFrame(const Frame& frame) {
     static Vec2Int resolution;
     Shader* shader = nullptr;
     CameraId camera_id = UINT16_MAX;
-    Rect scissor;
+    RectInt scissor;
     uint32_t vb_id = 0;
     uint32_t fb_id = 0;
     uint32_t vb_offset = 0;
@@ -466,6 +472,16 @@ void GLRendererAPI::RenderFrame(const Frame& frame) {
 
         if (fb_changed) {
             CHECK_ERRORS(glBindFramebuffer(GL_FRAMEBUFFER, fb_id));
+
+            if (camera.frame_buffer) {
+                texture_handle tex = frame_buffers_[camera.frame_buffer.index()].tex_handles[0];
+                Vec2Int tex_resolution = {(int) textures_[tex.index()].width, (int)textures_[tex.index()].height};
+                resolution_changed |= resolution != tex_resolution;
+                resolution = tex_resolution;
+            } else {
+                resolution_changed |= resolution != frame.get_resolution();
+                resolution = frame.get_resolution();
+            }
         }
 
         if (shader_changed) {
@@ -493,17 +509,17 @@ void GLRendererAPI::RenderFrame(const Frame& frame) {
             for (int i = 0; i < draw.texture_slots_size; i++) {
                 uint32_t slot_idx = draw.texture_slots[i];
                 texture_handle tex_handle = draw.textures[slot_idx];
-                glActiveTexture(GL_TEXTURE0 + slot_idx);
+                CHECK_ERRORS(glActiveTexture(GL_TEXTURE0 + slot_idx));
                 CHECK_ERRORS(glBindTexture(GL_TEXTURE_2D, textures_[tex_handle.index()].id));
             }
         }
 
         if (camera_changed || resolution_changed) {
-            SetViewport(camera.viewport, frame.get_resolution());
+            SetViewport(camera.viewport, resolution);
         }
 
         if (scissor_changed || resolution_changed) {
-            SetScissor(draw.scissor, frame.get_resolution());
+            SetScissor(draw.scissor, resolution);
         }
 
         SetDepthTest(draw.options & DrawConfig::DEPTH_TEST);

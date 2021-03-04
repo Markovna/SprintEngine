@@ -17,6 +17,8 @@ void TransformComponent::SetParent(TransformComponent* parent, TransformComponen
     assert(!next || next->parent_ == parent->entity_);
     assert(parent->entity_ != entity_);
 
+    Resolve();
+
     if (TransformComponent* curr_parent = parent_ != ecs::null ? &get(parent_) : root_)
         curr_parent->EraseChild(entity_);
 
@@ -25,7 +27,9 @@ void TransformComponent::SetParent(TransformComponent* parent, TransformComponen
     } else {
         parent->PushChild(entity_);
     }
-    SetDirty(true);
+
+    Transform parent_transform = parent_ != ecs::null ? get(parent_).GetTransform() : Transform();
+    local_ = world_ * Transform::Inverse(parent_transform);
 }
 
 void TransformComponent::SetTransform(const Transform &transform) {

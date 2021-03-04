@@ -11,9 +11,9 @@ namespace sprint {
 Application::Application() {
     SPRINT_PROFILE_FUNCTION();
 
-    window_ = Window::Create(config::window_size);
+    window_ = Window::Create({1024, 740});
     gfx::Init({ window_->get_handle(), window_->get_resolution() });
-    engine_ = Engine::Create(*window_);
+    engine_ = Engine::Create();
     renderer_ = Renderer::Create(*engine_->get_scene());
 
     input_events::OnClose.connect(this, &Application::OnClose);
@@ -29,7 +29,8 @@ int Application::Run() {
         }
 
         engine_->Update();
-        renderer_->Render();
+        Vec2Int resolution = window_->get_resolution();
+        renderer_->Render({0, 0, (float) resolution.x, (float) resolution.y});
         gfx::Frame();
     }
     return 0;

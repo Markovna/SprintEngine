@@ -1,5 +1,9 @@
 
 #include "matrix.h"
+
+#include <cmath>
+
+#include <cmath>
 #include "math_utils.h"
 
 namespace sprint {
@@ -48,7 +52,7 @@ Matrix Matrix::Ortho(float x, float width, float y, float height, float minZ, fl
         Vec4(2.0f / width, 0.0f, 0.0f, 0.0f),
         Vec4(0.0f, 2.0f / height, 0.0f, 0.0f),
         Vec4(0.0f, 0.0f, scale, 0.0f),
-        Vec4(- (2 * x + width) / width, - (2 * y + height) / height, -(minZ + maxZ) * scale, 1.0f)
+        Vec4(- (2*x + width) / width, - (2*y + height) / height, -(minZ + maxZ) * scale, 1.0f)
     );
 }
 
@@ -62,13 +66,12 @@ Matrix Matrix::Ortho(float width, float height, float minZ, float maxZ) {
         );
 }
 
-Matrix Matrix::Perspective(float fov, float width, float height, float minZ, float maxZ) {
+Matrix Matrix::Perspective(float fov, float ratio, float minZ, float maxZ) {
     assert(math::Approximately(0.0f, 0.0f));
     const float cot = 1.0f / std::tan(fov * 0.5f);
     const float scale = 1.0f / (maxZ - minZ);
-    const float r = height / width;
     return Matrix(
-            Vec4(r * cot, 0.0f, 0.0f, 0.0f),
+            Vec4( cot / ratio, 0.0f, 0.0f, 0.0f),
             Vec4(0.0f, cot, 0.0f, 0.0f),
             Vec4(0.0f, 0.0f, maxZ * scale, 1.0f),
             Vec4(0.0f, 0.0f, - minZ * maxZ * scale, 0.0f)

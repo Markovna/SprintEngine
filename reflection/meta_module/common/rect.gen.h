@@ -9,10 +9,10 @@ public:
     }
 
     static void InitFields() {
-        ::meta::details::AddField<sprint::Rect, int>("x", &get_x);
-        ::meta::details::AddField<sprint::Rect, int>("y", &get_y);
-        ::meta::details::AddField<sprint::Rect, unsigned int>("width", &get_width);
-        ::meta::details::AddField<sprint::Rect, unsigned int>("height", &get_height);
+        ::meta::details::AddField<sprint::Rect, float>("x", &get_x);
+        ::meta::details::AddField<sprint::Rect, float>("y", &get_y);
+        ::meta::details::AddField<sprint::Rect, float>("width", &get_width);
+        ::meta::details::AddField<sprint::Rect, float>("height", &get_height);
     }
 
     static Reference get_x(Reference& instance) {

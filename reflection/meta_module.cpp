@@ -1,6 +1,7 @@
 #include "meta_module.h"
 #include "meta_module/common/color.gen.h"
 #include "meta_module/common/rect.gen.h"
+#include "meta_module/common/rect_int.gen.h"
 #include "meta_module/core/components/camera.gen.h"
 #include "meta_module/core/components/mesh_renderer.gen.h"
 #include "meta_module/core/components/transform_component.gen.h"
@@ -16,6 +17,7 @@ void InitTypes() {
 
     details::Reflection<sprint::Color>::Allocate();
     details::Reflection<sprint::Rect>::Allocate();
+    details::Reflection<sprint::RectInt>::Allocate();
     details::Reflection<sprint::Camera>::Allocate();
     details::Reflection<sprint::MeshRenderer>::Allocate();
     details::Reflection<sprint::TransformComponent>::Allocate();
@@ -26,6 +28,7 @@ void InitTypes() {
 
     details::Reflection<sprint::Color>::InitFields();
     details::Reflection<sprint::Rect>::InitFields();
+    details::Reflection<sprint::RectInt>::InitFields();
     details::Reflection<sprint::Camera>::InitFields();
     details::Reflection<sprint::MeshRenderer>::InitFields();
     details::Reflection<sprint::TransformComponent>::InitFields();

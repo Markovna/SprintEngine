@@ -2,8 +2,10 @@
 
 #include "vector.h"
 
-namespace sprint::config {
+namespace sprint {
 
-Vec2Int window_size = {1024, 700 };
+struct Config {
+    Vec2Int window_size;
+};
 
 };

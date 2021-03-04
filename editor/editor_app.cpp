@@ -1,5 +1,6 @@
 #include "input_events.h"
 #include "editor_app.h"
+#include "config.h"
 
 namespace sprint::editor {
 
@@ -9,8 +10,8 @@ Application::Application() {
     window_ = Window::Create({1024, 640});
     gfx::Init(gfx::Config {window_->get_handle(), window_->get_resolution()});
     imgui_renderer_ = ImGuiRenderer::Create();
-    engine_ = Engine::Create(*window_);
-    editor_ = EditorGui::Create(*window_, *engine_);
+    engine_ = Engine::Create();
+    editor_ = EditorGui::Create(*engine_);
 
     input_events::OnClose.connect(this, &Application::OnClose);
     input_events::OnResize.connect(this, &Application::OnResize);

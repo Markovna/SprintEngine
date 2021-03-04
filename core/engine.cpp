@@ -1,5 +1,5 @@
 #include "matrix.h"
-#include "window.h"
+#include "config.h"
 #include "engine.h"
 #include "ecs/ecs.h"
 #include "components/camera.h"
@@ -7,7 +7,6 @@
 #include "input_events.h"
 
 #include <GLFW/glfw3.h>
-#include <any>
 
 namespace sprint {
 
@@ -31,47 +30,46 @@ void Engine::Update() {
     }
 }
 
-std::unique_ptr<Engine> Engine::Create(const Window& window) {
-    return std::make_unique<Engine>(window);
+std::unique_ptr<Engine> Engine::Create() {
+    return std::make_unique<Engine>();
 }
 
-Engine::Engine(const Window& window) {
+Engine::Engine() {
     scene_ = Scene::Create();
 
     {
         auto root_ent = scene_->CreateEntity();
         auto& ent0_tr = scene_->get<TransformComponent>(root_ent);
 
-//        auto mesh_ent = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
-        auto cam_ent = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
+        auto mesh_ent = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
+        auto cam_ent = scene_->CreateEntity({});
 //        auto ent3 = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
 
 //        scene_->get<TransformComponent>(mesh_ent).SetParent(&scene_->get<TransformComponent>(root_ent), &scene_->get<TransformComponent>(ent3));
-        scene_->get<TransformComponent>(cam_ent).SetParent(&scene_->get<TransformComponent>(root_ent));
-//        scene_->emplace<MeshRenderer>(mesh_ent);
+//        scene_->get<TransformComponent>(cam_ent).SetParent(&scene_->get<TransformComponent>(root_ent));
+        scene_->emplace<MeshRenderer>(mesh_ent);
 
-        for (int i = 1; i < 2; i++) {
+        for (int i = 1; i < 10; i++) {
             {
                 vec3 pos = (i * 2.0f + 1) * Vec3::Up + (i * 0.7f) * Vec3::Forward;
                 auto ent = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
                 scene_->emplace<MeshRenderer>(ent);
-                TransformComponent &tr = scene_->get<TransformComponent>(ent);
+                TransformComponent& tr = scene_->get<TransformComponent>(ent);
                 tr.SetLocalTransform((Transform) Matrix::Translation(pos));
             }
             {
                 vec3 pos = (i * 2.0f + 1) * Vec3::Up + (i * 0.7f) * Vec3::Backward;
                 auto ent = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
                 scene_->emplace<MeshRenderer>(ent);
-                TransformComponent &tr = scene_->get<TransformComponent>(ent);
+                TransformComponent& tr = scene_->get<TransformComponent>(ent);
                 tr.SetLocalTransform((Transform) Matrix::Translation(pos));
             }
         }
 
         auto& cam = scene_->emplace<Camera>(cam_ent);
-        cam.SetRectSize(vec2{(float)window.get_resolution().x, (float)window.get_resolution().y});
-
         auto& cam_tr = scene_->get<TransformComponent>(cam_ent);
-        cam_tr.SetLocalTransform(Transform(Matrix::Translation({0,0,-3.0f})));
+
+        cam_tr.SetLocalTransform(Transform(Matrix::Translation({0,-2.0f,-3.0f})));
 
 //        input_events::OnKeyPress.connect([](KeyPressEvent& key){
 //            if (key.key_code == key::Left || key.key_code == key::Right) {

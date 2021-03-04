@@ -60,7 +60,7 @@ private:
         uint32_t proj_location = 0;
         uint16_t enabled_attributes_mask = 0;
         uint16_t attributes_mask = 0;
-        uint16_t attribute_locations[Attribute::Binding::Count]{};
+        uint16_t attribute_locations[Attribute::Binding::Count] = {};
         uint32_t id = 0;
     };
 
@@ -68,6 +68,8 @@ private:
         uint32_t id{};
         bool render_buffer{};
         TextureFormat::Enum format{};
+        uint32_t width = 0;
+        uint32_t height = 0;
     };
 
     struct UniformInfo {

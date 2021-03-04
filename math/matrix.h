@@ -57,7 +57,7 @@ struct Matrix {
     static Matrix TRS(const vec3&, const quat&, const vec3&);
     static Matrix Ortho(float x, float width, float y, float height, float minZ, float maxZ);
     static Matrix Ortho(float width, float height, float minZ, float maxZ);
-    static Matrix Perspective(float fov, float width, float height, float minZ, float maxZ);
+    static Matrix Perspective(float fov, float ratio, float minZ, float maxZ);
     static Matrix LookAt(const Vec3& position, const Vec3& target);
     static Matrix LookAt(const Vec3& position, const Vec3& target, const Vec3& up);
 

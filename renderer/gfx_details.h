@@ -157,7 +157,7 @@ struct DrawUnit {
     uint32_t vb_size = 0;
     uint32_t ib_offset = 0;
     uint32_t ib_size = 0;
-    Rect scissor{};
+    RectInt scissor{};
     DrawConfig::Options options = DefaultOptions;
     UniformPair uniforms[static_config::kMaxUniformsPerDrawCall];
     size_t uniforms_size;
@@ -185,7 +185,7 @@ static void Clear(DrawUnit &draw) {
 struct Camera {
     Matrix view;
     Matrix projection;
-    Rect viewport;
+    RectInt viewport;
     ClearFlag::Type clear_flag = 0;
     Color clear_color;
     framebuf_handle frame_buffer = {};
@@ -424,6 +424,9 @@ public:
             std::visit([this](auto &c) { c.Execute(api_.get()); }, command);
         }
 
+        static int frame_count = 0;
+        frame_count++;
+
         frame_.set_resolution(g_config.resolution);
         frame_.SetCameras(cameras_);
 
@@ -646,7 +649,7 @@ public:
         draw.transform = value;
     }
 
-    void SetScissor(Rect rect) {
+    void SetScissor(RectInt rect) {
         DrawUnit &draw = frame_.GetDraw();
         draw.scissor = rect;
     }
@@ -660,7 +663,7 @@ public:
         cameras_[id].view = value;
     }
 
-    void SetViewRect(CameraId id, const Rect &rect) {
+    void SetViewRect(CameraId id, const RectInt &rect) {
         cameras_[id].viewport = rect;
     }
 

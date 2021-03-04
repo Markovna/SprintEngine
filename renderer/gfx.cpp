@@ -159,7 +159,7 @@ void SetView(CameraId camera_id, const Matrix &matrix) {
     details::g_renderer.SetView(camera_id, matrix);
 }
 
-void SetViewRect(CameraId camera_id, const Rect &rect) {
+void SetViewRect(CameraId camera_id, const RectInt &rect) {
     details::g_renderer.SetViewRect(camera_id, rect);
 }
 
@@ -226,7 +226,7 @@ void SetBuffer(indexbuf_handle handle, uint32_t offset, uint32_t num) {
     details::g_renderer.SetBuffer(handle, offset, num);
 }
 
-void SetScissor(Rect rect) {
+void SetScissor(RectInt rect) {
     details::g_renderer.SetScissor(rect);
 }
 

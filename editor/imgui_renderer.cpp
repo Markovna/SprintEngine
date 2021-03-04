@@ -204,10 +204,10 @@ void ImGuiRenderer::Render(ImDrawData *draw_data) {
                 cmd->UserCallback(cmd_list, cmd);
             }
             else if (cmd->ElemCount) {
-                const std::uint16_t x = (cmd->ClipRect.x - clip_off.x)* clip_scale.x;
-                const std::uint16_t y = (cmd->ClipRect.y - clip_off.y) * clip_scale.x;
+                const std::uint16_t x = (cmd->ClipRect.x - clip_off.x) * clip_scale.x;
+                const std::uint16_t y = (cmd->ClipRect.y - clip_off.y) * clip_scale.y;
                 const std::uint16_t width  = (cmd->ClipRect.z - clip_off.x) * clip_scale.x - x;
-                const std::uint16_t height = (cmd->ClipRect.w - clip_off.y) * clip_scale.x - y;
+                const std::uint16_t height = (cmd->ClipRect.w - clip_off.y) * clip_scale.y - y;
 
                 auto texture = gfx::texture_handle{(uint32_t)(intptr_t)cmd->TextureId};
                 gfx::SetScissor({ x, y, width, height });

@@ -44,8 +44,7 @@ struct SERIALIZED vector<2> {
     static const vector One;
 
     vector() : x(0), y(0) {}
-    explicit vector(float x, float y) : x(x), y(y) {
-    }
+    vector(float x, float y) : x(x), y(y) {}
 
     const float& operator[] (size_t index) const {
         assert(index >= 0 && index < N);
@@ -303,7 +302,11 @@ Vec Normalized(const Vec& vec) {
 }
 
 struct Vec2Int {
-    int x{}, y{};
+    int x = 0;
+    int y = 0;
+
+    Vec2Int() noexcept = default;
+    Vec2Int(int _x, int _y) noexcept : x(_x), y(_y) {}
 };
 
 inline bool operator==(const Vec2Int& lhs, const Vec2Int& rhs) {
