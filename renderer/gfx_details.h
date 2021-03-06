@@ -157,13 +157,13 @@ struct DrawUnit {
     uint32_t vb_size = 0;
     uint32_t ib_offset = 0;
     uint32_t ib_size = 0;
-    RectInt scissor{};
+    RectInt scissor = {0,0,0,0};
     DrawConfig::Options options = DefaultOptions;
     UniformPair uniforms[static_config::kMaxUniformsPerDrawCall];
-    size_t uniforms_size;
+    size_t uniforms_size = 0;
     texture_handle textures[static_config::kTextureSlotsCapacity];
     uint32_t texture_slots[static_config::kTextureSlotsCapacity];
-    size_t texture_slots_size;
+    size_t texture_slots_size = 0;
 };
 
 static void Clear(DrawUnit &draw) {

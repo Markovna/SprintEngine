@@ -1,6 +1,5 @@
 #include "input_events.h"
 #include "editor_app.h"
-#include "config.h"
 
 namespace sprint::editor {
 

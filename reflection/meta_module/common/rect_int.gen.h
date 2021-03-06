@@ -11,8 +11,8 @@ public:
     static void InitFields() {
         ::meta::details::AddField<sprint::RectInt, int>("x", &get_x);
         ::meta::details::AddField<sprint::RectInt, int>("y", &get_y);
-        ::meta::details::AddField<sprint::RectInt, unsigned int>("width", &get_width);
-        ::meta::details::AddField<sprint::RectInt, unsigned int>("height", &get_height);
+        ::meta::details::AddField<sprint::RectInt, int>("width", &get_width);
+        ::meta::details::AddField<sprint::RectInt, int>("height", &get_height);
     }
 
     static Reference get_x(Reference& instance) {

@@ -40,8 +40,8 @@ void Renderer::Render(Rect viewport, gfx::framebuf_handle fb_handle) {
                          {
             0,
             0,
-            (uint32_t)(viewport.width * normalized_rect.width),
-            (uint32_t)(viewport.height * normalized_rect.height)});
+            int(viewport.width * normalized_rect.width),
+            int(viewport.height * normalized_rect.height)});
         gfx::SetViewBuffer(camera.CameraID(), fb_handle);
 
         gfx::SetClear(0, gfx::ClearFlag::Color | gfx::ClearFlag::Depth);

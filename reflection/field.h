@@ -25,7 +25,7 @@ public:
     }
 
     template<class T>
-    const T& GetValue(Reference& instance) const {
+    T& GetValue(Reference& instance) const {
         return GetReference(instance).Get<T>();
     }
 

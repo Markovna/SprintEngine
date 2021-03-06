@@ -8,6 +8,7 @@ std::unique_ptr<SceneViewGui> SceneViewGui::Create(EditorGui& editor, Engine& en
 }
 
 void SceneViewGui::OnGui() {
+
     gui::Begin("Scene View");
 
 

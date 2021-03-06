@@ -123,9 +123,9 @@ static bool BeginEntityTreeNode(const TransformComponent* comp, bool& accept_dro
 
     ImGui::PopClipRect();
 
-    // Add Child button
+    // "Add Child" button
     if (hovered) {
-        ImGui::SameLine(clip_rect.Max.x + spacing);
+        ImGui::SameLine(cursor_pos_x + column_width + spacing);
         auto btn_flags = ImGuiButtonFlags_PressedOnClick | ImGuiButtonFlags_AlignTextBaseLine |
             ImGuiButtonFlags_NoHoldingActiveId | ImGuiButtonFlags_NoHoveredOnFocus | ImGuiButtonFlags_AllowItemOverlap;
 
@@ -162,8 +162,19 @@ std::unique_ptr<SceneGraphEditorGui> SceneGraphEditorGui::Create(EditorGui& edit
 
 void SceneGraphEditorGui::OnGui() {
     ecs::entity_t selected = editor_.Selected();
+
+    gui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4, 4));
     ImGui::Begin("Scene Graph");
+    gui::PopStyleVar();
+
+    gui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 14.0f);
     DrawTreeRecursive(engine_.get_scene()->GetRoots(), true, selected, commands_);
+    gui::PopStyleVar();
+
+    if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered()) {
+        selected = ecs::null;
+    }
+
     ImGui::End();
 
     editor_.Select(selected);

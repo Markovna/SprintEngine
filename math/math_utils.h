@@ -6,6 +6,8 @@
 namespace sprint::math {
 
 constexpr float PI = M_PI;
+constexpr float TO_RAD = PI / 180.0f;
+constexpr float TO_DEGREE = 1.0f / TO_RAD;
 
 template<class T>
 typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type

@@ -67,7 +67,9 @@ set(EDITOR_SRC
         editor/scene_graph_gui.cpp editor/scene_graph_gui.h
         editor/gui.h editor/gui.cpp
         editor/properties_gui.cpp editor/properties_gui.h
-        editor/scene_view_gui.cpp editor/scene_view_gui.h editor/game_view_gui.cpp editor/game_view_gui.h)
+        editor/scene_view_gui.cpp editor/scene_view_gui.h
+        editor/game_view_gui.cpp editor/game_view_gui.h
+        editor/components_gui.cpp editor/components_gui.h)
 
 set(REFLECTION_SRC
         reflection/meta_module.h

@@ -4,10 +4,10 @@
 namespace sprint {
 
 struct SERIALIZED RectInt {
-    int x{};
-    int y{};
-    uint32_t width{};
-    uint32_t height{};
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
 };
 
 inline bool Valid(const RectInt& rect) { return rect.width > 0 && rect.height > 0; }

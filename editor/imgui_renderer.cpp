@@ -160,7 +160,7 @@ void ImGuiRenderer::BeginFrame(sprint::Window *window) {
     io.DeltaTime = context_.timer.Restart().AsSeconds();
 
     gfx::SetProjection(1, Matrix::Ortho(0, io.DisplaySize.x, 0, io.DisplaySize.y,0,1));
-    gfx::SetViewRect(1, {0, 0, (uint32_t) resolution.x, (uint32_t) resolution.y });
+    gfx::SetViewRect(1, {0, 0, resolution.x, resolution.y });
 
     gui::NewFrame();
 }
