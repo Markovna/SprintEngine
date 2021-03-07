@@ -211,4 +211,30 @@ void TransformComponent::SetDirty(bool dirty) const {
     }
 }
 
+void TransformComponent::SetLocalPosition(const vec3 &position) {
+    local_.set_position(position);
+    SetDirty(true);
+}
+
+void TransformComponent::SetLocalRotation(const quat &rotation) {
+    local_.set_rotation(rotation);
+    SetDirty(true);
+}
+
+void TransformComponent::SetLocalScale(const vec3 &scale) {
+    local_.set_scale(scale);
+    SetDirty(true);
+}
+
+const vec3 &TransformComponent::GetLocalPosition() const {
+    return local_.get_position();
+}
+
+const quat &TransformComponent::GetLocalRotation() const {
+    return local_.get_rotation();
+}
+const vec3 &TransformComponent::GetLocalScale() const {
+    return local_.get_scale();
+}
+
 }

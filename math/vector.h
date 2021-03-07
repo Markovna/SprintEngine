@@ -72,12 +72,12 @@ struct SERIALIZED vector<3> {
 
     static const vector Zero;
     static const vector One;
-    static const vector Up;
-    static const vector Down;
     static const vector Forward;
     static const vector Backward;
     static const vector Right;
     static const vector Left;
+    static const vector Up;
+    static const vector Down;
 
     explicit vector(const Vec2& vec, float z = 0.0f) noexcept : x(vec.x), y(vec.y), z(z) {}
     vector() noexcept : x(0), y(0), z(0) {}
@@ -118,7 +118,17 @@ struct SERIALIZED vector<3> {
     }
 
     [[nodiscard]] float Length() const {
-        return std::sqrt(*this | *this);
+        return std::sqrtf(*this | *this);
+    }
+
+    [[nodiscard]] float SqrLength() const {
+        return *this | *this;
+    }
+
+    vec3& Normalize() {
+        float inv_l = 1.0f / Length();
+        x *= inv_l, y *= inv_l, z *= inv_l;
+        return *this;
     }
 };
 
@@ -299,6 +309,11 @@ bool operator!=(const vector<N>& lhs, const vector<N>& rhs) {
 template<class Vec>
 Vec Normalized(const Vec& vec) {
     return vec / std::sqrt(vec | vec);
+}
+
+inline float Angle(const Vec3& lhs, const Vec3& rhs) {
+    float len = lhs.Length() * rhs.Length();
+    return std::acosf((lhs | rhs) / len);
 }
 
 struct Vec2Int {

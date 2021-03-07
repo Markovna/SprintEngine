@@ -2,6 +2,7 @@
 #include "gui.h"
 #include "renderer.h"
 #include "texture.h"
+#include "render_texture.h"
 #include "engine.h"
 
 namespace sprint::editor {

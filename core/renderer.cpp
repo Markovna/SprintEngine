@@ -5,15 +5,14 @@
 
 namespace sprint {
 
-Matrix GetProjectionMatrix(const Camera& camera, const Rect& viewport) {
+Matrix GetProjectionMatrix(const Camera& camera, const float ratio) {
     const Rect normalized_rect = camera.GetRect();
     const float fov = camera.GetFieldOfView();
     const float near = camera.GetNear();
     const float far = camera.GetFar();
-    const float ratio = viewport.width / viewport.height;
     if (fov > 0.0f) {
         return Matrix::Perspective(
-            fov * math::PI / 180.0f, ratio * normalized_rect.width / normalized_rect.height, near, far
+            fov * math::DEG_TO_RAD, ratio * normalized_rect.width / normalized_rect.height, near, far
             );
     }
 
@@ -25,31 +24,29 @@ Matrix GetProjectionMatrix(const Camera& camera, const Rect& viewport) {
         far);
 }
 
-void Renderer::Render(Rect viewport, gfx::framebuf_handle fb_handle) {
+void Renderer::Render(Rect viewport, gfx::framebuf_handle fb_handle, Camera::Kind camera_kind) {
     auto mesh_view = scene_.view<MeshRenderer>();
     auto camera_view = scene_.view<Camera>();
 
     for (ecs::entity_t cam_entity : camera_view) {
-        const Camera& camera = scene_.get<Camera>(cam_entity);
+        const Camera& camera = camera_view.get(cam_entity);
+        if (camera.GetKind() != camera_kind)
+            continue;
+
         const TransformComponent& camera_transform = scene_.get<TransformComponent>(cam_entity);
         Rect normalized_rect = camera.GetRect();
 
-        gfx::SetView(camera.CameraID(), Matrix::GetInverse((Matrix)camera_transform.GetTransform()));
-        gfx::SetProjection(camera.CameraID(), GetProjectionMatrix(camera, viewport));
-        gfx::SetViewRect(camera.CameraID(),
-                         {
-            0,
-            0,
-            int(viewport.width * normalized_rect.width),
-            int(viewport.height * normalized_rect.height)});
-        gfx::SetViewBuffer(camera.CameraID(), fb_handle);
-
-        gfx::SetClear(0, gfx::ClearFlag::Color | gfx::ClearFlag::Depth);
-        gfx::SetClearColor(0, Color(0.1, 0.1, 0.1, 1.0));
+        gfx::CameraId camera_id = camera.CameraID();
+        gfx::SetView(camera_id, Matrix::GetInverse((Matrix)camera_transform.GetTransform()));
+        gfx::SetProjection(camera_id, GetProjectionMatrix(camera, viewport.width / viewport.height));
+        gfx::SetViewRect(camera_id,{ 0, 0, int(viewport.width * normalized_rect.width), int(viewport.height * normalized_rect.height)});
+        gfx::SetViewBuffer(camera_id, fb_handle);
+        gfx::SetClear(camera_id, camera.GetClearFlag());
+        gfx::SetClearColor(camera_id, camera.GetClearColor());
 
         for (ecs::entity_t entity : mesh_view) {
 
-            const MeshRenderer& mesh = scene_.get<MeshRenderer>(entity);
+            const MeshRenderer& mesh = mesh_view.get(entity);
             const TransformComponent& transform = scene_.get<TransformComponent>(entity);
             const Transform& model = transform.GetTransform();
 
@@ -61,10 +58,11 @@ void Renderer::Render(Rect viewport, gfx::framebuf_handle fb_handle) {
             gfx::SetBuffer(mesh.GetVertexBuf());
             gfx::SetBuffer(mesh.GetIndexBuf());
 
-            gfx::Render(camera.CameraID(), mesh.GetShader()->get_handle());
+            gfx::Render(camera_id, mesh.GetShader()->get_handle());
         }
     }
 }
+
 std::unique_ptr<Renderer> Renderer::Create(Scene &scene) {
     return std::make_unique<Renderer>(scene);
 }

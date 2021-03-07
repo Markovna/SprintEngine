@@ -8,10 +8,10 @@
 
 namespace sprint {
 
-const Matrix Matrix::Identity(Vec3::Forward, Vec3::Right, Vec3::Up, Vec3::Zero);
+const Matrix Matrix::Identity(Vec3::Right, Vec3::Up, Vec3::Forward, Vec3::Zero);
 
 Matrix Matrix::Translation(const Vec3& trans) {
-    return Matrix(Vec3::Forward, Vec3::Right, Vec3::Up, trans);
+    return Matrix(Vec3::Right, Vec3::Up, Vec3::Forward, trans);
 }
 
 Matrix Matrix::Scale(float scale) {
@@ -33,17 +33,7 @@ Matrix Matrix::Scale(const Vec3& scale) {
 }
 
 Matrix Matrix::Rotation(const Quat& rot) {
-    const float x2 = rot.x + rot.x;  const float y2 = rot.y + rot.y;  const float z2 = rot.z + rot.z;
-    const float xx = rot.x * x2;     const float xy = rot.x * y2;   const float xz = rot.x * z2;
-    const float yy = rot.y * y2;     const float yz = rot.y * z2;   const float zz = rot.z * z2;
-    const float wx = rot.w * x2;     const float wy = rot.w * y2;   const float wz = rot.w * z2;
-
-    return Matrix(
-            Vec3(1.0f - (yy + zz), xy + wz,          xz - wy),
-            Vec3(xy - wz,          1.0f - (xx + zz), yz + wx),
-            Vec3(xz + wy,          yz - wx,          1.0f - (xx + yy)),
-            Vec3(0.0f,             0.0f,             0.0f)
-        );
+    return Matrix(rot);
 }
 
 Matrix Matrix::Ortho(float x, float width, float y, float height, float minZ, float maxZ) {
@@ -100,6 +90,14 @@ Matrix Matrix::LookAt(const Vec3& position, const Vec3& target, const Vec3& up) 
         );
 }
 
+Matrix::Matrix(const Vec3 &x, const Vec3 &y, const Vec3 &z) noexcept :
+    data_ {
+        { x.x,  x.y,  x.z,  0.0f },
+        { y.x,  y.y,  y.z,  0.0f },
+        { z.x,  z.y,  z.z,  0.0f },
+        { 0.0f, 0.0f, 0.0f, 1.0f }
+    }
+{}
 Matrix::Matrix(const Vec3& x, const Vec3& y, const Vec3& z, const Vec3& w) noexcept :
         data_ {
         { x.x, x.y, x.z, 0.0f },
@@ -172,16 +170,10 @@ Vec3 Matrix::NormalizeScale() {
 }
 
 Matrix Matrix::TRS(const vec3& origin, const quat& rot, const vec3& scale) {
-    Matrix mat;
-
-    const float x2 = rot.x + rot.x, y2 = rot.y + rot.y,     z2 = rot.z + rot.z;
-    const float xx = rot.x * x2,    xy = rot.x * y2,        xz = rot.x * z2;
-    const float yy = rot.y * y2,    yz = rot.y * z2,        zz = rot.z * z2;
-    const float wx = rot.w * x2,    wy = rot.w * y2,        wz = rot.w * z2;
-
-    mat.SetRow(0, { 1.0f - (yy + zz),       (xy + wz) * scale.x,    (xz - wy) * scale.x});
-    mat.SetRow(1, { (xy - wz) * scale.y,    1.0f - (xx + zz),       (yz + wx) * scale.y});
-    mat.SetRow(2, { (xz + wy) * scale.z,    (yz - wx) * scale.z,    1.0f - (xx + yy) });
+    Matrix mat(rot);
+    mat[0][1] *= scale.x; mat[0][2] *= scale.x;
+    mat[1][0] *= scale.y; mat[1][2] *= scale.y;
+    mat[2][0] *= scale.z; mat[2][1] *= scale.z;
     mat.SetRow(3, origin);
     return mat;
 }

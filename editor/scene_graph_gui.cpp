@@ -1,3 +1,4 @@
+#include <components/camera.h>
 #include "scene_graph_gui.h"
 #include "engine.h"
 #include "editor_gui.h"

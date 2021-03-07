@@ -43,6 +43,8 @@ Engine::Engine() {
 
         auto mesh_ent = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
         auto cam_ent = scene_->CreateEntity({});
+
+
 //        auto ent3 = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
 
 //        scene_->get<TransformComponent>(mesh_ent).SetParent(&scene_->get<TransformComponent>(root_ent), &scene_->get<TransformComponent>(ent3));
@@ -51,14 +53,14 @@ Engine::Engine() {
 
         for (int i = 1; i < 10; i++) {
             {
-                vec3 pos = (i * 2.0f + 1) * Vec3::Up + (i * 0.7f) * Vec3::Forward;
+                vec3 pos = (i * 2.0f + 1) * Vec3::Forward + (i * 0.7f) * Vec3::Right;
                 auto ent = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
                 scene_->emplace<MeshRenderer>(ent);
                 TransformComponent& tr = scene_->get<TransformComponent>(ent);
                 tr.SetLocalTransform((Transform) Matrix::Translation(pos));
             }
             {
-                vec3 pos = (i * 2.0f + 1) * Vec3::Up + (i * 0.7f) * Vec3::Backward;
+                vec3 pos = (i * 2.0f + 1) * Vec3::Forward + (i * 0.7f) * Vec3::Left;
                 auto ent = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
                 scene_->emplace<MeshRenderer>(ent);
                 TransformComponent& tr = scene_->get<TransformComponent>(ent);
@@ -68,7 +70,6 @@ Engine::Engine() {
 
         auto& cam = scene_->emplace<Camera>(cam_ent);
         auto& cam_tr = scene_->get<TransformComponent>(cam_ent);
-
         cam_tr.SetLocalTransform(Transform(Matrix::Translation({0,-2.0f,-3.0f})));
 
 //        input_events::OnKeyPress.connect([](KeyPressEvent& key){

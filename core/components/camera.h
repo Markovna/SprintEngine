@@ -27,7 +27,10 @@ private:
     }
 
 public:
-    explicit Camera() : idx_(NextID()) {}
+    enum Kind { Game, Editor };
+
+public:
+    explicit Camera(Kind kind = Game) : idx_(NextID()), kind_(kind) {}
     ~Camera();
 
     [[nodiscard]] uint32_t CameraID() const { return idx_; }
@@ -37,6 +40,9 @@ public:
     [[nodiscard]] float GetFar() const { return far_; }
     [[nodiscard]] float GetOrthoSize() const { return orthogonal_size_; }
     [[nodiscard]] Rect GetRect() const { return normalized_rect_; }
+    [[nodiscard]] Color GetClearColor() const { return clear_color_; }
+    [[nodiscard]] ClearFlag GetClearFlag() const { return clear_flag_; }
+    [[nodiscard]] Kind GetKind() const { return kind_; }
 
     void SetFieldOfView(float fov) { fov_ = fov; }
     void SetNear(float near) { near_ = near; }
@@ -52,6 +58,7 @@ private:
     SERIALIZABLE Rect normalized_rect_ = {0.0f, 0.0f, 1.0f, 1.0f};
     SERIALIZABLE Color clear_color_ = Color::Black;
     SERIALIZABLE ClearFlag clear_flag_ = gfx::ClearFlag::Color | gfx::ClearFlag::Depth;
+    Kind kind_;
 };
 
 }

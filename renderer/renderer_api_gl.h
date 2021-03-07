@@ -97,6 +97,7 @@ public:
     void Destroy(shader_handle) override;
     void Destroy(uniform_handle) override;
     void Destroy(texture_handle) override;
+
     void RenderFrame(const Frame&) override;
 
 private:

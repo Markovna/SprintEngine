@@ -11,6 +11,7 @@ using mat4 = Matrix;
 
 struct Matrix {
 
+    Matrix(const Vec3& x, const Vec3& y, const Vec3& z) noexcept;
     Matrix(const Vec3& x, const Vec3& y, const Vec3& z, const Vec3& w) noexcept;
     Matrix(const Vec4& x, const Vec4& y, const Vec4& z, const Vec4& w) noexcept;
     Matrix() noexcept;

@@ -110,6 +110,9 @@ ImGuiRenderer::~ImGuiRenderer() {
     input_events::OnTextInput.disconnect(OnTextInput);
 }
 
+//TODO: reserve imgui camera id
+static const uint32_t camera_id = gfx::static_config::kCamerasCapacity - 1;
+
 ImGuiRenderer::ImGuiRenderer() : context_(RenderContext::Create()) {
     SPRINT_PROFILE_FUNCTION();
 
@@ -135,9 +138,9 @@ ImGuiRenderer::ImGuiRenderer() : context_(RenderContext::Create()) {
     input_events::OnScroll.connect(OnScroll);
     input_events::OnTextInput.connect(OnTextInput);
 
-    gfx::SetView(1, Matrix::Identity);
-    gfx::SetClear(1, gfx::ClearFlag::Color | gfx::ClearFlag::Depth);
-    gfx::SetClearColor(1, Color(0.1, 0.1, 0.1, 1.0));
+    gfx::SetView(camera_id, Matrix::Identity);
+    gfx::SetClear(camera_id, gfx::ClearFlag::Color | gfx::ClearFlag::Depth);
+    gfx::SetClearColor(camera_id, Color(0.1, 0.1, 0.1, 1.0));
 }
 
 void ImGuiRenderer::BeginFrame(sprint::Window *window) {
@@ -159,8 +162,8 @@ void ImGuiRenderer::BeginFrame(sprint::Window *window) {
     io.DisplayFramebufferScale = { (float) resolution.x / io.DisplaySize.x, (float) resolution.y / io.DisplaySize.y };
     io.DeltaTime = context_.timer.Restart().AsSeconds();
 
-    gfx::SetProjection(1, Matrix::Ortho(0, io.DisplaySize.x, 0, io.DisplaySize.y,0,1));
-    gfx::SetViewRect(1, {0, 0, resolution.x, resolution.y });
+    gfx::SetProjection(camera_id, Matrix::Ortho(0, io.DisplaySize.x, 0, io.DisplaySize.y,0,1));
+    gfx::SetViewRect(camera_id, {0, 0, resolution.x, resolution.y });
 
     gui::NewFrame();
 }
@@ -215,7 +218,7 @@ void ImGuiRenderer::Render(ImDrawData *draw_data) {
                 gfx::SetUniform(context_.texture_uniform_handle, texture, 0);
                 gfx::SetBuffer(context_.vb_handle, vertices_offset, num_vertices);
                 gfx::SetBuffer(context_.ib_handle, indices_offset + offset, cmd->ElemCount);
-                gfx::Render(1, context_.shader.get_handle());
+                gfx::Render(camera_id, context_.shader.get_handle());
             }
 
             offset += cmd->ElemCount;

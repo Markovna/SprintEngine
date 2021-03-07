@@ -31,7 +31,7 @@ class SceneGraphEditorGui {
 public:
     static std::unique_ptr<SceneGraphEditorGui> Create(EditorGui &, Engine &);
 
-    explicit SceneGraphEditorGui(EditorGui &editor, Engine &engine) : editor_(editor), engine_(engine) {};
+    SceneGraphEditorGui(EditorGui &editor, Engine &engine) : editor_(editor), engine_(engine) {}
     ~SceneGraphEditorGui() = default;
 
     void OnGui();

@@ -114,6 +114,14 @@ public:
     void SetTransform(const Transform& transform);
     void SetLocalTransform(const Transform& transform);
 
+    void SetLocalPosition(const vec3& position);
+    void SetLocalRotation(const quat& rotation);
+    void SetLocalScale(const vec3& scale);
+
+    const vec3& GetLocalPosition() const;
+    const quat& GetLocalRotation() const;
+    const vec3& GetLocalScale() const;
+
     iterator GetChildren();
     const_iterator GetChildren() const;
     size_t GetChildrenSize() const;

@@ -6,8 +6,11 @@
 namespace sprint::math {
 
 constexpr float PI = M_PI;
-constexpr float TO_RAD = PI / 180.0f;
-constexpr float TO_DEGREE = 1.0f / TO_RAD;
+constexpr float DEG_TO_RAD = PI / 180.0f;
+constexpr float RAD_TO_DEG = 1.0f / DEG_TO_RAD;
+
+template <class T>
+bool IsNaN(const T& value) { return isnan(value); }
 
 template<class T>
 typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type

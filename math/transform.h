@@ -26,6 +26,26 @@ public:
         return position_ + (rotation_ * value) * scale_;
     }
 
+    [[nodiscard]] vec3 TransformVector(const Vec3& value) const {
+        return (rotation_ * value) * scale_;
+    }
+
+    [[nodiscard]] vec3 TransformDirection(const Vec3& value) const {
+        return rotation_ * value;
+    }
+
+    [[nodiscard]] vec3 Up() const {
+        return TransformDirection(vec3::Up);
+    }
+
+    [[nodiscard]] vec3 Forward() const {
+        return TransformDirection(vec3::Forward);
+    }
+
+    [[nodiscard]] vec3 Right() const {
+        return TransformDirection(vec3::Right);
+    }
+
     Transform operator*(const Transform& rhs) const {
         return { rotation_ * (rhs.position_ * scale_) + position_, rotation_ * rhs.rotation_, scale_ * rhs.scale_};
     }

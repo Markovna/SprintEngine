@@ -1,6 +1,5 @@
 #pragma once
 
-#include <render_texture.h>
 #include "gfx.h"
 #include "vector.h"
 
@@ -8,7 +7,7 @@ namespace sprint {
 
 class Engine;
 class Renderer;
-class Texture;
+class RenderTexture;
 
 }
 

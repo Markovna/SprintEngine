@@ -129,7 +129,7 @@ struct ClearFlag {
         Stencil = 0x004
     };
 
-    using Type = uint8_t;
+    using Type = uint32_t;
 };
 
 struct TextureFormat {
