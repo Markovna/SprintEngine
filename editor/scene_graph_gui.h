@@ -37,6 +37,9 @@ public:
     void OnGui();
 
 private:
+    void DrawSceneGraph();
+
+private:
     EditorGui &editor_;
     Engine &engine_;
     std::vector<EditorGuiCommand> commands_;

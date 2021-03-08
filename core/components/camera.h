@@ -44,6 +44,7 @@ public:
     [[nodiscard]] ClearFlag GetClearFlag() const { return clear_flag_; }
     [[nodiscard]] Kind GetKind() const { return kind_; }
 
+    void SetClearColor(const Color& color) { clear_color_ = color; }
     void SetFieldOfView(float fov) { fov_ = fov; }
     void SetNear(float near) { near_ = near; }
     void SetFar(float far) { far_ = far; }

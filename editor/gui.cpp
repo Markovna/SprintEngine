@@ -26,7 +26,7 @@ const ImGuiPayload* DragDropTarget(void *ptr_id, const char *type, ImVec2 size, 
     if (ImGui::BeginDragDropTarget()) {
         if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload(type, ImGuiDragDropFlags_AcceptBeforeDelivery)) {
             hovered = true;
-            ImGui::RenderFrame(rect.Min, rect.Max, ImGui::GetColorU32(ImGuiCol_ButtonHovered), true);
+            ImGui::RenderFrame(rect.Min, rect.Max, ImGui::GetColorU32(ImGuiCol_HeaderHovered), true);
             if (payload->Delivery) {
                 payload_delivery = payload;
             }

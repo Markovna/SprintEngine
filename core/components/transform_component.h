@@ -19,6 +19,12 @@ public:
     public:
         explicit child_iterator(pointer curr) : curr_(curr) {}
 
+        explicit operator pointer() noexcept {
+            return curr_;
+        }
+
+        explicit operator bool() { return curr_ != nullptr; }
+
         child_iterator& operator++() {
             curr_ = curr_->next_ != ecs::null ? &curr_->get(curr_->next_) : nullptr;
             return *this;

@@ -17,12 +17,11 @@ GameViewGui::GameViewGui(EditorGui &editor, Engine &engine)
 }
 
 void GameViewGui::OnGui() {
-    gui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
     gui::Begin("Game View");
-    gui::PopStyleVar();
 
     ImVec2 scale = gui::GetIO().DisplayFramebufferScale;
-    ImVec2 size = { gui::GetWindowWidth(), gui::GetContentRegionAvail().y };
+    ImVec2 size = gui::GetContentRegionAvail();
     Vec2Int resolution(int(size.x * scale.x), int(size.y * scale.y));
 
     if (!render_texture_ ||

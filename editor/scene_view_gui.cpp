@@ -19,7 +19,9 @@ SceneViewGui::SceneViewGui(EditorGui &editor, Engine &engine)
 
     Scene* scene = engine.get_scene();
     camera_ = scene->CreateEntity({});
-    scene->emplace<Camera>(camera_, Camera::Editor);
+    Camera& camera = scene->emplace<Camera>(camera_, Camera::Editor);
+    camera.SetClearColor(Color(0.1f, 0.1f, 0.1f, 1.0f));
+
     TransformComponent& transform = engine_.get_scene()->get<TransformComponent>(camera_);
     transform.SetLocalRotation(quat(vec3::Right, 30 * math::DEG_TO_RAD));
 }
@@ -27,12 +29,10 @@ SceneViewGui::SceneViewGui(EditorGui &editor, Engine &engine)
 void SceneViewGui::OnGui() {
     ImGuiIO& io = gui::GetIO();
 
-    gui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     gui::Begin("Scene View");
-    gui::PopStyleVar();
 
     ImVec2 scale = gui::GetIO().DisplayFramebufferScale;
-    ImVec2 size = { gui::GetWindowWidth(), gui::GetContentRegionAvail().y };
+    ImVec2 size = gui::GetContentRegionAvail();
     Vec2Int resolution(int(size.x * scale.x), int(size.y * scale.y));
 
     if (!render_texture_ ||
@@ -84,6 +84,7 @@ void SceneViewGui::OnGui() {
         if (rotate_delta != vec2::Zero)
             RotateCamera(rotate_delta);
     }
+
     // -------------------------------------------------
 
     gui::End();
