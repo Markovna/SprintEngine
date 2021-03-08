@@ -193,15 +193,17 @@ void SceneGraphEditorGui::DrawSceneGraph() {
         ImGui::SetCursorScreenPos(button_pos);
         auto btn_flags = ImGuiButtonFlags_PressedOnClick | ImGuiButtonFlags_AlignTextBaseLine |
             ImGuiButtonFlags_NoHoldingActiveId | ImGuiButtonFlags_NoHoveredOnFocus | ImGuiButtonFlags_AllowItemOverlap;
+        ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetColorU32(ImGuiCol_ButtonHovered));
         if (ImGui::ButtonEx("+", ImVec2(button_size, button_size), btn_flags)) {
             gui::SetItemOpen((void*)(intptr_t)hovered_id, true);
             commands_.emplace_back(CreateEntityCommand{hovered_id});
         }
+        ImGui::PopStyleColor();
     }
 
     gui::PopStyleVar(2);
-
-    if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered()) {
+    
+    if (ImGui::IsWindowFocused() && ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered()) {
         selected = ecs::null;
     }
 
