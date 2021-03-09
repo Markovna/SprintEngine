@@ -45,7 +45,7 @@ static void BeginDockSpace() {
 
 
     if (ImGui::BeginMenuBar()) {
-        if (ImGui::BeginMenu("Find")) {
+        if (ImGui::BeginMenu("File")) {
             if (ImGui::MenuItem("Close", NULL, false, true)) {}
             ImGui::EndMenu();
         }
@@ -80,10 +80,23 @@ void EditorGui::OnGui() {
 
     BeginDockSpace();
 
-    game_view_gui->OnGui();
-    scene_graph_gui_->OnGui();
-    properties_gui_->OnGui();
-    scene_view_gui_->OnGui();
+    if (false) {
+
+        ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImVec2 size = {ImMin(viewport->Size.x - 100.0f, 400.0f), ImMin(viewport->Size.y - 80.0f, 300.0f)};
+        ImVec2 center = viewport->GetCenter();
+        ImGui::SetNextWindowPos({center.x - 0.5f * size.x, center.y - 0.5f * size.y});
+        ImGui::SetNextWindowSize(size);
+        gui::Begin("Projects", nullptr, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+        gui::End();
+
+    } else {
+        game_view_gui->OnGui();
+        scene_graph_gui_->OnGui();
+        properties_gui_->OnGui();
+        scene_view_gui_->OnGui();
+    }
 }
 
 EditorGui::~EditorGui() {

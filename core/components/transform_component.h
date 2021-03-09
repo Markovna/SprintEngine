@@ -23,7 +23,7 @@ public:
             return curr_;
         }
 
-        explicit operator bool() { return curr_ != nullptr; }
+        explicit operator bool() noexcept { return curr_ != nullptr; }
 
         child_iterator& operator++() {
             curr_ = curr_->next_ != ecs::null ? &curr_->get(curr_->next_) : nullptr;

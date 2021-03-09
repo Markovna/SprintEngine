@@ -210,7 +210,7 @@ bool Vector2Field(const char *label, float *x, float *y, const char *format, ImG
     FieldLabel(label);
 
     bool changed = false;
-    float item_w = (GetContentRegionAvail().x - 2.0f * style.ItemSpacing.y) / 2.0f;
+    float item_w = (GetContentRegionAvail().x - 1.0f * style.ItemSpacing.y) / 2.0f;
     SetNextItemWidth(item_w);
     PushID("x");
     changed |= DragFloat("", x, 1.0f, 0.0f, 0.0f, format, flags);
@@ -247,7 +247,7 @@ bool Vector4Field(const char *label,
     FieldLabel(label);
 
     bool changed = false;
-    float item_w = (GetContentRegionAvail().x - 2.0f * style.ItemSpacing.y) / 4.0f;
+    float item_w = (GetContentRegionAvail().x - 3.0f * style.ItemSpacing.y) / 4.0f;
     SetNextItemWidth(item_w);
     PushID("x");
     changed |= DragFloat("", x, 1.0f, 0.0f, 0.0f, format, flags);
@@ -288,12 +288,42 @@ bool RectField(const char *label, float *x, float *y, float *z, float *w, const 
     ImGuiStyle& style = g.Style;
 
     FieldLabel(label);
-
     bool changed = false;
-    changed |= Vector2Field("position", x, y);
+    float item_w = (GetContentRegionAvail().x - style.ItemSpacing.x) / 2.0f;
+
+    PushID("X");
+    Text("X");
+    SameLine(0.0f, style.ItemSpacing.x);
+    SetNextItemWidth(item_w - GetItemRectSize().x - style.ItemSpacing.x);
+    changed |= DragFloat("", x, 1.0f, 0.0f, 0.0f, format, flags);
+    PopID();
+
+    SameLine(0.0f, style.ItemSpacing.x);
+
+    PushID("Y");
+    Text("Y");
+    SameLine(0.0f, style.ItemSpacing.x);
+    SetNextItemWidth(GetContentRegionAvail().x);
+    changed |= DragFloat("", y, 1.0f, 0.0f, 0.0f, format, flags);
+    PopID();
 
     FieldLabel("");
-    changed |= Vector2Field("size", z, w);
+
+    PushID("W");
+    Text("W");
+    SameLine(0.0f, style.ItemSpacing.x);
+    SetNextItemWidth(item_w - GetItemRectSize().x - style.ItemSpacing.x);
+    changed |= DragFloat("", z, 1.0f, 0.0f, 0.0f, format, flags);
+    PopID();
+
+    SameLine(0.0f, style.ItemSpacing.x);
+
+    PushID("H");
+    Text("H");
+    SameLine(0.0f, style.ItemSpacing.x);
+    SetNextItemWidth(GetContentRegionAvail().x);
+    changed |= DragFloat("", w, 1.0f, 0.0f, 0.0f, format, flags);
+    PopID();
 
     PopID();
     EndGroup();

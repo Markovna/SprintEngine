@@ -67,7 +67,6 @@ static void BeginEntityTreeNode(
     }
 
     ImGui::SetCursorPos({min_x, cursor_pos.y});
-
     if (!small_target_hovered) {
         if (const ImGuiPayload *payload = gui::DragDropTarget(ptr_id, DRAG_DROP_TYPE, size)) {
             uint32_t child_id = *(uint32_t *) payload->Data;
@@ -117,7 +116,6 @@ static void BeginEntityTreeNode(
 }
 
 static void EndEntityTreeNode() {
-
     ImGui::TreePop();
 }
 
@@ -152,17 +150,22 @@ void SceneGraphEditorGui::DrawSceneGraph() {
     const float spacing = 4.0f;
     const float button_size = ImGui::GetFrameHeight();
     const ImVec2 screen_pos = ImGui::GetCursorScreenPos();
+//    const ImRect clip_rect = {
+//        screen_pos,
+//        {
+//            screen_pos.x + ImGui::GetContentRegionAvail().x - button_size - spacing,
+//            screen_pos.y + ImGui::GetWindowHeight()
+//        }
+//    };
+
+    const ImRect& window_clip_rect = ImGui::GetCurrentWindow()->ClipRect;
     const ImRect clip_rect = {
-        screen_pos,
-        {
-            screen_pos.x + ImGui::GetContentRegionAvail().x - button_size - spacing,
-            screen_pos.y + ImGui::GetWindowHeight()
-        }
-    };
+        window_clip_rect.Min,
+        {screen_pos.x + ImGui::GetContentRegionAvail().x - button_size - spacing, window_clip_rect.Max.y}  };
 
     ImGui::PushClipRect(clip_rect.Min, clip_rect.Max, true);
 
-    ecs::entity_t hovered_id;
+    ecs::entity_t hovered_id = ecs::null;
     ImVec2 button_pos;
     VisitTreeNodes(engine_.get_scene()->GetRoots(), [&] (TransformComponent::iterator it) {
         bool opened, hovered;
@@ -170,16 +173,14 @@ void SceneGraphEditorGui::DrawSceneGraph() {
         BeginEntityTreeNode((TransformComponent*) it, spacing, selected, commands_, opened, hovered);
         if (hovered) {
             hovered_id = it->GetID();
-            button_pos = {
-                ImGui::GetItemRectMax().x - button_size,
-                ImGui::GetItemRectMin().y
-            };
+            button_pos = {ImGui::GetItemRectMax().x - button_size, ImGui::GetItemRectMin().y };
         }
 
         if (opened)
             return VisitTreeNodesResult::Recursive;
 
-        while (it && !it->GetNext()) {
+
+        while (it->GetParent() && !it->GetNext()) {
             EndEntityTreeNode();
             it = TransformComponent::iterator(it->GetParent());
         }
@@ -202,7 +203,7 @@ void SceneGraphEditorGui::DrawSceneGraph() {
     }
 
     gui::PopStyleVar(2);
-    
+
     if (ImGui::IsWindowFocused() && ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered()) {
         selected = ecs::null;
     }
