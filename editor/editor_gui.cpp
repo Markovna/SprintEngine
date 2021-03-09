@@ -83,6 +83,7 @@ void EditorGui::OnGui() {
     if (false) {
 
         ImGuiViewport* viewport = ImGui::GetMainViewport();
+
         ImVec2 size = {ImMin(viewport->Size.x - 100.0f, 400.0f), ImMin(viewport->Size.y - 80.0f, 300.0f)};
         ImVec2 center = viewport->GetCenter();
         ImGui::SetNextWindowPos({center.x - 0.5f * size.x, center.y - 0.5f * size.y});

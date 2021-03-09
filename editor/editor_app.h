@@ -11,7 +11,14 @@ namespace sprint::editor {
 
 class Application {
 public:
-    Application();
+    struct Config {
+        static Config Parse(int argc, char *argv[]);
+
+        std::string project_path;
+    };
+
+public:
+    explicit Application(Config);
     ~Application();
     int Run();
 private:

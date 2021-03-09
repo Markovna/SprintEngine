@@ -24,6 +24,7 @@ Window::Window(size_t width, size_t height) : width_(width), height_(height) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, true);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+//    glfwWindowHint()
 
     window_ = glfwCreateWindow(width_, height_, "SprintEngine", NULL, NULL);
     assert(window_); // TODO: assert macro
@@ -102,10 +103,12 @@ Window::Window(size_t width, size_t height) : width_(width), height_(height) {
         int buffer_w, buffer_h; glfwGetFramebufferSize(w, &buffer_w, &buffer_h);
         window->resolution_ = { buffer_w, buffer_h };
 
+        std::cout << "Resize\n";
         window->PushEvent(ResizeEvent{});
     });
 
 //    glfwSetWindowRefreshCallback(window_, [](GLFWwindow *w) {
+//        Window* window = (Window*) glfwGetWindowUserPointer(w);
 //    });
 }
 

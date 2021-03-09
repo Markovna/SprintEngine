@@ -150,14 +150,6 @@ void SceneGraphEditorGui::DrawSceneGraph() {
     const float spacing = 4.0f;
     const float button_size = ImGui::GetFrameHeight();
     const ImVec2 screen_pos = ImGui::GetCursorScreenPos();
-//    const ImRect clip_rect = {
-//        screen_pos,
-//        {
-//            screen_pos.x + ImGui::GetContentRegionAvail().x - button_size - spacing,
-//            screen_pos.y + ImGui::GetWindowHeight()
-//        }
-//    };
-
     const ImRect& window_clip_rect = ImGui::GetCurrentWindow()->ClipRect;
     const ImRect clip_rect = {
         window_clip_rect.Min,

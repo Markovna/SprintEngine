@@ -1,9 +1,6 @@
 #include "application.h"
 
-int main() {
-    std::filesystem::path path(argv[0]);
-    std::filesystem::current_path(path.parent_path());
-
+int main(int argc, char *argv[]) {
     sprint::Application app;
     return app.Run();
 }

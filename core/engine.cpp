@@ -1,5 +1,4 @@
 #include "matrix.h"
-#include "config.h"
 #include "engine.h"
 #include "ecs/ecs.h"
 #include "components/camera.h"

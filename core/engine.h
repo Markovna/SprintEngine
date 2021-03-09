@@ -6,7 +6,6 @@
 
 namespace sprint {
 
-class Config;
 class Window;
 
 class Engine {

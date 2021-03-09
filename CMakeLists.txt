@@ -4,8 +4,6 @@ project(SprintEngine)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 add_subdirectory(thirdparty/spdlog spdlog)
 add_subdirectory(thirdparty/glfw glfw)
 add_subdirectory(thirdparty/glad glad)
@@ -48,7 +46,6 @@ set(ENGINE_SRC
         debug/profiler.cpp debug/profiler.h
         core/macro.h
         common/sparse_map.h
-        core/config.h
         core/scene.cpp core/scene.h
         math/transform.cpp math/transform.h
         math/math_utils.h
@@ -72,9 +69,16 @@ set(EDITOR_SRC
         editor/components_gui.cpp editor/components_gui.h)
 
 set(REFLECTION_SRC
-        reflection/meta_module.h
-        reflection/meta_module.cpp
-        reflection/meta_registry.cpp reflection/meta_registry.h reflection/type_info.cpp reflection/type_info.h reflection/type_ids.cpp reflection/type_ids.h reflection/field.cpp reflection/field.h reflection/type.cpp reflection/type.h reflection/reference.cpp reflection/reference.h reflection/meta_runtime.h reflection/method.cpp reflection/method.h reflection/object.cpp reflection/object.h)
+        reflection/meta_module.h reflection/meta_module.cpp
+        reflection/meta_registry.cpp reflection/meta_registry.h
+        reflection/type_info.cpp reflection/type_info.h
+        reflection/type_ids.cpp reflection/type_ids.h
+        reflection/field.cpp reflection/field.h
+        reflection/type.cpp reflection/type.h
+        reflection/reference.cpp reflection/reference.h
+        reflection/meta_runtime.h
+        reflection/method.cpp reflection/method.h
+        reflection/object.cpp reflection/object.h)
 
 set(INCLUDE_DIRECTORIES
         core/
@@ -102,7 +106,6 @@ target_precompile_headers(SprintEngine PRIVATE sprintpch.h)
 target_include_directories(SprintEngine PRIVATE ${INCLUDE_DIRECTORIES})
 target_link_libraries(SprintEngine PRIVATE ${LIBRARIES})
 target_compile_definitions(SprintEngine PRIVATE GLFW_INCLUDE_NONE)
-#target_sources(SprintEngine PUBLIC ${ENGINE_SRC})
 
 # ----------------------------------------------------------
 # ---------------------- SprintEditor ----------------------
@@ -126,36 +129,28 @@ add_custom_target(gen_meta_module
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         )
 
-set(TEST_META_SRC core/components/transform_component.h)
-add_custom_target(test_meta_module
-        COMMAND ${CMAKE_COMMAND}
-        ARGS
-            -DINPUT="${TEST_META_SRC}"
-            -DIMPLICIT_INCLUDES="${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}"
-            -DINCLUDES="${ALL_INCLUDES}"
-            -DDEFINES="${ALL_DEFINES}"
-            -DOUTPUT=${PROJECT_SOURCE_DIR}/reflection/meta_module_test.h
-            -DGEN=$<TARGET_FILE:meta_generator>
-            -P ${CMAKE_SOURCE_DIR}/cmake/RunCppParser.cmake
-        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-        )
-
-#add_custom_command(
-#        OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/${PARSER_OUT_HPP}
-#        COMMAND ${CMAKE_COMMAND}
-#        ARGS
-#            -DINPUT=${PARSER_INPUT}
-#            -DIMPLICIT_INCLUDES="${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}"
-#            -DINCLUDES="${ALL_INCLUDES}"
-#            -DDEFINES="${ALL_DEFINES}"
-#            -DGEN=$<TARGET_FILE:meta_generator>
-#            -P ${CMAKE_SOURCE_DIR}/cmake/RunCppParser.cmake
-#        WORKING_DIRECTORY "${PARSER_WORKING_DIRECTORY}"
-#)
-
 target_precompile_headers(SprintEditor PRIVATE sprintpch.h)
 target_include_directories(SprintEditor PRIVATE ${INCLUDE_DIRECTORIES})
 target_link_libraries(SprintEditor PRIVATE ${LIBRARIES})
 target_compile_definitions(SprintEditor PRIVATE GLFW_INCLUDE_NONE)
-#target_sources(SprintEditor PUBLIC ${EDITOR_SRC} ${ENGINE_SRC} ${REFLECTION_SRC})
+
+# ----------------------------------------------------------
+# ------------------------ Sandbox -------------------------
+# ----------------------------------------------------------
+
+set(SANDBOX_PATH ${PROJECT_SOURCE_DIR}/sandbox/)
+
+add_custom_target(SandboxEditor
+        COMMAND SprintEditor
+            -p ${SANDBOX_PATH}
+        )
+
+add_custom_target(Sandbox
+        COMMAND SprintEngine
+        WORKING_DIRECTORY "${SANDBOX_PATH}"
+        )
+
+# ----------------------------------------------------------
+# ----------------------------------------------------------
+# ----------------------------------------------------------
 

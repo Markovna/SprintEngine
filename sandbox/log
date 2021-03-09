@@ -1,0 +1,11 @@
+[2021-03-09 20:54:04.216] [ENGINE] [info] gfx::Init
+[2021-03-09 20:54:04.217] [ENGINE] [info] New OpenGL context created.
+[2021-03-09 20:54:04.403] [ENGINE] [info] gfx::CreateTexture
+[2021-03-09 20:54:04.459] [ENGINE] [info] gfx::CreateTexture
+[2021-03-09 20:54:04.460] [ENGINE] [info] gfx::CreateVertexBuffer
+[2021-03-09 20:54:04.460] [ENGINE] [info] gfx::CreateIndexBuffer
+[2021-03-09 20:54:04.460] [ENGINE] [info] gfx::CreateShader
+[2021-03-09 20:54:05.842] [ENGINE] [info] gfx::Shutdown
+[2021-03-09 20:54:05.863] [ENGINE] [info] gfx::Destroy Shader
+[2021-03-09 20:54:05.863] [ENGINE] [info] gfx::Destroy Texture
+[2021-03-09 20:54:05.863] [ENGINE] [info] gfx::Destroy Texture
