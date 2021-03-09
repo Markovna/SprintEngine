@@ -103,7 +103,6 @@ Window::Window(size_t width, size_t height) : width_(width), height_(height) {
         int buffer_w, buffer_h; glfwGetFramebufferSize(w, &buffer_w, &buffer_h);
         window->resolution_ = { buffer_w, buffer_h };
 
-        std::cout << "Resize\n";
         window->PushEvent(ResizeEvent{});
     });
 
