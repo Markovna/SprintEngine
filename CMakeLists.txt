@@ -10,82 +10,89 @@ add_subdirectory(thirdparty/glad glad)
 add_subdirectory(thirdparty/stb_image stb_image)
 add_subdirectory(thirdparty/imgui imgui)
 
-add_subdirectory(reflection/generator)
+
+set(SOURCE_DIR src)
+
+add_subdirectory(${SOURCE_DIR}/reflection/generator)
+
 
 set(ENGINE_SRC
-        core/log.cpp core/log.h
-        core/window_event.h
-        core/application.cpp core/application.h
-        core/window.cpp core/window.h
-        renderer/shader.cpp renderer/shader.h
-        math/vector.cpp math/vector.h
-        renderer/texture.cpp renderer/texture.h
-        math/matrix.cpp math/matrix.h
-        math/quat.cpp math/quat.h
-        core/key_codes.h
-        core/mouse_codes.h
-        common/color.cpp common/color.h
-        common/signals/delegate.h
-        common/signals/event.cpp common/signals/event.h
-        common/signals/delegate_tests.cpp common/signals/delegate_tests.h
-        common/slot_map.h
-        common/time_span.cpp common/time_span.h
-        renderer/gfx.cpp renderer/gfx.h
-        renderer/vertex_layout.cpp renderer/vertex_layout.h
-        renderer/gfx_details.cpp renderer/gfx_details.h
-        renderer/renderer_api_gl.cpp renderer/renderer_api_gl.h
-        renderer/shader_utils.cpp renderer/shader_utils.h
-        renderer/gfx_config.cpp renderer/gfx_config.h
-        common/iterator_range.h
-        common/rect_int.cpp common/rect_int.h
-        core/engine.cpp core/engine.h
-        common/ecs/ecs.cpp common/ecs/ecs.h
-        common/sparse_set.h
-        core/input_events.cpp core/input_events.h
-        common/semaphore.cpp common/semaphore.h
-        debug/profiler.cpp debug/profiler.h
-        core/macro.h
-        common/sparse_map.h
-        core/scene.cpp core/scene.h
-        math/transform.cpp math/transform.h
-        math/math_utils.h
-        core/components/transform_component.cpp core/components/transform_component.h
-        sprintpch.h
-        core/components/mesh_renderer.cpp core/components/mesh_renderer.h
-        core/components/camera.cpp core/components/camera.h
-        common/int_set.cpp common/int_set.h
-        core/renderer.cpp core/renderer.h
-        common/rect.cpp common/rect.h renderer/render_texture.cpp renderer/render_texture.h core/resources.cpp core/resources.h)
+#        ${SOURCE_DIR}/sprintpch.h
+        ${SOURCE_DIR}/core/log.cpp ${SOURCE_DIR}/core/log.h
+        ${SOURCE_DIR}/core/window_event.h
+        ${SOURCE_DIR}/core/application.cpp ${SOURCE_DIR}/core/application.h
+        ${SOURCE_DIR}/core/window.cpp ${SOURCE_DIR}/core/window.h
+        ${SOURCE_DIR}/renderer/shader.cpp ${SOURCE_DIR}/renderer/shader.h
+        ${SOURCE_DIR}/math/vector.cpp ${SOURCE_DIR}/math/vector.h
+        ${SOURCE_DIR}/renderer/texture.cpp ${SOURCE_DIR}/renderer/texture.h
+        ${SOURCE_DIR}/math/matrix.cpp ${SOURCE_DIR}/math/matrix.h
+        ${SOURCE_DIR}/math/quat.cpp ${SOURCE_DIR}/math/quat.h
+        ${SOURCE_DIR}/core/key_codes.h
+        ${SOURCE_DIR}/core/mouse_codes.h
+        ${SOURCE_DIR}/common/color.cpp ${SOURCE_DIR}/common/color.h
+        ${SOURCE_DIR}/common/signals/delegate.h
+        ${SOURCE_DIR}/common/signals/event.cpp ${SOURCE_DIR}/common/signals/event.h
+        ${SOURCE_DIR}/common/signals/delegate_tests.cpp ${SOURCE_DIR}/common/signals/delegate_tests.h
+        ${SOURCE_DIR}/common/slot_map.h
+        ${SOURCE_DIR}/common/time_span.cpp ${SOURCE_DIR}/common/time_span.h
+        ${SOURCE_DIR}/renderer/gfx.cpp ${SOURCE_DIR}/renderer/gfx.h
+        ${SOURCE_DIR}/renderer/vertex_layout.cpp ${SOURCE_DIR}/renderer/vertex_layout.h
+        ${SOURCE_DIR}/renderer/gfx_details.cpp ${SOURCE_DIR}/renderer/gfx_details.h
+        ${SOURCE_DIR}/renderer/renderer_api_gl.cpp ${SOURCE_DIR}/renderer/renderer_api_gl.h
+        ${SOURCE_DIR}/renderer/shader_utils.cpp ${SOURCE_DIR}/renderer/shader_utils.h
+        ${SOURCE_DIR}/renderer/gfx_config.cpp ${SOURCE_DIR}/renderer/gfx_config.h
+        ${SOURCE_DIR}/common/iterator_range.h
+        ${SOURCE_DIR}/common/rect_int.cpp ${SOURCE_DIR}/common/rect_int.h
+        ${SOURCE_DIR}/core/engine.cpp ${SOURCE_DIR}/core/engine.h
+        ${SOURCE_DIR}/common/ecs/ecs.cpp ${SOURCE_DIR}/common/ecs/ecs.h
+        ${SOURCE_DIR}/common/sparse_set.h
+        ${SOURCE_DIR}/core/input_events.cpp ${SOURCE_DIR}/core/input_events.h
+        ${SOURCE_DIR}/common/semaphore.cpp ${SOURCE_DIR}/common/semaphore.h
+        ${SOURCE_DIR}/debug/profiler.cpp ${SOURCE_DIR}/debug/profiler.h
+        ${SOURCE_DIR}/core/macro.h
+        ${SOURCE_DIR}/common/sparse_map.h
+        ${SOURCE_DIR}/core/scene.cpp ${SOURCE_DIR}/core/scene.h
+        ${SOURCE_DIR}/math/transform.cpp ${SOURCE_DIR}/math/transform.h
+        ${SOURCE_DIR}/math/math_utils.h
+        ${SOURCE_DIR}/core/components/transform_component.cpp ${SOURCE_DIR}/core/components/transform_component.h
+        ${SOURCE_DIR}/core/components/mesh_renderer.cpp ${SOURCE_DIR}/core/components/mesh_renderer.h
+        ${SOURCE_DIR}/core/components/camera.cpp ${SOURCE_DIR}/core/components/camera.h
+        ${SOURCE_DIR}/common/int_set.cpp ${SOURCE_DIR}/common/int_set.h
+        ${SOURCE_DIR}/core/renderer.cpp ${SOURCE_DIR}/core/renderer.h
+        ${SOURCE_DIR}/common/rect.cpp ${SOURCE_DIR}/common/rect.h
+        ${SOURCE_DIR}/renderer/render_texture.cpp ${SOURCE_DIR}/renderer/render_texture.h
+        ${SOURCE_DIR}/core/resources.cpp ${SOURCE_DIR}/core/resources.h)
 
 set(EDITOR_SRC
-        editor/editor_app.cpp editor/editor_app.h
-        editor/imgui_renderer.cpp editor/imgui_renderer.h
-        editor/editor_gui.h editor/editor_gui.cpp
-        editor/scene_graph_gui.cpp editor/scene_graph_gui.h
-        editor/gui.h editor/gui.cpp
-        editor/properties_gui.cpp editor/properties_gui.h
-        editor/scene_view_gui.cpp editor/scene_view_gui.h
-        editor/game_view_gui.cpp editor/game_view_gui.h
-        editor/components_gui.cpp editor/components_gui.h)
+        ${SOURCE_DIR}/editor/editor_app.cpp ${SOURCE_DIR}/editor/editor_app.h
+        ${SOURCE_DIR}/editor/imgui_renderer.cpp ${SOURCE_DIR}/editor/imgui_renderer.h
+        ${SOURCE_DIR}/editor/editor_gui.h ${SOURCE_DIR}/editor/editor_gui.cpp
+        ${SOURCE_DIR}/editor/scene_graph_gui.cpp ${SOURCE_DIR}/editor/scene_graph_gui.h
+        ${SOURCE_DIR}/editor/gui.h ${SOURCE_DIR}/editor/gui.cpp
+        ${SOURCE_DIR}/editor/properties_gui.cpp ${SOURCE_DIR}/editor/properties_gui.h
+        ${SOURCE_DIR}/editor/scene_view_gui.cpp ${SOURCE_DIR}/editor/scene_view_gui.h
+        ${SOURCE_DIR}/editor/game_view_gui.cpp ${SOURCE_DIR}/editor/game_view_gui.h
+        ${SOURCE_DIR}/editor/components_gui.cpp ${SOURCE_DIR}/editor/components_gui.h)
 
 set(REFLECTION_SRC
-        reflection/meta_module.h reflection/meta_module.cpp
-        reflection/meta_registry.cpp reflection/meta_registry.h
-        reflection/type_info.cpp reflection/type_info.h
-        reflection/type_ids.cpp reflection/type_ids.h
-        reflection/field.cpp reflection/field.h
-        reflection/type.cpp reflection/type.h
-        reflection/reference.cpp reflection/reference.h
-        reflection/meta_runtime.h
-        reflection/method.cpp reflection/method.h
-        reflection/object.cpp reflection/object.h)
+        ${SOURCE_DIR}/reflection/meta_runtime.h
+        ${SOURCE_DIR}/reflection/meta_module.h ${SOURCE_DIR}/reflection/meta_module.cpp
+        ${SOURCE_DIR}/reflection/meta_registry.cpp ${SOURCE_DIR}/reflection/meta_registry.h
+        ${SOURCE_DIR}/reflection/type_info.cpp ${SOURCE_DIR}/reflection/type_info.h
+        ${SOURCE_DIR}/reflection/type_ids.cpp ${SOURCE_DIR}/reflection/type_ids.h
+        ${SOURCE_DIR}/reflection/field.cpp ${SOURCE_DIR}/reflection/field.h
+        ${SOURCE_DIR}/reflection/type.cpp ${SOURCE_DIR}/reflection/type.h
+        ${SOURCE_DIR}/reflection/reference.cpp ${SOURCE_DIR}/reflection/reference.h
+        ${SOURCE_DIR}/reflection/method.cpp ${SOURCE_DIR}/reflection/method.h
+        ${SOURCE_DIR}/reflection/object.cpp ${SOURCE_DIR}/reflection/object.h)
 
 set(INCLUDE_DIRECTORIES
-        core/
-        renderer/
-        math/
-        common/
-        reflection/
+        ${SOURCE_DIR}/
+#        ${SOURCE_DIR}/core/
+#        ${SOURCE_DIR}/renderer/
+#        ${SOURCE_DIR}/math/
+#        ${SOURCE_DIR}/common/
+#        ${SOURCE_DIR}/reflection/
         )
 
 set(LIBRARIES
@@ -100,9 +107,9 @@ set(LIBRARIES
 # ---------------------- SprintEngine ----------------------
 # ----------------------------------------------------------
 
-add_executable(SprintEngine core/main.cpp ${ENGINE_SRC})
+add_executable(SprintEngine ${SOURCE_DIR}/core/main.cpp ${ENGINE_SRC})
 
-target_precompile_headers(SprintEngine PRIVATE sprintpch.h)
+target_precompile_headers(SprintEngine PRIVATE ${SOURCE_DIR}/sprintpch.h)
 target_include_directories(SprintEngine PRIVATE ${INCLUDE_DIRECTORIES})
 target_link_libraries(SprintEngine PRIVATE ${LIBRARIES})
 target_compile_definitions(SprintEngine PRIVATE GLFW_INCLUDE_NONE)
@@ -111,7 +118,7 @@ target_compile_definitions(SprintEngine PRIVATE GLFW_INCLUDE_NONE)
 # ---------------------- SprintEditor ----------------------
 # ----------------------------------------------------------
 
-add_executable(SprintEditor editor/main.cpp ${ENGINE_SRC} ${REFLECTION_SRC} ${EDITOR_SRC})
+add_executable(SprintEditor ${SOURCE_DIR}/editor/main.cpp ${ENGINE_SRC} ${REFLECTION_SRC} ${EDITOR_SRC})
 
 set(ALL_INCLUDES $<TARGET_PROPERTY:SprintEditor,INCLUDE_DIRECTORIES>)
 set(ALL_DEFINES $<TARGET_PROPERTY:SprintEditor,COMPILE_DEFINITIONS>)
@@ -123,13 +130,13 @@ add_custom_target(gen_meta_module
             -DIMPLICIT_INCLUDES="${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}"
             -DINCLUDES="${ALL_INCLUDES}"
             -DDEFINES="${ALL_DEFINES}"
-            -DOUTPUT=${PROJECT_SOURCE_DIR}/reflection/meta_module.h
+            -DOUTPUT=${PROJECT_SOURCE_DIR}/${SOURCE_DIR}/reflection/meta_module.h
             -DGEN=$<TARGET_FILE:meta_generator>
             -P ${CMAKE_SOURCE_DIR}/cmake/RunCppParser.cmake
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         )
 
-target_precompile_headers(SprintEditor PRIVATE sprintpch.h)
+target_precompile_headers(SprintEditor PRIVATE ${SOURCE_DIR}/sprintpch.h)
 target_include_directories(SprintEditor PRIVATE ${INCLUDE_DIRECTORIES})
 target_link_libraries(SprintEditor PRIVATE ${LIBRARIES})
 target_compile_definitions(SprintEditor PRIVATE GLFW_INCLUDE_NONE)
