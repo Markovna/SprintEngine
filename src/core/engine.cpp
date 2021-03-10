@@ -43,7 +43,6 @@ Engine::Engine() {
         auto mesh_ent = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
         auto cam_ent = scene_->CreateEntity({});
 
-
 //        auto ent3 = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
 
 //        scene_->get<TransformComponent>(mesh_ent).SetParent(&scene_->get<TransformComponent>(root_ent), &scene_->get<TransformComponent>(ent3));

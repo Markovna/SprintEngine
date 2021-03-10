@@ -6,19 +6,14 @@
 #include "editor_gui.h"
 
 #include <memory>
+#include <filesystem>
 
 namespace sprint::editor {
 
 class Application {
-public:
-    struct Config {
-        static Config Parse(int argc, char *argv[]);
-
-        std::string project_path;
-    };
 
 public:
-    explicit Application(Config);
+    explicit Application(std::filesystem::path);
     ~Application();
     int Run();
 private:

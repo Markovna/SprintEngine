@@ -4,6 +4,6 @@
 int main(int argc, char *argv[]) {
     meta::InitTypes();
 
-    sprint::editor::Application app(sprint::editor::Application::Config::Parse(argc, argv));
+    sprint::editor::Application app(argv[1]);
     return app.Run();
 }

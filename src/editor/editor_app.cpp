@@ -1,15 +1,13 @@
+#include "core/resources.h"
 #include "core/input_events.h"
 #include "editor_app.h"
 
-#include <filesystem>
-
 namespace sprint::editor {
 
-Application::Application(Config config) {
+Application::Application(std::filesystem::path project_path) {
     SPRINT_PROFILE_FUNCTION();
 
-    std::filesystem::path path(config.project_path);
-    std::filesystem::current_path(path);
+    std::filesystem::current_path(project_path);
 
     window_ = Window::Create({1024, 640});
     gfx::Init(gfx::Config {window_->get_handle(), window_->get_resolution()});
@@ -52,6 +50,7 @@ int Application::Run() {
 
         gfx::Frame();
     }
+
     return 0;
 }
 
@@ -61,17 +60,6 @@ void Application::OnClose(CloseEvent&) {
 
 void Application::OnResize(ResizeEvent &) {
     gfx::SetResolution(window_->get_resolution());
-}
-
-
-Application::Config Application::Config::Parse(int argc, char *argv[]) {
-    Application::Config config;
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i-1], "-p") == 0) {
-            config.project_path = argv[i];
-        }
-    }
-    return config;
 }
 
 };

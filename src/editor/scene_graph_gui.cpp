@@ -55,7 +55,7 @@ static void BeginEntityTreeNode(
 
     hovered =
         !ImGui::IsMouseDragging(ImGuiMouseButton_Left) &&
-        ImGui::IsMouseHoveringRect(screen_pos, {screen_pos.x + size.x, screen_pos.y + size.y}, false);
+        ImGui::IsMouseHoveringRect(screen_pos, {screen_pos.x + ImGui::GetContentRegionAvail().x, screen_pos.y + size.y}, false);
 
     bool small_target_hovered = false;
     ImGui::SetCursorPos({min_x, cursor_pos.y - spacing});

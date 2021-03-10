@@ -4,6 +4,7 @@
 #include "renderer.h"
 #include "engine.h"
 #include "input_events.h"
+#include "resources.h"
 
 namespace sprint {
 

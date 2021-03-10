@@ -10,11 +10,9 @@ add_subdirectory(thirdparty/glad glad)
 add_subdirectory(thirdparty/stb_image stb_image)
 add_subdirectory(thirdparty/imgui imgui)
 
-
 set(SOURCE_DIR src)
 
 add_subdirectory(${SOURCE_DIR}/reflection/generator)
-
 
 set(ENGINE_SRC
 #        ${SOURCE_DIR}/sprintpch.h
@@ -88,11 +86,6 @@ set(REFLECTION_SRC
 
 set(INCLUDE_DIRECTORIES
         ${SOURCE_DIR}/
-#        ${SOURCE_DIR}/core/
-#        ${SOURCE_DIR}/renderer/
-#        ${SOURCE_DIR}/math/
-#        ${SOURCE_DIR}/common/
-#        ${SOURCE_DIR}/reflection/
         )
 
 set(LIBRARIES
@@ -149,7 +142,7 @@ set(SANDBOX_PATH ${PROJECT_SOURCE_DIR}/sandbox/)
 
 add_custom_target(SandboxEditor
         COMMAND SprintEditor
-            -p ${SANDBOX_PATH}
+            ${SANDBOX_PATH}
         )
 
 add_custom_target(Sandbox
