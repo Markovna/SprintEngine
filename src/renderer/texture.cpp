@@ -9,6 +9,14 @@ Texture::Loader::Loader(const std::string& path) {
     data_ = stbi_load(path.c_str(), &width_, &height_, &channels_, 0);
 }
 
+Texture::Loader::Loader(const std::istream &in) {
+    stbi_set_flip_vertically_on_load(true);
+    std::stringstream ss;
+    ss << in.rdbuf();
+    std::string str = ss.str();
+    data_ = stbi_load_from_memory(reinterpret_cast<const stbi_uc *>(str.c_str()), str.length(), &width_, &height_, &channels_, 0);
+}
+
 Texture::Loader::~Loader() {
     if (data_) {
         stbi_image_free(data_);
@@ -50,6 +58,26 @@ static gfx::TextureFormat::Enum ToFormat(uint32_t channels) {
     return gfx::TextureFormat::RGBA8;
 }
 
+std::unique_ptr<Texture> Texture::Load(const std::istream& in) {
+    Loader loader(in);
+    if (loader) {
+        const uint8_t* data = loader.get_data();
+        uint32_t width = loader.get_width();
+        uint32_t height = loader.get_height();
+        auto format = ToFormat(loader.get_channels_num());
+        return std::unique_ptr<Texture>(new Texture(
+            gfx::Copy(data, sizeof(uint8_t) * width * height * gfx::TextureFormat::GetInfo(format).channels),
+            width, height,
+            format,
+            gfx::TextureWrap(), gfx::TextureFilter(),
+            gfx::TextureFlags::None
+        ));
+    }
+
+    log::core::Error("Failed to load texture");
+    return nullptr;
+}
+
 std::unique_ptr<Texture> Texture::Load(const std::string& path) {
     Loader loader(path);
     if (loader) {
@@ -57,13 +85,13 @@ std::unique_ptr<Texture> Texture::Load(const std::string& path) {
         uint32_t width = loader.get_width();
         uint32_t height = loader.get_height();
         auto format = ToFormat(loader.get_channels_num());
-        return std::make_unique<Texture>(
+        return std::unique_ptr<Texture>(new Texture(
             gfx::Copy(data, sizeof(uint8_t) * width * height * gfx::TextureFormat::GetInfo(format).channels),
                 width, height,
                 format,
                 gfx::TextureWrap(), gfx::TextureFilter(),
                 gfx::TextureFlags::None
-            );
+        ));
     }
 
     log::core::Error("Failed to load texture {0}", path);
@@ -99,13 +127,17 @@ Texture::Texture(gfx::MemoryPtr ptr,
      : handle_(gfx::CreateTexture(width, height, format, wrap, filter, flags, std::move(ptr))),
        width_(width), height_(height) {}
 
-//Texture::Texture(const uint8_t *data, uint32_t width, uint32_t height,
-//                 gfx::TextureFormat::Enum format,
-//                 gfx::TextureWrap wrap,
-//                 gfx::TextureFilter filter,
-//                 gfx::TextureFlags::Type flags)
-//     : handle_(gfx::CreateTexture(width, height, format, wrap, filter, flags,
-//        gfx::Copy(data, sizeof(uint8_t) * width * height * gfx::TextureFormat::GetInfo(format).channels))),
-//       width_(width), height_(height){}
+Texture::Texture(void *data,
+                 uint32_t width,
+                 uint32_t height,
+                 gfx::TextureFormat::Enum format,
+                 gfx::TextureWrap wrap,
+                 gfx::TextureFilter filter,
+                 gfx::TextureFlags::Type flags)
+     : Texture(
+    data ? gfx::Copy(data, width * height * gfx::TextureFormat::formats[format].channel_size * gfx::TextureFormat::formats[format].channels)
+        : gfx::MemoryPtr{},
+         width, height, format, wrap, filter, flags)
+{}
 
 }

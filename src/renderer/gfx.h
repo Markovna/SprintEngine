@@ -145,13 +145,13 @@ struct TextureFormat {
     };
 
     struct Info {
-        uint8_t channel_bytes;
+        size_t channel_size;
         uint8_t channels;
         uint8_t depth_bits;
         uint8_t stencil_bits;
     };
 
-    static Info formats[];
+    static const Info formats[];
 
     static const Info& GetInfo(Enum format) {
         return formats[format];

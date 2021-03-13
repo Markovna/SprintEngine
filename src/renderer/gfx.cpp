@@ -31,11 +31,11 @@ bool ShaderType::TryParse(std::string_view str, ShaderType::Enum &type) {
     return false;
 }
 
-TextureFormat::Info TextureFormat::formats[] = {
-    {8,    1,   0,   0 }, // R8
-    {8,    3,   0,   0 }, // RGB8
-    {8,    4,   0,   0 }, // RGBA8
-    {0,    0,   24,  8 }, // D24S8
+const TextureFormat::Info TextureFormat::formats[] = {
+    { sizeof(uint8_t),    1,   0,   0 }, // R8
+    { sizeof(uint8_t),    3,   0,   0 }, // RGB8
+    { sizeof(uint8_t),    4,   0,   0 }, // RGBA8
+    { 0,    0,   24,  8 }, // D24S8
 };
 
 vertexbuf_handle CreateVertexBuffer(MemoryPtr ptr, uint32_t size, VertexLayout layout) {

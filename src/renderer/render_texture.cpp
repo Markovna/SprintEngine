@@ -9,7 +9,7 @@ RenderTexture::RenderTexture(
     sprint::gfx::TextureWrap wrap,
     sprint::gfx::TextureFilter filter,
     sprint::gfx::TextureFlags::Type flags)
-    : color_texture_(gfx::MemoryPtr{}, width, height, format, wrap, filter, flags)
+    : color_texture_(nullptr, width, height, format, wrap, filter, flags)
     , depth_tex_handle_(gfx::CreateTexture(width, height, gfx::TextureFormat::D24S8, {}, {}, gfx::TextureFlags::RenderTarget, {}))
     , fb_handle_(gfx::CreateFrameBuffer({color_texture_.get_handle(), depth_tex_handle_}))
 {}

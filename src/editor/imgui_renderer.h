@@ -99,7 +99,7 @@ private:
             // your ImTextureId represent a higher-level concept than just a GL texture id,
             // consider calling GetTexDataAsAlpha8() instead to save on GPU memory.
             io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-            Texture texture(gfx::Copy(pixels, sizeof(uint8_t)*width*height*4), width, height, gfx::TextureFormat::RGBA8);
+            Texture texture(pixels, width, height, gfx::TextureFormat::RGBA8);
 
             Shader shader = Shader::Load(
                 "assets/shaders/GUIShader.shader",

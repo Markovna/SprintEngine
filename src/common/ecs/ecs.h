@@ -60,9 +60,9 @@ public:
     template<class ...Args>
     Component& emplace(entity_t entity, Args&&... args) {
         assert(!entities::contains(entity));
-        components_.emplace_back(std::forward<Args>(args)...);
+        Component& comp = components_.emplace_back(std::forward<Args>(args)...);
         entities::insert(entity);
-        return components_.back();
+        return comp;
     }
 
     void erase(entity_t entity) {

@@ -4,6 +4,7 @@
 #include "reflection/meta_runtime.h"
 #include "renderer/shader.h"
 #include "renderer/texture.h"
+#include "core/resources.h"
 
 namespace sprint {
 
@@ -52,22 +53,33 @@ public:
         return ::sprint::GetIndexBuf();
     }
 
-    Texture* GetMainTexture() const {
-        return ::sprint::GetMainTexture();
+    const Texture* GetMainTexture() const {
+        if (!main_texture_) main_texture_ = resources::Load<Texture>("assets/textures/container.jpg");
+        return main_texture_.Get();
     }
 
-    Texture* GetSecondTexture() const {
-        return ::sprint::GetSecondTexture();
+    const Texture* GetSecondTexture() const {
+        if (!second_texture_) second_texture_ = resources::Load<Texture>("assets/textures/seal.png");
+        return second_texture_.Get();
     }
 
     Shader* GetShader() const {
         return ::sprint::GetShader();
     }
 
+    MeshRenderer() = default;
+    ~MeshRenderer() = default;
+
+    MeshRenderer(const MeshRenderer& o) = default;
+    MeshRenderer(MeshRenderer&& o) noexcept = default;
+
+    MeshRenderer& operator=(const MeshRenderer&) = default;
+    MeshRenderer& operator=(MeshRenderer&&) noexcept = default;
+
 private:
-//    SERIALIZABLE float float_value = 10.0f;
-//    SERIALIZABLE int int_value = 42;
-//    SERIALIZABLE bool bool_value = false;
+    mutable resources::ResourceHandle<Texture> main_texture_;
+    mutable resources::ResourceHandle<Texture> second_texture_;
+
 };
 
 }

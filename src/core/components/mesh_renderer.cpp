@@ -10,14 +10,7 @@ sprint::Shader *sprint::GetShader() {
     );
     return shader.get();
 }
-sprint::Texture *sprint::GetSecondTexture() {
-    static std::shared_ptr<Texture> texture = Texture::Load("assets/textures/seal.png");
-    return texture.get();
-}
-sprint::Texture *sprint::GetMainTexture() {
-    static std::shared_ptr<Texture> texture = Texture::Load("assets/textures/container.jpg");
-    return texture.get();
-}
+
 float *sprint::GetVertices() {
     static float vertices[] = {
         // pos                // tex coords
