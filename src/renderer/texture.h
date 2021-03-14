@@ -41,10 +41,9 @@ public:
 
     [[nodiscard]] uint32_t get_width() const { return width_; }
     [[nodiscard]] uint32_t get_height() const { return height_; }
+    [[nodiscard]] gfx::texture_handle get_handle() const;
 
     static std::unique_ptr<Texture> Load(const std::istream& in);
-    static std::unique_ptr<Texture> Load(const std::string& path);
-    [[nodiscard]] gfx::texture_handle get_handle() const;
 
 private:
     Texture(gfx::MemoryPtr ptr, uint32_t width, uint32_t height, gfx::TextureFormat::Enum, gfx::TextureWrap = {}, gfx::TextureFilter = {}, gfx::TextureFlags::Type = gfx::TextureFlags::None);

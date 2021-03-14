@@ -278,7 +278,7 @@ void ImGuiRenderer::Render(ImDrawData *draw_data) {
                 gfx::SetUniform(context_.texture_uniform_handle, texture, 0);
                 gfx::SetBuffer(context_.vb_handle, vertices_offset, num_vertices);
                 gfx::SetBuffer(context_.ib_handle, indices_offset + offset, cmd->ElemCount);
-                gfx::Render(camera_id, context_.shader.get_handle());
+                gfx::Render(camera_id, context_.shader->get_handle());
             }
 
             offset += cmd->ElemCount;

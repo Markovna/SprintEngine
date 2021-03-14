@@ -1,9 +1,14 @@
 #type vertex
 #version 330 core
 
-layout (location = 0) in vec2 Position;
-layout (location = 1) in vec2 UV;
-layout (location = 2) in vec4 Color;
+#binding POSITION
+in vec2 Position;
+
+#binding TEXCOORD0
+in vec2 UV;
+
+#binding COLOR0
+in vec4 Color;
 
 out vec2 Frag_UV;
 out vec4 Frag_Color;

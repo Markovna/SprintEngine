@@ -27,6 +27,8 @@ struct Attribute {
         };
 
         constexpr static const uint32_t Count = 11;
+
+        static bool TryParse(std::string_view str, Enum& type);
     };
 
     struct BindingPack {
@@ -40,10 +42,15 @@ struct Attribute {
             }
         }
 
-        BindingPack() : mask(0) {}
+        BindingPack() = default;
+
+        void Set(Binding::Enum bnd, int location) {
+            mask |= (1u << bnd);
+            locations[bnd] = location;
+        }
 
         Mask mask = 0;
-        uint16_t locations[Binding::Count];
+        uint16_t locations[Binding::Count] = {};
     };
 
     struct Format {

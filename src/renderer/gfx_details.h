@@ -33,7 +33,7 @@ public:
                                     VertexLayout layout) = 0;
     virtual void CreateIndexBuffer(indexbuf_handle, const void *data, uint32_t data_size, uint32_t size) = 0;
     virtual void CreateFrameBuffer(framebuf_handle, texture_handle *, uint32_t num, bool destroy_tex = false) = 0;
-    virtual void CreateShader(shader_handle, const std::string &source, const Attribute::BindingPack &bindings) = 0;
+    virtual void CreateShader(shader_handle, const std::string &source) = 0;
     virtual void CreateUniform(uniform_handle, char* name) = 0;
     virtual void CreateTexture(texture_handle,
                                const void *data,
@@ -273,10 +273,9 @@ struct CreateTextureCommand {
 struct CreateShaderCommand {
     shader_handle handle;
     std::string source;
-    Attribute::BindingPack bindings;
 
     void Execute(RendererAPI *api) {
-        api->CreateShader(handle, source, bindings);
+        api->CreateShader(handle, source);
     }
 };
 
@@ -481,12 +480,11 @@ public:
         return handle;
     }
 
-    shader_handle CreateShader(const std::string &source, std::initializer_list<Attribute::Binding::Enum> bindings) {
+    shader_handle CreateShader(const std::string &source) {
         shader_handle handle(shader_handles_.get());
         auto& command = frame_.EmplaceCommand<CreateShaderCommand>();
         command.handle = handle;
         command.source = source;
-        command.bindings = Attribute::BindingPack(bindings);
         return handle;
     }
 

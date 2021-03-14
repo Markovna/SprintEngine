@@ -253,7 +253,7 @@ vertexbuf_handle CreateVertexBuffer(MemoryPtr ptr, uint32_t size, VertexLayout l
 indexbuf_handle CreateIndexBuffer(MemoryPtr ptr, uint32_t size);
 framebuf_handle CreateFrameBuffer(std::initializer_list<texture_handle>);
 uniform_handle CreateUniform(const char* c_str);
-shader_handle CreateShader(const std::string& source, std::initializer_list<gfx::Attribute::Binding::Enum> in_types);
+shader_handle CreateShader(const std::string& source);
 texture_handle CreateTexture(uint32_t width, uint32_t height, TextureFormat::Enum, MemoryPtr ref = {});
 texture_handle CreateTexture(uint32_t width, uint32_t height, TextureFormat::Enum, TextureWrap wrap, TextureFilter filter, TextureFlags::Type, MemoryPtr ptr);
 

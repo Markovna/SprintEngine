@@ -187,25 +187,29 @@ void GLRendererAPI::UpdateIndexBuffer(indexbuf_handle handle, uint32_t offset, c
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void GLRendererAPI::CreateShader(shader_handle handle,
-                                 const std::string &source,
-                                 const Attribute::BindingPack& bindings) {
-    std::string shaders[ShaderType::Count];
-    PreProcess(source, shaders);
+void GLRendererAPI::CreateShader(shader_handle handle, const std::string &source) {
+    std::string vertex_shader, fragment_shader;
+    Attribute::BindingPack binding;
+    PreProcess(source, vertex_shader, fragment_shader, binding);
+
     uint32_t id = glCreateProgram();
-    for (size_t i = 0; i < ShaderType::Count; i++) {
-        auto shader_id = CompileShader((ShaderType::Enum) i, shaders[i]);
-        glAttachShader(id, shader_id);
-        glDeleteShader(shader_id);
-    }
+
+    auto vertex_shader_id = CompileShader(ShaderType::Vertex, vertex_shader);
+    glAttachShader(id, vertex_shader_id);
+    glDeleteShader(vertex_shader_id);
+
+
+    auto fragment_shader_id = CompileShader(ShaderType::Fragment, fragment_shader);
+    glAttachShader(id, fragment_shader_id);
+    glDeleteShader(fragment_shader_id);
 
     CHECK_ERRORS(glLinkProgram(id));
     CheckLinkStatus(id);
 
     Shader& shader = shaders_[handle.index()];
     shader.id = id;
-    shader.attributes_mask = bindings.mask;
-    std::memcpy(shader.attribute_locations, bindings.locations, Attribute::Binding::Count);
+    shader.attributes_mask = binding.mask;
+    std::memcpy(shader.attribute_locations, binding.locations, Attribute::Binding::Count);
     shader.model_location = glGetUniformLocation(id, "model");
     shader.view_location = glGetUniformLocation(id, "view");
     shader.proj_location = glGetUniformLocation(id, "projection");

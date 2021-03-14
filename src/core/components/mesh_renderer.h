@@ -8,25 +8,14 @@
 
 namespace sprint {
 
-//TODO
-Shader* GetShader();
-
-Texture* GetMainTexture();
-
-Texture* GetSecondTexture();
-
 float* GetVertices();
-
 uint32_t* GetIndices(size_t& count);
 
 gfx::vertexbuf_handle GetVertexBuf();
-
 gfx::indexbuf_handle GetIndexBuf();
 
 gfx::uniform_handle GetMainTextureUniform();
-
 gfx::uniform_handle GetSecondTextureUniform();
-
 gfx::uniform_handle GetColorUniform();
 
 
@@ -53,18 +42,16 @@ public:
         return ::sprint::GetIndexBuf();
     }
 
-    const Texture* GetMainTexture() const {
-        if (!main_texture_) main_texture_ = resources::Load<Texture>("assets/textures/container.jpg");
+    [[nodiscard]] const Texture* GetMainTexture() const {
         return main_texture_.Get();
     }
 
-    const Texture* GetSecondTexture() const {
-        if (!second_texture_) second_texture_ = resources::Load<Texture>("assets/textures/seal.png");
+    [[nodiscard]] const Texture* GetSecondTexture() const {
         return second_texture_.Get();
     }
 
-    Shader* GetShader() const {
-        return ::sprint::GetShader();
+    [[nodiscard]] const Shader* GetShader() const {
+        return shader_.Get();
     }
 
     MeshRenderer() = default;
@@ -77,9 +64,9 @@ public:
     MeshRenderer& operator=(MeshRenderer&&) noexcept = default;
 
 private:
-    mutable resources::ResourceHandle<Texture> main_texture_;
-    mutable resources::ResourceHandle<Texture> second_texture_;
-
+    resources::ResourceHandle<Texture> main_texture_ = resources::Load<Texture>("assets/textures/container.jpg");
+    resources::ResourceHandle<Texture> second_texture_ = resources::Load<Texture>("assets/textures/seal.png");
+    resources::ResourceHandle<Shader> shader_ = resources::Load<Shader>("assets/shaders/TestShader.shader");
 };
 
 }

@@ -5,11 +5,8 @@
 namespace sprint {
 
 class Shader {
-private:
-    explicit Shader(const std::string& source, std::initializer_list<gfx::Attribute::Binding::Enum> bindings);
-
 public:
-
+    explicit Shader(const std::string& source);
     Shader(const Shader& other) = delete;
     Shader& operator=(const Shader& other) = delete;
 
@@ -20,7 +17,7 @@ public:
 
     [[nodiscard]] gfx::shader_handle get_handle() const { return handle_; };
 
-    static Shader Load(const std::string& path, std::initializer_list<gfx::Attribute::Binding::Enum> bindings);
+    static std::unique_ptr<Shader> Load(const std::istream& in);
 private:
     gfx::shader_handle handle_;
 

@@ -48,9 +48,9 @@ indexbuf_handle CreateIndexBuffer(MemoryPtr ptr, uint32_t size) {
     return details::g_renderer.CreateIndexBuffer(std::move(ptr), size);
 }
 
-shader_handle CreateShader(const std::string &source, std::initializer_list<Attribute::Binding::Enum> in_types) {
+shader_handle CreateShader(const std::string &source) {
     log::core::Info("gfx::CreateShader");
-    return details::g_renderer.CreateShader(source, in_types);
+    return details::g_renderer.CreateShader(source);
 }
 
 texture_handle CreateTexture(uint32_t width, uint32_t height, TextureFormat::Enum format, MemoryPtr ptr) {

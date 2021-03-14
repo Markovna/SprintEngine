@@ -1,16 +1,5 @@
 #include "mesh_renderer.h"
 
-sprint::Shader *sprint::GetShader() {
-    static std::unique_ptr<Shader> shader = std::make_unique<Shader>(Shader::Load(
-        "assets/shaders/TestShader.shader",
-        {
-            gfx::Attribute::Binding::POSITION,
-            gfx::Attribute::Binding::TEXCOORD0
-        })
-    );
-    return shader.get();
-}
-
 float *sprint::GetVertices() {
     static float vertices[] = {
         // pos                // tex coords

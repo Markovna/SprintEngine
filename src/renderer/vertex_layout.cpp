@@ -34,6 +34,33 @@ VertexLayout::VertexLayout(std::initializer_list<Attribute> attributes) {
     }
 }
 
+bool Attribute::Binding::TryParse(std::string_view str, Attribute::Binding::Enum &type) {
+    #define DEFINE_BINDING(__binding) { #__binding, __binding }
+    static std::unordered_map<std::string, Attribute::Binding::Enum> types_map = {
+        DEFINE_BINDING(POSITION),
+        DEFINE_BINDING(NORMAL),
+        DEFINE_BINDING(COLOR0),
+        DEFINE_BINDING(COLOR1),
+        DEFINE_BINDING(TANGENT),
+        DEFINE_BINDING(TEXCOORD0),
+        DEFINE_BINDING(TEXCOORD1),
+        DEFINE_BINDING(TEXCOORD2),
+        DEFINE_BINDING(TEXCOORD3),
+        DEFINE_BINDING(TEXCOORD4),
+        DEFINE_BINDING(TEXCOORD5)
+    };
+    #undef DEFINE_BINDING
+
+    static std::string search_str;
+    search_str = str;
+    if (auto it = types_map.find(search_str); it != types_map.end()) {
+        type = it->second;
+        return true;
+    }
+
+    return false;
+}
+
 }
 
 }

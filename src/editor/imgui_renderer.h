@@ -7,6 +7,7 @@
 #include "renderer/texture.h"
 #include "core/key_codes.h"
 #include "core/window.h"
+#include "core/resources.h"
 
 namespace sprint::editor {
 
@@ -29,7 +30,7 @@ private:
         };
 
         Buffer buffer;
-        Shader shader;
+        resources::ResourceHandle<Shader> shader;
         Texture texture;
         gfx::uniform_handle texture_uniform_handle;
         gfx::vertexbuf_handle vb_handle;
@@ -37,7 +38,7 @@ private:
         ImGuiContext* imgui_context;
         Timer timer;
 
-        RenderContext(Shader shader_, Texture texture_, ImGuiContext* context_) noexcept :
+        RenderContext(resources::ResourceHandle<Shader> shader_, Texture texture_, ImGuiContext* context_) noexcept :
             shader(std::move(shader_)),
             texture(std::move(texture_)),
             imgui_context(context_),
@@ -101,11 +102,7 @@ private:
             io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
             Texture texture(pixels, width, height, gfx::TextureFormat::RGBA8);
 
-            Shader shader = Shader::Load(
-                "assets/shaders/GUIShader.shader",
-                {
-                    gfx::Attribute::Binding::POSITION, gfx::Attribute::Binding::TEXCOORD0, gfx::Attribute::Binding::COLOR0
-                });
+            resources::ResourceHandle<Shader> shader(resources::Load<Shader>("assets/shaders/GUIShader.shader"));
 
             return { std::move(shader), std::move(texture), context };
         }

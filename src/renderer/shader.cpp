@@ -22,8 +22,8 @@ static std::string ReadFile(const std::string& path) {
     return content;
 }
 
-Shader::Shader(const std::string& source, std::initializer_list<gfx::Attribute::Binding::Enum> bindings)
-    : handle_(gfx::CreateShader(source, bindings))
+Shader::Shader(const std::string& source)
+    : handle_(gfx::CreateShader(source))
 {
 }
 
@@ -32,8 +32,11 @@ Shader::~Shader() {
         gfx::Destroy(handle_);
 }
 
-Shader Shader::Load(const std::string& path, std::initializer_list<gfx::Attribute::Binding::Enum> bindings) {
-    return Shader(ReadFile(path), bindings);
+std::unique_ptr<Shader> Shader::Load(const std::istream& in) {
+    std::stringstream ss;
+    ss << in.rdbuf();
+    std::string source(ss.str());
+    return std::make_unique<Shader>(source);
 }
 
 Shader &Shader::operator=(Shader &&other) noexcept {

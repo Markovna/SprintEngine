@@ -83,7 +83,7 @@ public:
     void CreateVertexBuffer(vertexbuf_handle handle, const void* data, uint32_t data_size, uint32_t size, VertexLayout layout) override;
     void CreateIndexBuffer(indexbuf_handle handle, const void* data, uint32_t data_size, uint32_t size) override;
     void CreateFrameBuffer(framebuf_handle handle, texture_handle*, uint32_t num, bool destroy_tex) override;
-    void CreateShader(shader_handle handle, const std::string& source, const Attribute::BindingPack& bindings) override;
+    void CreateShader(shader_handle handle, const std::string& source) override;
     void CreateUniform(uniform_handle, char* name) override;
     void CreateTexture(texture_handle handle, const void* data, uint32_t data_size, uint32_t width, uint32_t height,
                        TextureFormat::Enum, TextureWrap wrap, TextureFilter filter, TextureFlags::Type flags) override;
