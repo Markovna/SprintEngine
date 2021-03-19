@@ -32,12 +32,12 @@ public:
 
     [[nodiscard]] bool IsValid() const {
         return !name_.empty() &&
-                owner_type_.Valid() &&
-                return_type_.Valid() &&
+                owner_type_.IsValid() &&
+                return_type_.IsValid() &&
                 std::all_of(
                     arg_types_.begin(),
                     arg_types_.end(),
-                    [](const Type& type){ return type.Valid(); }) &&
+                    [](const Type& type){ return type.IsValid(); }) &&
                 invoke_ptr_;
     }
 

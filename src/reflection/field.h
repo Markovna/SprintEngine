@@ -35,7 +35,7 @@ public:
     }
 
     [[nodiscard]] bool IsValid() const {
-        return !name_.empty() && type_.Valid() && owner_type_.Valid() && getter_;
+        return !name_.empty() && type_.IsValid() && owner_type_.IsValid() && getter_;
     }
 
 private:

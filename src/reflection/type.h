@@ -23,7 +23,7 @@ public:
     [[nodiscard]] const Field& GetField(const std::string& name) const;
     [[nodiscard]] const std::vector<Method>& GetMethods() const;
     [[nodiscard]] const Method& GetMethod(const std::string& name) const;
-    [[nodiscard]] bool Valid() const;
+    [[nodiscard]] bool IsValid() const;
     [[nodiscard]] bool IsPointer() const;
 
     [[nodiscard]] TypeId ID() const { return id_; }

@@ -33,7 +33,7 @@ void Register(const std::string& full_name) {
 template<class T, class FieldType>
 void AddField(std::string name, Reference (*getter)(Reference& instance)) {
     Type type = GetType<T>();
-    if (type.Valid()) {
+    if (type.IsValid()) {
         MetaRegistry& registry = Registry();
         registry[type.ID()].AddField(
                 Field(std::move(name), GetType<FieldType>(), type, getter)
@@ -44,7 +44,7 @@ void AddField(std::string name, Reference (*getter)(Reference& instance)) {
 template<class T, class ReturnType, class ...Args>
 void AddMethod(std::string name, Object (*ptr)(Reference&, std::initializer_list<Object>)) {
     Type type = GetType<T>();
-    if (type.Valid()) {
+    if (type.IsValid()) {
         MetaRegistry& registry = Registry();
         registry[type.ID()].AddMethod(
                 Method(std::move(name), type, GetType<ReturnType>(), { GetType<Args>()... }, ptr)
@@ -56,6 +56,7 @@ static void RegisterPrimitiveTypes() {
     REGISTER_TYPE(void);
     REGISTER_TYPE(bool);
     REGISTER_TYPE(char);
+    REGISTER_TYPE(unsigned char);
     REGISTER_TYPE(short);
     REGISTER_TYPE(unsigned short);
     REGISTER_TYPE(int);

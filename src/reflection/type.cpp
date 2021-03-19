@@ -19,7 +19,7 @@ const std::vector<Method>& Type::GetMethods() const {
     return details::GetTypeInfo(id_).GetMethods();
 }
 
-bool Type::Valid() const {
+bool Type::IsValid() const {
     return id_ != InvalidTypeId;
 }
 
