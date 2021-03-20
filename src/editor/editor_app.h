@@ -2,8 +2,8 @@
 
 #include "core/window.h"
 #include "core/engine.h"
-#include "imgui_renderer.h"
-#include "editor_gui.h"
+#include "editor/gui/imgui_renderer.h"
+#include "editor/gui/editor_gui.h"
 
 #include <memory>
 #include <filesystem>

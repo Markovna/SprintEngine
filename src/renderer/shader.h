@@ -17,7 +17,7 @@ public:
 
     [[nodiscard]] gfx::shader_handle get_handle() const { return handle_; };
 
-    static std::unique_ptr<Shader> Load(const std::istream& in);
+    static std::unique_ptr<Shader> Load(const std::istream& file, const std::istream& meta);
 private:
     gfx::shader_handle handle_;
 

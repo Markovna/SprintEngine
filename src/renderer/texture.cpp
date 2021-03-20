@@ -58,7 +58,9 @@ static gfx::TextureFormat::Enum ToFormat(uint32_t channels) {
     return gfx::TextureFormat::RGBA8;
 }
 
-std::unique_ptr<Texture> Texture::Load(const std::istream& in) {
+std::unique_ptr<Texture> Texture::Load(const std::istream& in, const std::istream& meta) {
+
+
     Loader loader(in);
     if (loader) {
         const uint8_t* data = loader.get_data();

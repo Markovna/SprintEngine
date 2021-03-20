@@ -4,12 +4,13 @@
 #include <map>
 #include "common/slot_map.h"
 #include <fstream>
+#include <filesystem>
 
 namespace sprint::resources {
 
 namespace details {
 
-static bool ReadFile(const std::string& path, std::ostream& stream) {
+static bool ReadFile(const std::filesystem::path& path, std::ostream& stream) {
     std::string content;
     std::ifstream file;
     file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
@@ -20,7 +21,7 @@ static bool ReadFile(const std::string& path, std::ostream& stream) {
         return true;
     }
     catch (std::ifstream::failure& e) {
-        log::core::Error("Couldn't read file {0}", path);
+        log::core::Error("Couldn't read file {0}", path.string());
     }
     return false;
 }
@@ -32,7 +33,6 @@ public:
     using ResourceID = typename ResourceTable::key_type;
 
 public:
-
     ResourceStore() = default;
     ~ResourceStore() = default;
 
@@ -41,15 +41,19 @@ public:
             return it->second;
         }
 
-        std::stringstream ss;
-        ReadFile(path, ss);
+        std::stringstream file_stream;
+        std::stringstream meta_stream;
 
-        ResourceID id = table_.insert({ T::Load(ss), 0 });
+        ReadFile(path, file_stream);
+        ReadFile(path + ".meta", meta_stream);
+
+        ResourceID id = table_.insert({ T::Load(file_stream, meta_stream), 0 });
         path_to_keys_.insert({path, id});
         return id;
     }
 
     T* Get(ResourceID id) { return table_[id].first.get(); }
+    const T* Get(ResourceID id) const { return table_[id].first.get(); }
 
     void IncRefCount(ResourceID id) {
         table_[id].second++;
@@ -124,13 +128,13 @@ public:
         return *this;
     }
 
+    explicit operator bool() const noexcept { return store_ != nullptr; }
+
     T* operator->() { return Get(); }
     T& operator*() { return *Get(); }
 
     const T* operator->() const { return Get(); }
     const T& operator*() const { return *Get(); }
-
-    explicit operator bool() const noexcept { return store_ != nullptr; }
 
     T* Get() { return store_->Get(id_); }
     const T* Get() const { return store_->Get(id_); }
@@ -164,7 +168,6 @@ private:
     details::ResourceStore<T>* store_ = nullptr;
     ResourceID id_ = {};
 };
-
 
 template<class T>
 ResourceHandle<T> Load(const std::string& path) {

@@ -32,9 +32,9 @@ Shader::~Shader() {
         gfx::Destroy(handle_);
 }
 
-std::unique_ptr<Shader> Shader::Load(const std::istream& in) {
+std::unique_ptr<Shader> Shader::Load(const std::istream& file, const std::istream& meta) {
     std::stringstream ss;
-    ss << in.rdbuf();
+    ss << file.rdbuf();
     std::string source(ss.str());
     return std::make_unique<Shader>(source);
 }

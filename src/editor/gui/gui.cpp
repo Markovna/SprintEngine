@@ -469,25 +469,27 @@ bool DrawFieldImpl<RectInt>(meta::Reference &instance, const meta::Field &field,
 
 bool DrawField(meta::Reference &instance, const meta::Field &field, const char* name) {
     using method_ptr = bool (*)(meta::Reference &instance, const meta::Field &field, const char*);
+    #define DEFINE_DRAWFIELD(__type) { meta::details::GetTypeId<__type>(), DrawFieldImpl<__type> }
     static const std::unordered_map<meta::TypeId, method_ptr> methods = {
-            { meta::details::GetTypeId<bool>(), DrawFieldImpl<bool> },
-            { meta::details::GetTypeId<int>(), DrawFieldImpl<int> },
-            { meta::details::GetTypeId<uint32_t>(), DrawFieldImpl<uint32_t> },
-            { meta::details::GetTypeId<uint64_t>(), DrawFieldImpl<uint64_t> },
-            { meta::details::GetTypeId<float>(), DrawFieldImpl<float> },
-            { meta::details::GetTypeId<double>(), DrawFieldImpl<double> },
-            { meta::details::GetTypeId<vec2>(), DrawFieldImpl<vec2> },
-            { meta::details::GetTypeId<vec3>(), DrawFieldImpl<vec3> },
-            { meta::details::GetTypeId<vec4>(), DrawFieldImpl<vec4> },
-            { meta::details::GetTypeId<Color>(), DrawFieldImpl<Color> },
-            { meta::details::GetTypeId<Rect>(), DrawFieldImpl<Rect> },
-            { meta::details::GetTypeId<RectInt>(), DrawFieldImpl<RectInt> },
+        DEFINE_DRAWFIELD(bool),
+        DEFINE_DRAWFIELD(int),
+        DEFINE_DRAWFIELD(uint32_t),
+        DEFINE_DRAWFIELD(uint64_t),
+        DEFINE_DRAWFIELD(float),
+        DEFINE_DRAWFIELD(double),
+        DEFINE_DRAWFIELD(vec2),
+        DEFINE_DRAWFIELD(vec3),
+        DEFINE_DRAWFIELD(vec4),
+        DEFINE_DRAWFIELD(Color),
+        DEFINE_DRAWFIELD(Rect),
+        DEFINE_DRAWFIELD(RectInt),
     };
+    #undef DEFINE_DRAWFIELD
 
     bool changed = false;
     gui::PushID(field.GetName().c_str());
     meta::Type type(field.GetType());
-    if (!type.Valid()) {
+    if (!type.IsValid()) {
 
     } else if (auto it = methods.find(type.ID()); it != methods.end()) {
         changed |= it->second(instance, field, name);
