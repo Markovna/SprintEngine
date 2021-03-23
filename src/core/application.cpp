@@ -14,7 +14,7 @@ Application::Application() {
     window_ = Window::Create({1024, 740});
     gfx::Init({ window_->get_handle(), window_->get_resolution() });
     engine_ = Engine::Create();
-    renderer_ = Renderer::Create(*engine_->get_scene());
+    renderer_ = Renderer::Create(*engine_->get_world());
 
     input_events::OnClose.connect(this, &Application::OnClose);
     input_events::OnResize.connect(this, &Application::OnResize);

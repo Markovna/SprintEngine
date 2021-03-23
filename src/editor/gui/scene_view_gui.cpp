@@ -15,14 +15,14 @@ std::unique_ptr<SceneViewGui> SceneViewGui::Create(EditorGui& editor, Engine& en
 }
 
 SceneViewGui::SceneViewGui(EditorGui &editor, Engine &engine)
-    : editor_(editor), engine_(engine), renderer_(Renderer::Create(*engine_.get_scene())) {
+    : editor_(editor), engine_(engine), renderer_(Renderer::Create(*engine_.get_world())) {
 
-    Scene* scene = engine.get_scene();
+    World* scene = engine.get_world();
     camera_ = scene->CreateEntity({});
     Camera& camera = scene->emplace<Camera>(camera_, Camera::Editor);
     camera.SetClearColor(Color(0.1f, 0.1f, 0.1f, 1.0f));
 
-    TransformComponent& transform = engine_.get_scene()->get<TransformComponent>(camera_);
+    TransformComponent& transform = engine_.get_world()->get<TransformComponent>(camera_);
     transform.SetLocalRotation(quat(vec3::Right, 30 * math::DEG_TO_RAD));
 }
 
@@ -96,14 +96,14 @@ SceneViewGui::~SceneViewGui() {
 
 void SceneViewGui::MoveCamera(const vec2 &delta) {
     static const float speed = 0.2f;
-    TransformComponent& transform = engine_.get_scene()->get<TransformComponent>(camera_);
+    TransformComponent& transform = engine_.get_world()->get<TransformComponent>(camera_);
     vec3 direction = transform.GetLocalTransform().TransformDirection((speed * vec3(delta)));
     transform.SetLocalPosition(transform.GetLocalPosition() + direction);
 }
 
 void SceneViewGui::ZoomCamera(float delta) {
     static const float speed = 1.0f;
-    TransformComponent& transform = engine_.get_scene()->get<TransformComponent>(camera_);
+    TransformComponent& transform = engine_.get_world()->get<TransformComponent>(camera_);
     vec3 direction = transform.GetLocalTransform().TransformDirection((speed * delta * vec3::Forward));
     transform.SetLocalPosition(transform.GetLocalPosition() + direction);
 }
@@ -111,7 +111,7 @@ void SceneViewGui::ZoomCamera(float delta) {
 void SceneViewGui::RotateCamera(const vec2 &delta) {
     static const float distance = 2.0f;
     static const float speed = 0.1f;
-    TransformComponent& transform = engine_.get_scene()->get<TransformComponent>(camera_);
+    TransformComponent& transform = engine_.get_world()->get<TransformComponent>(camera_);
     const vec3 up = transform.GetLocalTransform().Up();
     const vec3 right = transform.GetLocalTransform().Right();
     const vec3 fwd = transform.GetLocalTransform().Forward();

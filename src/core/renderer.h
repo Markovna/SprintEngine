@@ -6,17 +6,17 @@
 
 namespace sprint {
 
-class Scene;
+class World;
 
 class Renderer {
 public:
-    static std::unique_ptr<Renderer> Create(Scene&);
+    static std::unique_ptr<Renderer> Create(World&);
 
-    explicit Renderer(Scene& scene) : scene_(scene) {}
+    explicit Renderer(World& scene) : scene_(scene) {}
     void Render(Rect viewport, gfx::framebuf_handle = gfx::framebuf_handle::null, Camera::Kind camera_kind = Camera::Game);
 
 private:
-    Scene& scene_;
+    World& scene_;
 };
 
 }

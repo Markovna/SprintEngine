@@ -13,7 +13,7 @@ std::unique_ptr<GameViewGui> GameViewGui::Create(EditorGui& editor, Engine& engi
 
 GameViewGui::GameViewGui(EditorGui &editor, Engine &engine)
     : editor_(editor), engine_(engine) {
-    renderer_ = Renderer::Create(*engine_.get_scene());
+    renderer_ = Renderer::Create(*engine_.get_world());
 }
 
 void GameViewGui::OnGui() {

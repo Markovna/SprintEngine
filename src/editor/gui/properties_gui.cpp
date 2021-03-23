@@ -31,7 +31,7 @@ void PropertiesEditorGui::OnGui() {
         gui::TextField("Name", buf, (int)(sizeof(buf) / sizeof(*(buf))));
         gui::PopStyleVar();
 
-        Scene *scene = engine_.get_scene();
+        World *scene = engine_.get_world();
         bool opened = false;
         scene->visit(selected, [&] (const meta::TypeId id) {
             meta::Type type(id);

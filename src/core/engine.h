@@ -18,12 +18,12 @@ public:
     void Update();
 
     [[nodiscard]] TimeSpan get_delta() const;
-    [[nodiscard]] Scene* get_scene();
+    [[nodiscard]] World* get_world();
 
 private:
     Timer timer_;
     TimeSpan delta_time_;
-    std::unique_ptr<Scene> scene_;
+    std::unique_ptr<World> world_;
 };
 
 }

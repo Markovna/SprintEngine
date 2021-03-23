@@ -18,7 +18,7 @@ template<>
 void DrawComponentContent<TransformComponent>(meta::Reference ref);
 
 template<class T>
-bool DrawComponent(Scene* scene, ecs::entity_t selected) {
+bool DrawComponent(World* scene, ecs::entity_t selected) {
     static const meta::Type type = meta::GetType<T>();
 
     gui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 4.0f);

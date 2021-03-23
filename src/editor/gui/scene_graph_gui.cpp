@@ -160,7 +160,7 @@ void SceneGraphEditorGui::DrawSceneGraph() {
 
     ecs::entity_t hovered_id = ecs::null;
     ImVec2 button_pos;
-    VisitTreeNodes(engine_.get_scene()->GetRoots(), [&] (TransformComponent::iterator it) {
+    VisitTreeNodes(engine_.get_world()->GetRoots(), [&] (TransformComponent::iterator it) {
         bool opened, hovered;
 
         BeginEntityTreeNode((TransformComponent*) it, spacing, selected, commands_, opened, hovered);
@@ -227,7 +227,7 @@ void SceneGraphEditorGui::OnGui() {
 }
 
 void SetParentCommand::Execute(Engine &engine) const {
-    Scene* scene = engine.get_scene();
+    World* scene = engine.get_world();
     auto& child = scene->get<TransformComponent>(entity);
     auto* parent_transform = parent != ecs::null ? &scene->get<TransformComponent>(parent) : nullptr;
     auto* next_transform = next != ecs::null ? &scene->get<TransformComponent>(next) : nullptr;
@@ -246,11 +246,12 @@ void SetParentCommand::Execute(Engine &engine) const {
 }
 
 void CreateEntityCommand::Execute(Engine &engine) const {
-    Scene* scene = engine.get_scene();
-    auto* parent_transform = parent != ecs::null ? &scene->get<TransformComponent>(parent) : nullptr;
-    scene->CreateEntity({}, parent_transform);
+    World* world = engine.get_world();
+    world->CreateEntity({}, parent);
+}
+
 void DestroyEntityCommand::Execute(Engine &engine) const {
-    Scene* world = engine.get_scene();
+    World* world = engine.get_world();
     world->DestroyEntity(entity);
 }
 

@@ -63,7 +63,7 @@ void Renderer::Render(Rect viewport, gfx::framebuf_handle fb_handle, Camera::Kin
     }
 }
 
-std::unique_ptr<Renderer> Renderer::Create(Scene &scene) {
+std::unique_ptr<Renderer> Renderer::Create(World &scene) {
     return std::make_unique<Renderer>(scene);
 }
 

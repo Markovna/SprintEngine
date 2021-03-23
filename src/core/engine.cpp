@@ -16,8 +16,8 @@ void Engine::Update() {
 
     {
         float timeValue = 0.5f * (float) glfwGetTime();
-        for (ecs::entity_t ent : scene_->view<MeshRenderer>()) {
-            auto &tr = scene_->get<TransformComponent>(ent);
+        for (ecs::entity_t ent : world_->view<MeshRenderer>()) {
+            auto &tr = world_->get<TransformComponent>(ent);
 
 //            Matrix model = Matrix::Identity;
 //            model *= Matrix::Rotation(Quat(Vec3::Forward, 1.0f * timeValue));
@@ -34,40 +34,36 @@ std::unique_ptr<Engine> Engine::Create() {
 }
 
 Engine::Engine() {
-    scene_ = Scene::Create();
+    world_ = World::Create();
 
     {
-        auto root_ent = scene_->CreateEntity();
-        auto& ent0_tr = scene_->get<TransformComponent>(root_ent);
+        auto root_ent = world_->CreateEntity();
+        auto& ent0_tr = world_->get<TransformComponent>(root_ent);
 
-        auto mesh_ent = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
-        auto cam_ent = scene_->CreateEntity({});
+        auto mesh_ent = world_->CreateEntity({}, root_ent);
+        auto cam_ent = world_->CreateEntity({});
 
-//        auto ent3 = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
-
-//        scene_->get<TransformComponent>(mesh_ent).SetParent(&scene_->get<TransformComponent>(root_ent), &scene_->get<TransformComponent>(ent3));
-//        scene_->get<TransformComponent>(cam_ent).SetParent(&scene_->get<TransformComponent>(root_ent));
-        scene_->emplace<MeshRenderer>(mesh_ent);
+        world_->emplace<MeshRenderer>(mesh_ent);
 
         for (int i = 1; i < 10; i++) {
             {
                 vec3 pos = (i * 2.0f + 1) * Vec3::Forward + (i * 0.7f) * Vec3::Right;
-                auto ent = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
-                scene_->emplace<MeshRenderer>(ent);
-                TransformComponent& tr = scene_->get<TransformComponent>(ent);
+                auto ent = world_->CreateEntity({}, root_ent);
+                world_->emplace<MeshRenderer>(ent);
+                TransformComponent& tr = world_->get<TransformComponent>(ent);
                 tr.SetLocalTransform((Transform) Matrix::Translation(pos));
             }
             {
                 vec3 pos = (i * 2.0f + 1) * Vec3::Forward + (i * 0.7f) * Vec3::Left;
-                auto ent = scene_->CreateEntity({}, &scene_->get<TransformComponent>(root_ent));
-                scene_->emplace<MeshRenderer>(ent);
-                TransformComponent& tr = scene_->get<TransformComponent>(ent);
+                auto ent = world_->CreateEntity({}, root_ent);
+                world_->emplace<MeshRenderer>(ent);
+                TransformComponent& tr = world_->get<TransformComponent>(ent);
                 tr.SetLocalTransform((Transform) Matrix::Translation(pos));
             }
         }
 
-        auto& cam = scene_->emplace<Camera>(cam_ent);
-        auto& cam_tr = scene_->get<TransformComponent>(cam_ent);
+        auto& cam = world_->emplace<Camera>(cam_ent);
+        auto& cam_tr = world_->get<TransformComponent>(cam_ent);
         cam_tr.SetLocalTransform(Transform(Matrix::Translation({0,-2.0f,-3.0f})));
 
 //        input_events::OnKeyPress.connect([](KeyPressEvent& key){
@@ -97,8 +93,8 @@ TimeSpan Engine::get_delta() const {
     return delta_time_;
 }
 
-Scene* Engine::get_scene() {
-    return scene_.get();
+World* Engine::get_world() {
+    return world_.get();
 }
 
 }

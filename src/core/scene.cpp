@@ -2,29 +2,42 @@
 
 namespace sprint {
 
-std::unique_ptr<Scene> Scene::Create() {
-    return std::make_unique<Scene>();
+std::unique_ptr<World> World::Create() {
+    return std::make_unique<World>();
 }
 
-ecs::entity_t Scene::CreateEntity(const Transform &local, TransformComponent *parent) {
+World::World()
+    : root_{this, nullptr, ecs::null} {}
+
+TransformComponent::iterator World::GetRoots() {
+    return root_.GetChildren();
+}
+
+TransformComponent::const_iterator World::GetRoots() const {
+    return root_.GetChildren();
+}
+
+size_t World::GetRootsSize() const {
+    return root_.GetChildrenSize();
+}
+
+ecs::entity_t World::CreateEntity(const Transform &local, ecs::entity_t parent) {
     auto entity = registry::create();
-    TransformComponent::Create(entity, *this, &root_, parent, local);
+    TransformComponent::Create(entity, this, &root_, parent != ecs::null ? &registry::get<TransformComponent>(parent) : nullptr, local);
     return entity;
 }
 
-Scene::Scene()
-    : root_{*this, nullptr, ecs::null} {}
+void World::DestroyEntity(ecs::entity_t e) {
+    TransformComponent& transform = registry::get<TransformComponent>(e);
+    transform.SetParent(nullptr);
 
-TransformComponent::iterator Scene::GetRoots() {
-    return root_.GetChildren();
-}
+    while (transform.GetChildrenSize()) {
+        DestroyEntity(transform.GetChildren()->GetID());
+    }
 
-TransformComponent::const_iterator Scene::GetRoots() const {
-    return root_.GetChildren();
-}
+    root_.EraseChild(e);
 
-size_t Scene::GetRootsSize() const {
-    return root_.GetChildrenSize();
+    registry::destroy(e);
 }
 
 }
