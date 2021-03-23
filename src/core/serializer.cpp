@@ -1,21 +1,18 @@
 #include "serializer.h"
 
 template<class T>
-void SerializeFieldImpl(nlohmann::json& data, const meta::Field& field, meta::Reference reference) {
-    data[field.GetName()] = field.GetValue<T>(reference);
-}
-
-template<class T>
 void DeserializeFieldImpl(nlohmann::json& data, const meta::Field& field, meta::Reference reference) {
     field.SetValue<T>(reference, data[field.GetName()].get<T>());
 }
 
-void sprint::serializer::SerializeField(nlohmann::json &data, const meta::Field &field, meta::Reference reference) {
-    using method_ptr = void (*)(nlohmann::json&, const meta::Field&, meta::Reference);
+template<class T>
+nlohmann::json SerializeImpl(meta::Reference instance) {
+    return instance.Get<T>();
+}
 
-    meta::Type type = field.GetType();
-
-#define SERIALIZE_BASE(__type) { meta::details::GetTypeId<__type>(), SerializeFieldImpl<__type> }
+nlohmann::json sprint::serializer::Serialize(const meta::Type& type, meta::Reference instance) {
+    using method_ptr = nlohmann::json (*)(meta::Reference);
+#define SERIALIZE_BASE(__type) { meta::details::GetTypeId<__type>(), SerializeImpl<__type> }
     static const std::unordered_map<meta::TypeId, method_ptr> methods {
         SERIALIZE_BASE(bool),
         SERIALIZE_BASE(char),
@@ -34,12 +31,14 @@ void sprint::serializer::SerializeField(nlohmann::json &data, const meta::Field 
 #undef SERIALIZE_BASE
 
     if (auto it = methods.find(type.ID()); it != methods.end()) {
-        it->second(data, field, reference);
-    } else {
-        for (const auto& inner_field : type.GetFields()) {
-            SerializeField(data[field.GetName()], inner_field, field.GetReference(reference));
-        }
+        return it->second(instance);
     }
+
+    nlohmann::json data;
+    for (const auto &field : instance.GetType().GetFields()) {
+        data[field.GetName()] = Serialize(field.GetType(), field.GetReference(instance));
+    }
+    return data;
 }
 
 void sprint::serializer::DeserializeField(nlohmann::json &data, const meta::Field &field, meta::Reference reference) {
