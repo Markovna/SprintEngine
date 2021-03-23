@@ -59,18 +59,21 @@ set(ENGINE_SRC
         ${SOURCE_DIR}/core/renderer.cpp ${SOURCE_DIR}/core/renderer.h
         ${SOURCE_DIR}/common/rect.cpp ${SOURCE_DIR}/common/rect.h
         ${SOURCE_DIR}/renderer/render_texture.cpp ${SOURCE_DIR}/renderer/render_texture.h
-        ${SOURCE_DIR}/core/resources.cpp ${SOURCE_DIR}/core/resources.h)
+        ${SOURCE_DIR}/core/resources.cpp ${SOURCE_DIR}/core/resources.h src/core/serializer.cpp src/core/serializer.h
+        ${SOURCE_DIR}/common/json.hpp
+        src/renderer/texture_import.cpp src/renderer/texture_import.h)
 
 set(EDITOR_SRC
         ${SOURCE_DIR}/editor/editor_app.cpp ${SOURCE_DIR}/editor/editor_app.h
-        ${SOURCE_DIR}/editor/imgui_renderer.cpp ${SOURCE_DIR}/editor/imgui_renderer.h
-        ${SOURCE_DIR}/editor/editor_gui.h ${SOURCE_DIR}/editor/editor_gui.cpp
-        ${SOURCE_DIR}/editor/scene_graph_gui.cpp ${SOURCE_DIR}/editor/scene_graph_gui.h
-        ${SOURCE_DIR}/editor/gui.h ${SOURCE_DIR}/editor/gui.cpp
-        ${SOURCE_DIR}/editor/properties_gui.cpp ${SOURCE_DIR}/editor/properties_gui.h
-        ${SOURCE_DIR}/editor/scene_view_gui.cpp ${SOURCE_DIR}/editor/scene_view_gui.h
-        ${SOURCE_DIR}/editor/game_view_gui.cpp ${SOURCE_DIR}/editor/game_view_gui.h
-        ${SOURCE_DIR}/editor/components_gui.cpp ${SOURCE_DIR}/editor/components_gui.h)
+        ${SOURCE_DIR}/editor/gui/imgui_renderer.cpp ${SOURCE_DIR}/editor/gui/imgui_renderer.h
+        ${SOURCE_DIR}/editor/gui/editor_gui.h ${SOURCE_DIR}/editor/gui/editor_gui.cpp
+        ${SOURCE_DIR}/editor/gui/scene_graph_gui.cpp ${SOURCE_DIR}/editor/gui/scene_graph_gui.h
+        ${SOURCE_DIR}/editor/gui/gui.h ${SOURCE_DIR}/editor/gui/gui.cpp
+        ${SOURCE_DIR}/editor/gui/properties_gui.cpp ${SOURCE_DIR}/editor/gui/properties_gui.h
+        ${SOURCE_DIR}/editor/gui/scene_view_gui.cpp ${SOURCE_DIR}/editor/gui/scene_view_gui.h
+        ${SOURCE_DIR}/editor/gui/scene_view_gui.cpp ${SOURCE_DIR}/editor/gui/scene_view_gui.h
+        ${SOURCE_DIR}/editor/gui/game_view_gui.cpp ${SOURCE_DIR}/editor/gui/game_view_gui.h
+        ${SOURCE_DIR}/editor/gui/components_gui.cpp ${SOURCE_DIR}/editor/gui/components_gui.h src/editor/common/guid.cpp src/editor/common/guid.h)
 
 set(REFLECTION_SRC
         ${SOURCE_DIR}/reflection/meta_runtime.h
