@@ -25,7 +25,13 @@ struct CreateEntityCommand {
     void Execute(Engine &engine) const;
 };
 
-using EditorGuiCommand = std::variant<SetParentCommand, CreateEntityCommand>;
+struct DestroyEntityCommand {
+    ecs::entity_t entity;
+
+    void Execute(Engine &engine) const;
+};
+
+using EditorGuiCommand = std::variant<SetParentCommand, CreateEntityCommand, DestroyEntityCommand>;
 
 class SceneGraphEditorGui {
 public:

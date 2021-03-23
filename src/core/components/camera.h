@@ -51,7 +51,7 @@ public:
     void SetRect(const Rect& rect) { normalized_rect_ = rect; }
 
 private:
-    const uint32_t idx_;
+    uint32_t idx_;
     SERIALIZABLE float fov_ = 60.0f;
     SERIALIZABLE float near_ = 0.1f;
     SERIALIZABLE float far_ = 100.0f;

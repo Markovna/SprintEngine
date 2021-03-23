@@ -61,6 +61,10 @@ public:
             return curr_ != nullptr;
         }
 
+        [[nodiscard]] pointer get() const noexcept {
+            return curr_;
+        }
+
         [[nodiscard]] pointer operator->() const noexcept {
             return curr_;
         }
@@ -79,36 +83,36 @@ public:
 
     static TransformComponent& Create(
         ecs::entity_t entity,
-        ecs::registry& registry,
+        ecs::registry* registry,
         TransformComponent* root,
         TransformComponent* parent = nullptr,
         const Transform& local = {}
     ) {
         ecs::entity_t parent_ent = parent ? parent->entity_ : ecs::null;
-        auto& component = registry.emplace<TransformComponent>(entity, registry, root, entity);
+        auto& component = registry->emplace<TransformComponent>(entity, registry, root, entity);
         PushChild(registry, root, component);
         if (parent_ent != ecs::null)
-            component.SetParent(&registry.get<TransformComponent>(parent_ent));
+            component.SetParent(&registry->get<TransformComponent>(parent_ent));
         component.SetLocalTransform(local);
         return component;
     }
 
-    TransformComponent(ecs::registry& registry, TransformComponent* root, ecs::entity_t entity) noexcept
-        : registry_(registry),
-          root_(root),
-          entity_(entity),
-          parent_(ecs::null),
-          child_first_(ecs::null),
-          child_last_(ecs::null),
-          next_(ecs::null),
-          prev_(ecs::null),
-          child_count_(0),
-          world_{},
-          local_{},
-          dirty_(false) {
+    TransformComponent(ecs::registry* registry, TransformComponent* root, ecs::entity_t entity) noexcept
+        : registry_(registry)
+        , root_(root)
+        , entity_(entity)
+        , parent_(ecs::null)
+        , child_first_(ecs::null)
+        , child_last_(ecs::null)
+        , next_(ecs::null)
+        , prev_(ecs::null)
+        , child_count_(0)
+        , world_{}
+        , local_{}
+        , dirty_(false) {
     }
 
-    ~TransformComponent();
+    ~TransformComponent() = default;
 
     void SetParent(TransformComponent* parent, TransformComponent* next = nullptr);
 
@@ -146,12 +150,15 @@ private:
     void PushChild(ecs::entity_t e);
     void InsertChild(ecs::entity_t pos, ecs::entity_t e);
     SERIALIZABLE void SetDirty(bool) const;
-    static void PushChild(ecs::registry&, TransformComponent* parent, TransformComponent& child);
-    static void InsertChild(ecs::registry&, TransformComponent* parent, TransformComponent& child, TransformComponent& next);
+    static void PushChild(ecs::registry*, TransformComponent* parent, TransformComponent& child);
+    static void InsertChild(ecs::registry*, TransformComponent* parent, TransformComponent& child, TransformComponent& next);
     static bool IsChildOf(const TransformComponent& child, const TransformComponent& parent);
 
+    friend class World;
+
 private:
-    SERIALIZABLE ecs::registry& registry_;
+public:
+    SERIALIZABLE ecs::registry* registry_;
     SERIALIZABLE TransformComponent* root_;
     SERIALIZABLE ecs::entity_t entity_;
     SERIALIZABLE ecs::entity_t parent_;
@@ -159,9 +166,9 @@ private:
     SERIALIZABLE ecs::entity_t child_last_;
     SERIALIZABLE ecs::entity_t next_;
     SERIALIZABLE ecs::entity_t prev_;
+    SERIALIZABLE size_t child_count_;
     SERIALIZABLE Transform local_;
     mutable Transform world_;
-    SERIALIZABLE size_t child_count_;
     SERIALIZABLE mutable bool dirty_;
 };
 

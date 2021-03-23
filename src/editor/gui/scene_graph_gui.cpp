@@ -15,6 +15,7 @@ static void EntityPopupMenu(ecs::entity_t id, void* ptr_id, std::vector<EditorGu
 
     if (ImGui::MenuItem("Destroy")) {
         //TODO
+        commands.emplace_back(DestroyEntityCommand{id});
     }
 
     ImGui::Separator();
@@ -248,6 +249,9 @@ void CreateEntityCommand::Execute(Engine &engine) const {
     Scene* scene = engine.get_scene();
     auto* parent_transform = parent != ecs::null ? &scene->get<TransformComponent>(parent) : nullptr;
     scene->CreateEntity({}, parent_transform);
+void DestroyEntityCommand::Execute(Engine &engine) const {
+    Scene* world = engine.get_scene();
+    world->DestroyEntity(entity);
 }
 
 }

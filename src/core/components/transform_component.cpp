@@ -2,16 +2,6 @@
 
 namespace sprint {
 
-TransformComponent::~TransformComponent() {
-    //TODO
-//    while (child_count_) {
-//        registry_.destroy(child_first_);
-//    }
-
-//    if (TransformComponent* parent = parent_ != ecs::null ? &get(parent_) : root_)
-//        parent->EraseChild(entity_);
-}
-
 void TransformComponent::SetParent(TransformComponent* parent, TransformComponent *next) {
     if (!parent) parent = root_;
     assert(!next || next->parent_ == parent->entity_);
@@ -109,11 +99,11 @@ const Transform &TransformComponent::GetLocalTransform() const {
 }
 
 TransformComponent &TransformComponent::get(ecs::entity_t e) {
-    return registry_.get<TransformComponent>(e);
+    return registry_->get<TransformComponent>(e);
 }
 
 const TransformComponent& TransformComponent::get(ecs::entity_t e) const {
-    return registry_.get<TransformComponent>(e);
+    return registry_->get<TransformComponent>(e);
 }
 
 TransformComponent::child_iterator<const TransformComponent> TransformComponent::GetChildren() const {
@@ -128,10 +118,10 @@ size_t TransformComponent::GetChildrenSize() const {
     return child_count_;
 }
 
-void TransformComponent::PushChild(ecs::registry& registry, TransformComponent *parent, TransformComponent &child) {
+void TransformComponent::PushChild(ecs::registry* registry, TransformComponent *parent, TransformComponent &child) {
     if (parent) {
         if (parent->child_last_ != ecs::null) {
-            registry.get<TransformComponent>(parent->child_last_).next_ = child.entity_;
+            registry->get<TransformComponent>(parent->child_last_).next_ = child.entity_;
         }
 
         child.parent_ = parent->entity_;
@@ -151,13 +141,13 @@ void TransformComponent::PushChild(ecs::registry& registry, TransformComponent *
     }
 }
 
-void TransformComponent::InsertChild(ecs::registry& registry, TransformComponent *parent, TransformComponent &child, TransformComponent &next) {
+void TransformComponent::InsertChild(ecs::registry* registry, TransformComponent *parent, TransformComponent &child, TransformComponent &next) {
     ecs::entity_t parent_id = parent ? parent->entity_ : ecs::null;
     assert(next.parent_ == parent_id);
 
     ecs::entity_t prev = next.prev_;
     if (prev != ecs::null) {
-        registry.get<TransformComponent>(prev).next_ = child.entity_;
+        registry->get<TransformComponent>(prev).next_ = child.entity_;
     } else {
         if (parent)
             parent->child_first_ = child.entity_;

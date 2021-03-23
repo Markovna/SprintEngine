@@ -67,7 +67,8 @@ public:
 
     void erase(entity_t entity) {
         assert(entities::contains(entity));
-        components_[entities::index(entity)] = std::move(components_.back());
+        auto other = std::move(components_.back());
+        components_[entities::index(entity)] = std::move(other);
         components_.pop_back();
         entities::erase(entity);
     }
@@ -259,8 +260,14 @@ private:
     using entity_traits = details::entity_traits;
 
     struct pool_info {
+        using remove_ptr_t = void (*)(sparse_set<entity_t>*, ecs::entity_t);
         pool_ptr ptr;
         meta::TypeId type_id;
+        remove_ptr_t remove_ptr;
+
+        void remove(ecs::entity_t entity) {
+            remove_ptr(ptr.get(), entity);
+        }
     };
 
     template<class Component>
@@ -270,11 +277,14 @@ private:
             pools_.resize(idx+1);
         }
 
-        auto& [ptr, id] = pools_[idx];
+        auto& [ptr, id, remove_ptr] = pools_[idx];
 
         if (!ptr) {
             ptr.reset(new pool_t<Component>);
             id = meta::GetType<Component>().ID();
+            remove_ptr = [] (sparse_set<entity_t>* ptr, ecs::entity_t entity) {
+                static_cast<pool_t<Component>*>(ptr)->erase(entity);
+            };
         }
 
         return *static_cast<pool_t<Component>*>(ptr.get());
@@ -329,9 +339,9 @@ public:
 
     template<typename Func>
     void visit(entity_t entity, Func func) const {
-        for (auto& [ptr, id] : pools_) {
-            if (ptr && ptr->contains(entity)) {
-                func(id);
+        for (auto& pool : pools_) {
+            if (pool.ptr && pool.ptr->contains(entity)) {
+                func(pool.type_id);
             }
         }
     }
@@ -350,9 +360,9 @@ public:
 
     void remove_all(entity_t entity) {
         assert(valid(entity));
-        for (auto& [ptr, _] : pools_) {
-            if (ptr && ptr->contains(entity)) {
-                ptr->erase(entity);
+        for (auto& pool : pools_) {
+            if (pool.ptr && pool.ptr->contains(entity)) {
+                pool.remove(entity);
             }
         }
     }
@@ -360,13 +370,17 @@ public:
     template<class Component>
     Component& get(entity_t entity) {
         assert(has<Component>(entity));
-        return get_pool<Component>()->get(entity);
+        pool_t<Component>* pool_ptr = get_pool<Component>();
+        assert(pool_ptr);
+        return pool_ptr->get(entity);
     }
 
     template<class Component>
     const Component& get(entity_t entity) const {
         assert(has<Component>(entity));
-        return get_pool<Component>()->get(entity);
+        pool_t<Component>* pool_ptr = get_pool<Component>();
+        assert(pool_ptr);
+        return pool_ptr->get(entity);
     }
 
     template<class Component>
