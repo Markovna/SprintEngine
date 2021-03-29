@@ -14,7 +14,6 @@ static void EntityPopupMenu(ecs::entity_t id, void* ptr_id, std::vector<EditorGu
     }
 
     if (ImGui::MenuItem("Destroy")) {
-        //TODO
         commands.emplace_back(DestroyEntityCommand{id});
     }
 
@@ -29,9 +28,10 @@ static void EntityPopupMenu(ecs::entity_t id, void* ptr_id, std::vector<EditorGu
 }
 
 static void BeginEntityTreeNode(
-    const TransformComponent* comp,
+    const World* world,
+    Entity entity,
     float spacing,
-    ecs::entity_t& selected_id,
+    Entity& selected_entity,
     std::vector<EditorGuiCommand>& commands,
     bool& opened,
     bool& hovered) {
@@ -39,13 +39,13 @@ static void BeginEntityTreeNode(
     static const char* DRAG_DROP_TYPE = "DND";
     static const char* label = "ent %d";
 
-    const auto id = comp->GetID();
-    void* ptr_id = (void*)(intptr_t)comp->GetID();
+    const auto id = entity.id;
+    void* ptr_id = (void*)(intptr_t)entity.id;
     char str_ptr[16];
     sprintf(str_ptr,"%u", id);
 
-    bool leaf = comp->GetChildren() == nullptr;
-    bool selected = selected_id == id;
+    bool leaf = world->GetChildrenSize(entity) == 0;
+    bool selected = selected_entity == entity;
     bool open;
     hovered = false;
 
@@ -62,16 +62,14 @@ static void BeginEntityTreeNode(
     ImGui::SetCursorPos({min_x, cursor_pos.y - spacing});
     if (const ImGuiPayload* payload = gui::DragDropTarget(ptr_id, DRAG_DROP_TYPE, {size.x, spacing}, small_target_hovered)) {
         uint32_t child_id = *(uint32_t *) payload->Data;
-        auto *parent = comp->GetParent();
-        ecs::entity_t parent_id = parent ? parent->GetID() : ecs::null;
-        commands.emplace_back(SetParentCommand{child_id, parent_id, id });
+        commands.emplace_back(SetParentCommand{child_id, world->GetParent(entity), id });
     }
 
     ImGui::SetCursorPos({min_x, cursor_pos.y});
     if (!small_target_hovered) {
         if (const ImGuiPayload *payload = gui::DragDropTarget(ptr_id, DRAG_DROP_TYPE, size)) {
             uint32_t child_id = *(uint32_t *) payload->Data;
-            commands.emplace_back(SetParentCommand{child_id, id, ecs::null});
+            commands.emplace_back(SetParentCommand{child_id, id, Entity::Invalid()});
         }
     }
 
@@ -101,7 +99,7 @@ static void BeginEntityTreeNode(
     }
 
     if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
-        selected_id = id;
+        selected_entity = entity;
     }
 
     if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
@@ -127,24 +125,23 @@ enum class VisitTreeNodesResult {
 };
 
 template <class F>
-static void VisitTreeNodes(TransformComponent::iterator it, F function) {
-    if (it == nullptr)
+static void VisitTreeNodes(World* world, Entity entity, F function) {
+    if (!entity)
         return;
 
-    VisitTreeNodesResult result = function(it);
+    VisitTreeNodesResult result = function(entity);
     if (result == VisitTreeNodesResult::Break)
         return;
 
     if (result == VisitTreeNodesResult::Recursive) {
-        VisitTreeNodes(it->GetChildren(), function);
+        VisitTreeNodes(world, world->GetChild(entity), function);
     }
 
-    VisitTreeNodes(++it, function);
+    VisitTreeNodes(world, world->GetNext(entity), function);
 }
 
 void SceneGraphEditorGui::DrawSceneGraph() {
-
-    ecs::entity_t selected = editor_.Selected();
+    Entity selected = editor_.Selected();
     ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 14.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {2,2});
 
@@ -158,14 +155,16 @@ void SceneGraphEditorGui::DrawSceneGraph() {
 
     ImGui::PushClipRect(clip_rect.Min, clip_rect.Max, true);
 
-    ecs::entity_t hovered_id = ecs::null;
+    Entity hovered_ent = {};
     ImVec2 button_pos;
-    VisitTreeNodes(engine_.get_world()->GetRoots(), [&] (TransformComponent::iterator it) {
+
+    VisitTreeNodes(engine_.get_world(), engine_.get_world()->GetFirstRoot(), [&] (Entity entity) {
         bool opened, hovered;
 
-        BeginEntityTreeNode((TransformComponent*) it, spacing, selected, commands_, opened, hovered);
+        BeginEntityTreeNode(engine_.get_world(), entity, spacing, selected, commands_, opened, hovered);
+
         if (hovered) {
-            hovered_id = it->GetID();
+            hovered_ent = entity;
             button_pos = {ImGui::GetItemRectMax().x - button_size, ImGui::GetItemRectMin().y };
         }
 
@@ -173,9 +172,9 @@ void SceneGraphEditorGui::DrawSceneGraph() {
             return VisitTreeNodesResult::Recursive;
 
 
-        while (it->GetParent() && !it->GetNext()) {
+        while (engine_.get_world()->GetParent(entity) && !engine_.get_world()->GetNext(entity)) {
             EndEntityTreeNode();
-            it = TransformComponent::iterator(it->GetParent());
+            entity = engine_.get_world()->GetParent(entity);
         }
 
         return VisitTreeNodesResult::Continue;
@@ -183,14 +182,14 @@ void SceneGraphEditorGui::DrawSceneGraph() {
 
     ImGui::PopClipRect();
 
-    if (hovered_id != ecs::null) {
+    if (hovered_ent) {
         ImGui::SetCursorScreenPos(button_pos);
         auto btn_flags = ImGuiButtonFlags_PressedOnClick | ImGuiButtonFlags_AlignTextBaseLine |
             ImGuiButtonFlags_NoHoldingActiveId | ImGuiButtonFlags_NoHoveredOnFocus | ImGuiButtonFlags_AllowItemOverlap;
         ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetColorU32(ImGuiCol_ButtonHovered));
         if (ImGui::ButtonEx("+", ImVec2(button_size, button_size), btn_flags)) {
-            gui::SetItemOpen((void*)(intptr_t)hovered_id, true);
-            commands_.emplace_back(CreateEntityCommand{hovered_id});
+            gui::SetItemOpen((void*)(intptr_t)hovered_ent.id, true);
+            commands_.emplace_back(CreateEntityCommand{hovered_ent});
         }
         ImGui::PopStyleColor();
     }
@@ -198,7 +197,7 @@ void SceneGraphEditorGui::DrawSceneGraph() {
     gui::PopStyleVar(2);
 
     if (ImGui::IsWindowFocused() && ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered()) {
-        selected = ecs::null;
+        selected = {};
     }
 
     editor_.Select(selected);
@@ -227,22 +226,16 @@ void SceneGraphEditorGui::OnGui() {
 }
 
 void SetParentCommand::Execute(Engine &engine) const {
-    World* scene = engine.get_world();
-    auto& child = scene->get<TransformComponent>(entity);
-    auto* parent_transform = parent != ecs::null ? &scene->get<TransformComponent>(parent) : nullptr;
-    auto* next_transform = next != ecs::null ? &scene->get<TransformComponent>(next) : nullptr;
+    World* world = engine.get_world();
 
-    if (parent_transform && parent_transform->IsChildOf(child)) {
+    if (next == entity ||
+        entity == parent ||
+        world->IsChildOf(parent, entity)) {
         log::core::Error("Invalid operation");
         return;
     }
 
-    if (next_transform && child.GetID() == next_transform->GetID()) {
-        log::core::Error("Invalid operation");
-        return;
-    }
-
-    child.SetParent(parent_transform, next_transform);
+    world->SetParent(entity, parent, next);
 }
 
 void CreateEntityCommand::Execute(Engine &engine) const {
@@ -252,7 +245,7 @@ void CreateEntityCommand::Execute(Engine &engine) const {
 
 void DestroyEntityCommand::Execute(Engine &engine) const {
     World* world = engine.get_world();
-    world->DestroyEntity(entity);
+    world->Destroy(entity);
 }
 
 }

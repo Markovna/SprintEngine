@@ -43,6 +43,8 @@ public:
     auto rbegin() const { return components_.rbegin(); }
     auto rend() const { return components_.rend(); }
 
+    size_t size() const { return components_.size(); }
+
     Component& push(entity_t entity, const Component& component) {
         assert(!entities::contains(entity));
         components_.push_back(component);
@@ -111,6 +113,8 @@ public:
 
     auto begin() const { return pool_->entities_t::begin(); }
     auto end() const { return pool_->entities_t::end(); }
+
+    size_t size() const { return pool_->size(); }
 
     [[nodiscard]] Component &get(entity_t entity) { return pool_->get(entity); }
     [[nodiscard]] const Component &get(entity_t entity) const { return pool_->get(entity); }
@@ -378,7 +382,7 @@ public:
     template<class Component>
     const Component& get(entity_t entity) const {
         assert(has<Component>(entity));
-        pool_t<Component>* pool_ptr = get_pool<Component>();
+        const pool_t<Component>* pool_ptr = get_pool<Component>();
         assert(pool_ptr);
         return pool_ptr->get(entity);
     }
@@ -411,6 +415,12 @@ public:
     template<class ...Component>
     component_view<Component...> view() {
         return component_view<Component...>(assure<Component>()...);
+    }
+
+    template<class Component>
+    size_t size() const {
+        auto idx = component_info<Component>::index();
+        return idx < pools_.size() && pools_[idx].ptr && pools_[idx].ptr->size();
     }
 
 private:

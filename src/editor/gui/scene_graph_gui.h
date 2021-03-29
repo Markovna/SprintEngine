@@ -12,21 +12,21 @@ namespace editor {
 class EditorGui;
 
 struct SetParentCommand {
-    ecs::entity_t entity;
-    ecs::entity_t parent;
-    ecs::entity_t next;
+    Entity entity;
+    Entity parent;
+    Entity next;
 
     void Execute(Engine &engine) const;
 };
 
 struct CreateEntityCommand {
-    ecs::entity_t parent;
+    Entity parent;
 
     void Execute(Engine &engine) const;
 };
 
 struct DestroyEntityCommand {
-    ecs::entity_t entity;
+    Entity entity;
 
     void Execute(Engine &engine) const;
 };

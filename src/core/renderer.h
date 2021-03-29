@@ -3,6 +3,7 @@
 #include "common/rect.h"
 #include "renderer/gfx.h"
 #include "components/camera.h"
+#include "scene.h"
 
 namespace sprint {
 

@@ -2,42 +2,58 @@
 
 namespace sprint {
 
-std::unique_ptr<World> World::Create() {
-    return std::make_unique<World>();
-}
+void World::SetParentImpl(Entity entity, Entity parent, Entity next) {
+    LinkComponent& component = Get<LinkComponent>(entity);
+    if (component.parent_) {
+        LinkComponent& parent_comp = Get<LinkComponent>(component.parent_);
+        parent_comp.children_size_--;
 
-World::World()
-    : root_{this, nullptr, ecs::null} {}
+        if (parent_comp.child_ == entity)
+            parent_comp.child_ = component.next_;
 
-TransformComponent::iterator World::GetRoots() {
-    return root_.GetChildren();
-}
-
-TransformComponent::const_iterator World::GetRoots() const {
-    return root_.GetChildren();
-}
-
-size_t World::GetRootsSize() const {
-    return root_.GetChildrenSize();
-}
-
-ecs::entity_t World::CreateEntity(const Transform &local, ecs::entity_t parent) {
-    auto entity = registry::create();
-    TransformComponent::Create(entity, this, &root_, parent != ecs::null ? &registry::get<TransformComponent>(parent) : nullptr, local);
-    return entity;
-}
-
-void World::DestroyEntity(ecs::entity_t e) {
-    TransformComponent& transform = registry::get<TransformComponent>(e);
-    transform.SetParent(nullptr);
-
-    while (transform.GetChildrenSize()) {
-        DestroyEntity(transform.GetChildren()->GetID());
+        if (parent_comp.child_last_ == entity)
+            parent_comp.child_last_ = component.prev_;
     }
 
-    root_.EraseChild(e);
+    if (component.prev_)
+        Get<LinkComponent>(component.prev_).next_ = component.next_;
 
-    registry::destroy(e);
+    if (component.next_)
+        Get<LinkComponent>(component.next_).prev_ = component.prev_;
+
+    component.parent_ = parent;
+    component.next_ = next;
+    component.prev_ = Entity::Invalid();
+
+    if (component.parent_) {
+        LinkComponent& parent_comp = Get<LinkComponent>(component.parent_);
+        parent_comp.children_size_++;
+
+        if (!component.next_) {
+            if (parent_comp.child_last_) {
+                LinkComponent& last_child_comp = Get<LinkComponent>(parent_comp.child_last_);
+                last_child_comp.next_ = entity;
+            }
+
+            component.prev_ = parent_comp.child_last_;
+            parent_comp.child_last_ = entity;
+        }
+
+        if (component.next_ == parent_comp.child_)
+            parent_comp.child_ = entity;
+    }
+
+    if (component.next_) {
+        LinkComponent& next_comp = Get<LinkComponent>(component.next_);
+
+        if (next_comp.prev_) {
+            LinkComponent &prev_comp = Get<LinkComponent>(next_comp.prev_);
+            prev_comp.next_ = entity;
+            component.prev_ = next_comp.prev_;
+        }
+
+        next_comp.prev_ = entity;
+    }
 }
 
 }

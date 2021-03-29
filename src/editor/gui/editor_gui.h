@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/engine.h"
+#include "core/entity.h"
 
 namespace sprint {
 
@@ -22,8 +23,8 @@ public:
     explicit EditorGui(Engine&);
     ~EditorGui();
 
-    [[nodiscard]] ecs::entity_t Selected() const { return selected_; }
-    void Select(ecs::entity_t entity) { selected_ = entity; }
+    [[nodiscard]] Entity Selected() const { return selected_; }
+    void Select(Entity entity) { selected_ = entity; }
 
     void OnGui();
 private:
@@ -32,7 +33,7 @@ private:
     std::unique_ptr<SceneGraphEditorGui> scene_graph_gui_;
     std::unique_ptr<PropertiesEditorGui> properties_gui_;
     std::unique_ptr<SceneViewGui> scene_view_gui_;
-    ecs::entity_t selected_ = ecs::null;
+    Entity selected_ = {};
 };
 
 }

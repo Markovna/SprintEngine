@@ -4,6 +4,7 @@
 #include "components/camera.h"
 #include "components/mesh_renderer.h"
 #include "input_events.h"
+#include "scene.h"
 
 #include <GLFW/glfw3.h>
 
@@ -16,8 +17,8 @@ void Engine::Update() {
 
     {
         float timeValue = 0.5f * (float) glfwGetTime();
-        for (ecs::entity_t ent : world_->view<MeshRenderer>()) {
-            auto &tr = world_->get<TransformComponent>(ent);
+        for (ecs::entity_t ent : world_->View<MeshRenderer>()) {
+            auto &tr = world_->Get<TransformComponent>({ent});
 
 //            Matrix model = Matrix::Identity;
 //            model *= Matrix::Rotation(Quat(Vec3::Forward, 1.0f * timeValue));
@@ -34,37 +35,35 @@ std::unique_ptr<Engine> Engine::Create() {
 }
 
 Engine::Engine() {
+
     world_ = World::Create();
 
     {
         auto root_ent = world_->CreateEntity();
-        auto& ent0_tr = world_->get<TransformComponent>(root_ent);
+        auto& ent0_tr = world_->Get<TransformComponent>(root_ent);
 
         auto mesh_ent = world_->CreateEntity({}, root_ent);
         auto cam_ent = world_->CreateEntity({});
 
-        world_->emplace<MeshRenderer>(mesh_ent);
+        world_->AddComponent<MeshRenderer>(mesh_ent);
 
         for (int i = 1; i < 10; i++) {
             {
                 vec3 pos = (i * 2.0f + 1) * Vec3::Forward + (i * 0.7f) * Vec3::Right;
                 auto ent = world_->CreateEntity({}, root_ent);
-                world_->emplace<MeshRenderer>(ent);
-                TransformComponent& tr = world_->get<TransformComponent>(ent);
-                tr.SetLocalTransform((Transform) Matrix::Translation(pos));
+                world_->AddComponent<MeshRenderer>(ent);
+                world_->SetLocalTransform(ent, (Transform) Matrix::Translation(pos));
             }
             {
                 vec3 pos = (i * 2.0f + 1) * Vec3::Forward + (i * 0.7f) * Vec3::Left;
                 auto ent = world_->CreateEntity({}, root_ent);
-                world_->emplace<MeshRenderer>(ent);
-                TransformComponent& tr = world_->get<TransformComponent>(ent);
-                tr.SetLocalTransform((Transform) Matrix::Translation(pos));
+                world_->AddComponent<MeshRenderer>(ent);
+                world_->SetLocalTransform(ent, (Transform) Matrix::Translation(pos));
             }
         }
 
-        auto& cam = world_->emplace<Camera>(cam_ent);
-        auto& cam_tr = world_->get<TransformComponent>(cam_ent);
-        cam_tr.SetLocalTransform(Transform(Matrix::Translation({0,-2.0f,-3.0f})));
+        auto& cam = world_->AddComponent<Camera>(cam_ent);
+        world_->SetLocalTransform(cam_ent, Transform(Matrix::Translation({0,-2.0f,-3.0f})));
 
 //        input_events::OnKeyPress.connect([](KeyPressEvent& key){
 //            if (key.key_code == key::Left || key.key_code == key::Right) {

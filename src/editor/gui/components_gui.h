@@ -6,19 +6,21 @@
 namespace sprint::editor::gui {
 
 template<class T>
-void DrawComponentContent(meta::Reference ref) {
+bool DrawComponentContent(World* scene, Entity entity, meta::Reference ref) {
     static const meta::Type type = meta::GetType<T>();
     static const std::vector<meta::Field>& fields = type.GetFields();
+    bool changed = false;
     for (const auto & field : fields) {
-        gui::DrawField(ref, field);
+        changed |= gui::DrawField(ref, field);
     }
+    return changed;
 }
 
 template<>
-void DrawComponentContent<TransformComponent>(meta::Reference ref);
+bool DrawComponentContent<TransformComponent>(World* world, Entity entity, meta::Reference ref);
 
 template<class T>
-bool DrawComponent(World* scene, ecs::entity_t selected) {
+bool DrawComponent(World* world, Entity selected) {
     static const meta::Type type = meta::GetType<T>();
 
     gui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 4.0f);
@@ -26,8 +28,10 @@ bool DrawComponent(World* scene, ecs::entity_t selected) {
 
     if (node_open) {
         gui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
-        meta::Reference ref(scene->get<T>(selected));
-        DrawComponentContent<T>(ref);
+        meta::Reference ref(world->Get<T>(selected));
+
+        DrawComponentContent<T>(world, selected, ref);
+
         gui::PopStyleVar();
 
         gui::TreePop();

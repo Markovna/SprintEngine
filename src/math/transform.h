@@ -74,6 +74,11 @@ public:
         return Transform(position, rotation, scale);
     }
 
+    static const Transform& Identity() {
+        static Transform identity;
+        return identity;
+    }
+
     [[nodiscard]] const vec3& get_position() const { return position_; }
     [[nodiscard]] const vec3& get_scale() const { return scale_; }
     [[nodiscard]] const quat& get_rotation() const { return rotation_; }

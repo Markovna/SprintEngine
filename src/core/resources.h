@@ -21,7 +21,7 @@ static bool ReadFile(const std::filesystem::path& path, std::ostream& stream) {
         return true;
     }
     catch (std::ifstream::failure& e) {
-        log::core::Error("Couldn't read file {0}", path.string());
+        log::core::Error("Couldn't read file {0} {1}", path.string(), e.what());
     }
     return false;
 }

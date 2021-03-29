@@ -61,7 +61,7 @@ set(ENGINE_SRC
         ${SOURCE_DIR}/renderer/render_texture.cpp ${SOURCE_DIR}/renderer/render_texture.h
         ${SOURCE_DIR}/core/resources.cpp ${SOURCE_DIR}/core/resources.h src/core/serializer.cpp src/core/serializer.h
         ${SOURCE_DIR}/common/json.hpp
-        src/renderer/texture_import.cpp src/renderer/texture_import.h)
+        src/renderer/texture_import.cpp src/renderer/texture_import.h src/core/entity.cpp src/core/entity.h)
 
 set(EDITOR_SRC
         ${SOURCE_DIR}/editor/editor_app.cpp ${SOURCE_DIR}/editor/editor_app.h

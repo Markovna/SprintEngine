@@ -18,11 +18,11 @@ void PropertiesEditorGui::OnGui() {
     gui::ShowDemoWindow();
 
     auto selected = editor_.Selected();
-    if (selected != ecs::null) {
+    if (selected) {
 
         gui::BeginGroup();
         gui::FieldLabel("Entity");
-        gui::TextDisabled("ID: %u", selected);
+        gui::TextDisabled("ID: %u", selected.id);
         gui::EndGroup();
 
         // TODO: entity name
@@ -31,18 +31,18 @@ void PropertiesEditorGui::OnGui() {
         gui::TextField("Name", buf, (int)(sizeof(buf) / sizeof(*(buf))));
         gui::PopStyleVar();
 
-        World *scene = engine_.get_world();
+        World *world = engine_.get_world();
         bool opened = false;
-        scene->visit(selected, [&] (const meta::TypeId id) {
+        world->Visit(selected, [&] (const meta::TypeId id) {
             meta::Type type(id);
 
             opened = false;
             if (type.Is<TransformComponent>()) {
-                opened = gui::DrawComponent<TransformComponent>(scene, selected);
+                opened = gui::DrawComponent<TransformComponent>(world, selected);
             } else if (type.Is<MeshRenderer>()) {
-                opened = gui::DrawComponent<MeshRenderer>(scene, selected);
+                opened = gui::DrawComponent<MeshRenderer>(world, selected);
             } else if (type.Is<Camera>()) {
-                opened = gui::DrawComponent<Camera>(scene, selected);
+                opened = gui::DrawComponent<Camera>(world, selected);
             }
         });
 

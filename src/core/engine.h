@@ -2,11 +2,11 @@
 
 #include "common/time_span.h"
 #include "renderer/gfx.h"
-#include "scene.h"
 
 namespace sprint {
 
 class Window;
+class World;
 
 class Engine {
 public:

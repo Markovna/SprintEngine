@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/entity.h"
+
 namespace sprint {
 
 class Engine;
@@ -28,7 +30,7 @@ private:
     EditorGui &editor_;
     Engine &engine_;
     std::unique_ptr<Renderer> renderer_;
-    uint32_t camera_;
+    Entity camera_;
     std::unique_ptr<RenderTexture> render_texture_;
 };
 

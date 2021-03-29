@@ -19,11 +19,9 @@ SceneViewGui::SceneViewGui(EditorGui &editor, Engine &engine)
 
     World* scene = engine.get_world();
     camera_ = scene->CreateEntity({});
-    Camera& camera = scene->emplace<Camera>(camera_, Camera::Editor);
-    camera.SetClearColor(Color(0.1f, 0.1f, 0.1f, 1.0f));
-
-    TransformComponent& transform = engine_.get_world()->get<TransformComponent>(camera_);
-    transform.SetLocalRotation(quat(vec3::Right, 30 * math::DEG_TO_RAD));
+    scene->SetLocalRotation(camera_, quat(vec3::Right, 30 * math::DEG_TO_RAD));
+    scene->AddComponent<Camera>(camera_, Camera::Editor)
+            .SetClearColor(Color(0.1f, 0.1f, 0.1f, 1.0f));
 }
 
 void SceneViewGui::OnGui() {
@@ -96,35 +94,36 @@ SceneViewGui::~SceneViewGui() {
 
 void SceneViewGui::MoveCamera(const vec2 &delta) {
     static const float speed = 0.2f;
-    TransformComponent& transform = engine_.get_world()->get<TransformComponent>(camera_);
-    vec3 direction = transform.GetLocalTransform().TransformDirection((speed * vec3(delta)));
-    transform.SetLocalPosition(transform.GetLocalPosition() + direction);
+    Transform camera_local = engine_.get_world()->GetLocalTransform(camera_);
+    vec3 direction = camera_local.TransformDirection(speed * vec3(delta));
+    engine_.get_world()->SetLocalPosition(camera_, camera_local.get_position() + direction);
 }
 
 void SceneViewGui::ZoomCamera(float delta) {
     static const float speed = 1.0f;
-    TransformComponent& transform = engine_.get_world()->get<TransformComponent>(camera_);
-    vec3 direction = transform.GetLocalTransform().TransformDirection((speed * delta * vec3::Forward));
-    transform.SetLocalPosition(transform.GetLocalPosition() + direction);
+    Transform camera_local = engine_.get_world()->GetLocalTransform(camera_);
+    vec3 direction = camera_local.TransformDirection((speed * delta * vec3::Forward));
+    engine_.get_world()->SetLocalPosition(camera_, camera_local.get_position() + direction);
 }
 
 void SceneViewGui::RotateCamera(const vec2 &delta) {
     static const float distance = 2.0f;
     static const float speed = 0.1f;
-    TransformComponent& transform = engine_.get_world()->get<TransformComponent>(camera_);
-    const vec3 up = transform.GetLocalTransform().Up();
-    const vec3 right = transform.GetLocalTransform().Right();
-    const vec3 fwd = transform.GetLocalTransform().Forward();
+    Transform camera_local = engine_.get_world()->GetLocalTransform(camera_);
+
+    const vec3 up = camera_local.Up();
+    const vec3 right = camera_local.Right();
+    const vec3 fwd = camera_local.Forward();
 
     vec3 dir = distance * fwd;
     quat rot(vec3::Up, speed * delta.x * math::DEG_TO_RAD);
     rot *= quat(right, speed * delta.y * math::DEG_TO_RAD);
 
-    vec3 center = transform.GetLocalPosition() + dir;
+    vec3 center = camera_local.get_position() + dir;
     vec3 local_pos = center + rot * -dir;
 
-    transform.SetLocalPosition(local_pos);
-    transform.SetLocalRotation(quat::LookAt(center - local_pos, rot * up));
+    engine_.get_world()->SetLocalPosition(camera_, local_pos);
+    engine_.get_world()->SetLocalRotation(camera_, quat::LookAt(center - local_pos, rot * up));
 }
 
 }

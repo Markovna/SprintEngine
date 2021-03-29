@@ -4,11 +4,10 @@
 namespace sprint::editor::gui {
 
 template<>
-void DrawComponentContent<TransformComponent>(meta::Reference ref) {
+bool DrawComponentContent<TransformComponent>(World* world, Entity entity, meta::Reference ref) {
     static const meta::Type type = meta::GetType<TransformComponent>();
     static const meta::Field& transform_field = type.GetField("local_");
     static const meta::Type transform_type = transform_field.GetType();
-    static const meta::Method& set_dirty_method = type.GetMethod("SetDirty");
     static const meta::Field& position_field = transform_type.GetField("position_");
     static const meta::Field& rotation_field = transform_type.GetField("rotation_");
     static const meta::Field& scale_field = transform_type.GetField("scale_");
@@ -20,8 +19,9 @@ void DrawComponentContent<TransformComponent>(meta::Reference ref) {
     changed |= gui::DrawField(transform_ref, scale_field);
 
     if (changed) {
-        set_dirty_method.Invoke(ref, {true});
+        world->SetLocalTransform(entity, transform_ref.Get<Transform>());
     }
+    return changed;
 }
 
 }
